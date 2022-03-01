@@ -29,10 +29,10 @@ namespace Ironwill
 
 			TypedValue[] filter = {
 				new TypedValue((int)DxfCode.Operator, "<or"),
-				new TypedValue((int)DxfCode.LayerName, "SpkPipe_Armover"),
-				new TypedValue((int)DxfCode.LayerName, "SpkPipe_Branchline"),
-				new TypedValue((int)DxfCode.LayerName, "SpkPipe_Main"),
-				new TypedValue((int)DxfCode.LayerName, "SpkPipe_Drain"),
+				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Armover.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Branchline.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Main.Get()),
+				//new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_AuxDrain.Get()), // TODO label drains!
 				new TypedValue((int)DxfCode.Operator, "or>"),
 			};
 
@@ -102,15 +102,13 @@ namespace Ironwill
 			// TODO new labelling system
 			string labelBlockName = "PipeLabel_";
 
-			string branchline = Layers.SystemPipe_Branchline.Get();
-
 			if (lineLayer == Layers.SystemPipe_Branchline.Get())
 			{
 				labelBlockName += "BL-";
 			}
 			else if (lineLayer == Layers.SystemPipe_Main.Get())
 			{
-				labelBlockName += "MN-";
+				labelBlockName += "ML-";
 			}
 			else if (lineLayer == Layers.SystemPipe_Armover.Get())
 			{
@@ -159,7 +157,16 @@ namespace Ironwill
 			if (block == null)
 				return;
 
-			var blockLayers = new List<string>() { "SpkSystem_Fitting", "SpkSystem_Head", "SpkSystem_Device", "SpkPipe_Armover", "SpkPipe_Branchline", "SpkPipe_Main" };
+			var blockLayers = new List<string>()
+			{
+				Layers.SystemFitting.Get(),
+				Layers.SystemHead.Get(),
+				Layers.SystemDevice.Get(), 
+				Layers.SystemPipe_Armover.Get(), 
+				Layers.SystemPipe_Branchline.Get(), 
+				Layers.SystemPipe_Main.Get()
+				//Layers.SystemPipe_AuxDrain.Get() // TODO label drains
+			};
 			
 			if (!blockLayers.Contains(block.Layer))
 				return;
@@ -174,7 +181,12 @@ namespace Ironwill
 			if (line == null)
 				return;
 
-			var LineLayers = new List<string>() { "SpkPipe_Armover", "SpkPipe_Branchline", "SpkPipe_Main" };
+			var LineLayers = new List<string>()
+			{
+				Layers.SystemPipe_Armover.Get(),
+				Layers.SystemPipe_Branchline.Get(),
+				Layers.SystemPipe_Main.Get()
+			};
 
 			if (!LineLayers.Contains(line.Layer))
 				return;
@@ -357,26 +369,30 @@ namespace Ironwill
 			double skipLabelThreshold = PipeLabelDialog.ignoreLineLength;
 
 			if (line.Length < skipLabelThreshold)
-				return;
-
-			switch (line.Layer)
 			{
-				case "SpkPipe_Armover":
-					attributeText["DIA"] = PipeLabelDialog.armoverLabel;
-					bShowLength = PipeLabelDialog.showArmoverLengths;
-					break;
-				case "SpkPipe_Branchline":
-					attributeText["DIA"] = PipeLabelDialog.branchlineLabel;
-					bShowLength = PipeLabelDialog.showBranchlineLengths;
-					break;
-				case "SpkPipe_Main":
-					attributeText["DIA"] = PipeLabelDialog.mainLabel;
-					bShowLength = PipeLabelDialog.showMainLengths;
-					break;
-				default:
-					attributeText["DIA"] = "ERROR";
-					break;
+				return;
 			}
+
+			if (line.Layer == Layers.SystemPipe_Armover.Get())
+			{
+				attributeText["DIA"] = PipeLabelDialog.armoverLabel;
+				bShowLength = PipeLabelDialog.showArmoverLengths;
+			}
+			else if (line.Layer == Layers.SystemPipe_Branchline.Get())
+			{
+				attributeText["DIA"] = PipeLabelDialog.branchlineLabel;
+				bShowLength = PipeLabelDialog.showBranchlineLengths;
+			}
+			else if (line.Layer == Layers.SystemPipe_Main.Get())
+			{
+				attributeText["DIA"] = PipeLabelDialog.mainLabel;
+				bShowLength = PipeLabelDialog.showMainLengths;
+			}
+			else
+			{
+				attributeText["DIA"] = "ERROR";
+			}
+
 
 			if (bShowLength && line.Length > omitLengthThreshold)
 			{
@@ -423,7 +439,7 @@ namespace Ironwill
 			blockReference.Position = midPoint;
 			blockReference.ScaleFactors = new Scale3d(GetScaleFactor());
 			blockReference.Rotation = Session.SanitizeAngle(segment.Angle, segmentDirection);
-			blockReference.Layer = "SpkPipeLabel";
+			blockReference.Layer = Layers.PipeLabel.Get();
 
 			BlockDictionary.SetBlockAttributes(transaction, blockReference, attributeText);
 		}

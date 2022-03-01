@@ -29,7 +29,7 @@ namespace Ironwill
 				TypedValue[] filterValues =
 				{
 					new TypedValue((int)DxfCode.Operator, "<or"),
-					new TypedValue((int)DxfCode.LayerName, "SpkSystem_Head"),
+					new TypedValue((int)DxfCode.LayerName, Layers.SystemHead.Get()),
 					new TypedValue((int)DxfCode.Operator, "or>"),
 				};
 

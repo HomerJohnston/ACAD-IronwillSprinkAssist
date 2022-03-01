@@ -119,6 +119,7 @@ namespace Ironwill
 
 				database.Orthomode = initialOrthoMode;
 
+				// TODO restore at same viewpoint centre
 				Session.GetDocument().SendStringToExecute("ucs\n\n", false, false, true);
 
 				transaction.Commit();
