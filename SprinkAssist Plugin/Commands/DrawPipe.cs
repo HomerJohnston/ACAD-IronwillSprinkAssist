@@ -1,0 +1,73 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.EditorInput;
+
+using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+
+[assembly: CommandClass(typeof(Ironwill.DrawPipe))]
+
+namespace Ironwill
+{
+	public class DrawPipe
+	{
+		[CommandMethod("DrawDraftAid")]
+		public void DrawDraftAid()
+		{
+			SetLayer(Layers.DraftAid.Get());
+			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
+		}
+
+		[CommandMethod("DrawPipeMain")]
+		public void DrawPipeMain()
+		{
+			SetLayer(Layers.SystemPipe_Main.Get());
+			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
+		}
+
+		[CommandMethod("DrawPipeBranchline")]
+		public void DrawPipeBranchline()
+		{
+			SetLayer(Layers.SystemPipe_Branchline.Get());
+			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
+		}
+
+		[CommandMethod("DrawPipeArmover")]
+		public void DrawPipeArmover()
+		{
+			SetLayer(Layers.SystemPipe_Armover.Get());
+			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
+		}
+
+		[CommandMethod("DrawPipeDrain")]
+		public void DrawPipeDrain()
+		{
+			SetLayer(Layers.SystemPipe_AuxDrain.Get());
+			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
+		}
+
+		public void SetLayer(string layerName)
+		{
+			Database database = Session.GetDatabase();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				LayerTable layerTable;
+				layerTable = transaction.GetObject(database.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+				if (layerTable.Has(layerName))
+				{
+					database.Clayer = layerTable[layerName];
+					transaction.Commit();
+				}
+			}
+		}
+	}
+}

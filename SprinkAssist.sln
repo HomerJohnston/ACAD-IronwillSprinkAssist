@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30523.141
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SprinkAssist Plugin", "SprinkAssist Plugin\SprinkAssist Plugin.csproj", "{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SprinkAssist Resources", "SprinkAssist Resources\Ironwill SprinkAssist Resources.vcxproj", "{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Debug|x64.ActiveCfg = Debug|x64
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Debug|x64.Build.0 = Debug|x64
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Release|x64.ActiveCfg = Release|x64
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Release|x64.Build.0 = Release|x64
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}.Release|x86.Build.0 = Release|Any CPU
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Debug|x64.ActiveCfg = Debug|Win32
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Debug|x64.Build.0 = Debug|Win32
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Debug|x86.ActiveCfg = Debug|Win32
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Debug|x86.Build.0 = Debug|Win32
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Release|x64.ActiveCfg = Release|x64
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Release|x64.Build.0 = Release|x64
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Release|x86.ActiveCfg = Release|Win32
+		{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6435809-366F-4265-A78F-8CA04F878A26}
+	EndGlobalSection
+EndGlobal
