@@ -154,7 +154,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\AboutSprinkAssist.cs" />
     <Compile Include="Commands\AutoCouplings.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
     <Compile Include="Commands\AutoLabelNew.cs" />

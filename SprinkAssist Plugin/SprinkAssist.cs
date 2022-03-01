@@ -21,6 +21,9 @@ namespace Ironwill
 	// then you should remove this class.
 	public partial class SprinkAssist : IExtensionApplication
 	{
+		// TODO remove ghetto version
+		string GhettoVersion = "2022.03.01";
+
 		void IExtensionApplication.Initialize()
 		{
 			// Add one time initialization here
@@ -41,13 +44,26 @@ namespace Ironwill
 			// as well as some of the existing AutoCAD managed apps.
 
 			// Initialize your plug-in application here
-
-			Session.GetEditor().WriteMessage("\nIronwill SprinkAssist Loaded\n");
+			//Autodesk.AutoCAD.ApplicationServices.Application.ShowAlertDialog("Initializing SprinkAssist");
+			DisplayVersion(null, null);
+			AcApplication.DocumentManager.DocumentCreated += DisplayVersion;
 		}
 
 		void IExtensionApplication.Terminate()
 		{
 			// Do plug-in application clean up here
+			AcApplication.DocumentManager.DocumentCreated -= DisplayVersion;
+		}
+
+		private void DisplayVersion(object sender, DocumentCollectionEventArgs e)
+		{
+			//Autodesk.AutoCAD.ApplicationServices.Application.ShowAlertDialog("Helloe Workd");
+			Session.WriteMessage(String.Format(
+				"{0}" +
+				"-------------------{0}" +
+				"SprinkAssist Loaded{0}" +
+				"Version: {1}{0}" +
+				"-------------------", Environment.NewLine, GhettoVersion));
 		}
 	}
 }
