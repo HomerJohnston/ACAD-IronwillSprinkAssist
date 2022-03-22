@@ -18,7 +18,7 @@ namespace Ironwill
 {
 	public class SprinklerArea
 	{
-		[CommandMethod("CalcCoverage")]
+		[CommandMethod("SpkAssist_CalcCoverage")]
 		public void CalcCoverageCmd()
 		{
 			Document document = AcApplication.DocumentManager.MdiActiveDocument;

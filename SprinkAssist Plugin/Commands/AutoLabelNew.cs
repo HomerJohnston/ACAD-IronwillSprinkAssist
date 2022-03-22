@@ -19,7 +19,7 @@ namespace Ironwill
 {
 	public class AutoLabelNew
 	{		
-		[CommandMethod("AutoLabelNew", CommandFlags.UsePickSet | CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist_AutoLabelNew", CommandFlags.UsePickSet | CommandFlags.UsePickSet)]
 		public void AutoLabelNewCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

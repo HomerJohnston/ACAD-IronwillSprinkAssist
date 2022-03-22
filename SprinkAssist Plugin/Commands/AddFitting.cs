@@ -9,6 +9,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using System.Collections.ObjectModel;
 
 [assembly: CommandClass(typeof(Ironwill.AddFitting))]
 
@@ -17,21 +18,28 @@ namespace Ironwill
 {
 	public class AddFitting
 	{
-		StringSetting addFittingType = new StringSetting(new DictionaryPath("AddFitting"), "SelectedFitting", "Elbow");
+		const string ElbowKeyword = "Elbow";
+		const string TeeKeyword = "Tee";
+		const string CapKeyword = "Cap";
+		const string RiserKeyword = "Riser";
+		const string ReducerKeyword = "REducer";
+		const string CouplingKeyword = "COupling";
 
-		[CommandMethod("AddFitting")]
+		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { ElbowKeyword, TeeKeyword, CapKeyword, RiserKeyword, ReducerKeyword, CouplingKeyword } );
+
+		StringSetting fittingTypeSetting = new StringSetting(new DictionaryPath("AddFitting"), "SelectedFitting", ElbowKeyword);
+
+		[CommandMethod("SpkAssist_AddFitting")]
 		public void AddFittingCmd()
 		{
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("\nPlace " + addFittingType.stringValue);
-			promptEntityOptions.Keywords.Add("Elbow");
-			promptEntityOptions.Keywords.Add("Tee");
-			promptEntityOptions.Keywords.Add("Cap");
-			promptEntityOptions.Keywords.Add("Riser");
-			promptEntityOptions.Keywords.Add("REducer");
-			//promptEntityOptions.Keywords.Add("COupling");
-			//promptEntityOptions.Keywords.Add("Placement");
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("\nPlace " + fittingTypeSetting.stringValue);
 
-			promptEntityOptions.Keywords.Default = addFittingType.stringValue;
+			foreach (string key in Keywords)
+			{
+				promptEntityOptions.Keywords.Add(key);
+			}
+
+			promptEntityOptions.Keywords.Default = fittingTypeSetting.stringValue;
 
 			bool bStopCommand = false;
 
@@ -46,7 +54,7 @@ namespace Ironwill
 						switch (promptEntityResult.Status)
 						{
 							case PromptStatus.Keyword:
-								addFittingType.Set(promptEntityResult.StringResult);
+								fittingTypeSetting.Set(promptEntityResult.StringResult);
 								promptEntityOptions.Message = "Place " + promptEntityResult.StringResult;
 								promptEntityOptions.Keywords.Default = promptEntityResult.StringResult;
 								break;
@@ -83,7 +91,7 @@ namespace Ironwill
 
 		string GetFittingName()
 		{
-			switch (addFittingType.stringValue)
+			switch (fittingTypeSetting.stringValue)
 			{
 				case "Elbow":
 					return Blocks.Fitting_Elbow.Get();
@@ -93,6 +101,8 @@ namespace Ironwill
 					return Blocks.Fitting_Cap.Get();
 				case "Riser":
 					return Blocks.Fitting_Riser.Get();
+				case "COupling":
+					return Blocks.Fitting_GroovedCoupling.Get();
 				case "REducer":
 					return Blocks.Fitting_GroovedReducingCoupling.Get();
 			}

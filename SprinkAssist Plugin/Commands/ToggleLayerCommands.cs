@@ -23,7 +23,7 @@ namespace Ironwill
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("ToggleDraftAid")]
+		[CommandMethod("SpkAssist_ToggleDraftAid")]
 		public void ToggleDraftAidCmd()
 		{
 			LayerHelper.ToggleFrozen(Layers.HeadCoverage.Get());
@@ -32,7 +32,7 @@ namespace Ironwill
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("ToggleCoverage")]
+		[CommandMethod("SpkAssist_ToggleCoverage")]
 		public void ToggleCoverageCmd()
 		{
 			LayerHelper.ToggleFrozen(Layers.HeadCoverage.Get());
@@ -41,12 +41,12 @@ namespace Ironwill
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("TogglePipeLabels")]
+		[CommandMethod("SpkAssist_TogglePipeLabels")]
 		public void TogglePipeLabelsCmd()
 		{
 			LayerHelper.ToggleFrozen(Layers.PipeLabel.Get());
 		}
-
+/*
 		[CommandMethod("ToggleLineSmoothing")]
 		public void ToggleLineSmoothingCmd()
 		{
@@ -86,9 +86,9 @@ namespace Ironwill
 					// gfxConfig.SetFeatureEnabled(lineSmoothing, !status);
 				}
 			}
-		}
+		}*/
 
-		[CommandMethod("ToggleLineweightDisplay")]
+		[CommandMethod("SpkAssist_ToggleLineweightDisplay")]
 		public void ToggleLineweightDisplayCmd()
 		{
 			bool lwdisplay = System.Convert.ToBoolean(AcApplication.GetSystemVariable("LWDISPLAY"));

@@ -159,5 +159,10 @@ namespace Ironwill
 		{
 			GetEditor().WriteMessage(Message + "\n");
 		}
+
+		public static void Command(params object[] parameters)
+		{
+			GetEditor().Command(parameters);
+		}
 	}
 }

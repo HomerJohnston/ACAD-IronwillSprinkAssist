@@ -20,7 +20,7 @@ namespace Ironwill
 	{
 		/// ---------------------------------------------------------------------------------------
 		/**  */
-		[CommandMethod("AutoCouplings", CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist_AutoCouplings", CommandFlags.UsePickSet)]
 		public void AutoCouplingsCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
@@ -387,10 +387,25 @@ namespace Ironwill
 		private void CreateCouplings(Transaction transaction, Line segment)
 		{
 			double remainingLength = segment.Length;
-			
+
 			// TODO units and setting up global constants
 			// TODO plastic?
-			double pipeLength = 6400;
+			double pipeLength = 0;
+			DrawingUnits units = Session.GetPrimaryUnits();
+
+			if (units == DrawingUnits.Metric)
+			{
+				pipeLength = 6400.8;
+			}
+			else if (units == DrawingUnits.Imperial)
+			{
+				pipeLength = 252;
+			}
+			else
+			{
+				Session.WriteMessage("Drawing units not properly set! Must be metric or architectural");
+				return;
+			}
 
 			Point3d currentPoint = segment.StartPoint;
 

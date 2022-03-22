@@ -18,7 +18,7 @@ namespace Ironwill
 {
 	public class CountHeads
 	{
-		[CommandMethod("CountHeads")]
+		[CommandMethod("SpkAssist_CountHeads")]
 		public void CountHeadsCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())

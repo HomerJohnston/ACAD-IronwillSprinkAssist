@@ -18,35 +18,35 @@ namespace Ironwill
 {
 	public class DrawPipe
 	{
-		[CommandMethod("DrawDraftAid")]
+		[CommandMethod("SpkAssist_DrawDraftAid")]
 		public void DrawDraftAid()
 		{
 			SetLayer(Layers.DraftAid.Get());
 			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
 		}
 
-		[CommandMethod("DrawPipeMain")]
+		[CommandMethod("SpkAssist_DrawPipeMain")]
 		public void DrawPipeMain()
 		{
 			SetLayer(Layers.SystemPipe_Main.Get());
 			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
 		}
 
-		[CommandMethod("DrawPipeBranchline")]
+		[CommandMethod("SpkAssist_DrawPipeBranchline")]
 		public void DrawPipeBranchline()
 		{
 			SetLayer(Layers.SystemPipe_Branchline.Get());
 			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
 		}
 
-		[CommandMethod("DrawPipeArmover")]
+		[CommandMethod("SpkAssist_DrawPipeArmover")]
 		public void DrawPipeArmover()
 		{
 			SetLayer(Layers.SystemPipe_Armover.Get());
 			Session.GetDocument().SendStringToExecute("_line\n", false, false, true);
 		}
 
-		[CommandMethod("DrawPipeDrain")]
+		[CommandMethod("SpkAssist_DrawPipeDrain")]
 		public void DrawPipeDrain()
 		{
 			SetLayer(Layers.SystemPipe_AuxDrain.Get());

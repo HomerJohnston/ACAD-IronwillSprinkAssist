@@ -18,7 +18,7 @@ namespace Ironwill
 {
 	public class ReplaceHeads
 	{
-		[CommandMethod("ReplaceHeads")]
+		[CommandMethod("SpkAssist_ReplaceHeads")]
 		public void ReplaceHeadsCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())

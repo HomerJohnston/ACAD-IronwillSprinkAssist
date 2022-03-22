@@ -25,6 +25,7 @@ namespace Ironwill
 		// --------------------------------------------------------------------	Name ------------------------------	Color ---------	Plot --	Deprecated Names
 		public static LayerStruct Default					= new LayerStruct(	"0",								White,			true);
 		
+		public static LayerStruct Area_CalcBackground		= new LayerStruct(	"Spk_Area_CalcBackground",			White,			true,	"SpkCalc");
 		public static LayerStruct Calculation				= new LayerStruct(	"Spk_Calculation",					White,			true,	"SpkCalc");
 		public static LayerStruct Detail					= new LayerStruct(	"Spk_Detail",						White,			true,	"SpkDetail", "Spk_Detail", "Sprk_Detail");
 		public static LayerStruct Dimension					= new LayerStruct(	"Spk_Dimension",					White,			true,	"SpkDimension");
@@ -54,6 +55,8 @@ namespace Ironwill
 
 		public static LayerStruct Viewport					= new LayerStruct(	"Spk_Viewport",						White,			true,	"SpkViewport");
 		public static LayerStruct Viewport_Hidden			= new LayerStruct(	"Spk_Viewport_Hidden",				DarkTurqoise,	true,	"SpkViewport_NoPlot");
+
+		public static LayerStruct Wipeout					= new LayerStruct(	"Spk_Wipeout",						0,				true);
 
 		public static LayerStruct XREF						= new LayerStruct(	"Spk_XREF",							LightTurqoise,	false,	"SpkXREF");
 	}

@@ -20,7 +20,7 @@ namespace Ironwill
 	{
 		/// ---------------------------------------------------------------------------------------
 		/**  */
-		[CommandMethod("AutoLabel", CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist_AutoLabel", CommandFlags.UsePickSet)]
 		public void AutoLabelCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
@@ -74,9 +74,11 @@ namespace Ironwill
 
 					List<Line> segments = GetLineSegments(line, ref breakPoints);
 
+					double roundingError = 0;
+
 					foreach (Line segment in segments)
 					{
-						LabelLine(line, segment, pipeLabelDialog, labelBlockName, transaction);
+						LabelLine(line, segment, pipeLabelDialog, labelBlockName, transaction, ref roundingError);
 					}
 				}
 
@@ -353,7 +355,7 @@ namespace Ironwill
 			return inDegrees * Math.PI / 180.0;
 		}
 
-		protected void LabelLine(Line line, Line segment, PipeLabelDialog pipeLabelDialog, string labelBlockName, Transaction transaction)
+		protected void LabelLine(Line line, Line segment, PipeLabelDialog pipeLabelDialog, string labelBlockName, Transaction transaction, ref double roundingError)
 		{
 			Vector3d startToEndVector = segment.StartPoint.GetVectorTo(segment.EndPoint);
 			Point3d midPoint = segment.StartPoint + 0.5f * startToEndVector;
@@ -367,11 +369,11 @@ namespace Ironwill
 
 			double omitLengthThreshold = PipeLabelDialog.omitLengthLabelLength;
 			double skipLabelThreshold = PipeLabelDialog.ignoreLineLength;
-
+/*
 			if (line.Length < skipLabelThreshold)
 			{
 				return;
-			}
+			}*/
 
 			if (line.Layer == Layers.SystemPipe_Armover.Get())
 			{
@@ -399,23 +401,17 @@ namespace Ironwill
 				switch (Session.GetPrimaryUnits())
 				{
 					case DrawingUnits.Metric:
-						displayLength = (int)Math.Round(actualLength / 25) * 25;
-
-						if (displayLength < 100)
-						{
-							return;
-						}
+						displayLength = (int)Math.Round((actualLength + roundingError) / 25) * 25;
+						
+						roundingError = (actualLength + roundingError) - displayLength;
 
 						attributeText["LGTH"] = displayLength.ToString();
 						break;
 
 					case DrawingUnits.Imperial:
-						displayLength = (int)Math.Round(actualLength);
+						displayLength = (int)Math.Round(actualLength + roundingError);
 
-						if (displayLength < 4)
-						{
-							return;
-						}
+						roundingError = (actualLength + roundingError) - displayLength;
 
 						int feet = displayLength / 12;
 						int inches = displayLength % 12;

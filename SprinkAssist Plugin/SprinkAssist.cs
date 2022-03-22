@@ -22,7 +22,7 @@ namespace Ironwill
 	public partial class SprinkAssist : IExtensionApplication
 	{
 		// TODO remove ghetto version
-		string GhettoVersion = "2022.03.01";
+		string GhettoVersion = "2022.03.19";
 
 		void IExtensionApplication.Initialize()
 		{

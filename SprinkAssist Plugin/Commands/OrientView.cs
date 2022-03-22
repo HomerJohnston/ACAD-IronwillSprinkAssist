@@ -22,7 +22,7 @@ namespace Ironwill
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("OrientView")]
+		[CommandMethod("SpkAssist_OrientView")]
 		public void OrientViewCmd()
 		{
 			using (Transaction transaction = Session.GetTransactionManager().StartTransaction())
@@ -89,7 +89,7 @@ namespace Ironwill
 			}
 		}
 
-		[CommandMethod("ResetView")]
+		[CommandMethod("SpkAssist_ResetView")]
 		public void ResetViewCmd()
 		{
 			using (Transaction transaction = Session.GetTransactionManager().StartTransaction())

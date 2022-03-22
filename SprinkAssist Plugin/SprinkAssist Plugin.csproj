@@ -157,23 +157,19 @@
     <Compile Include="Commands\AutoCouplings.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
     <Compile Include="Commands\AutoLabelNew.cs" />
+    <Compile Include="Commands\AutoPublish.cs" />
     <Compile Include="Commands\CleanupDraworder.cs" />
     <Compile Include="Commands\CountHeads.cs" />
     <Compile Include="Commands\DeleteDraftAidPoints.cs" />
     <Compile Include="Commands\DrawPipe.cs" />
     <Compile Include="Commands\GenerateCalcBackground.cs" />
-    <Compile Include="Commands\Layer Visibility\LayerHelper.cs" />
+    <Compile Include="Helpers\LayerHelper.cs" />
+    <Compile Include="Commands\PlaceHead.cs" />
     <Compile Include="Commands\ReplaceHeads.cs" />
-    <Compile Include="Commands\Layer Visibility\ToggleLayerCommands.cs" />
+    <Compile Include="Commands\ToggleLayerCommands.cs" />
     <Compile Include="Commands\XRoom.cs" />
     <Compile Include="Commands\AddFitting.cs" />
     <Compile Include="Commands\OrientView.cs" />
-    <Compile Include="Commands\Test\myCommands.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>myCommands.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Commands\Test\_Test.cs" />
     <Compile Include="Dialogs\AutoLabelDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -204,7 +200,6 @@
     <Compile Include="Settings\DrawingSettings.cs" />
     <Compile Include="Types\PipeGroup.cs" />
     <Compile Include="SprinkAssist.cs" />
-    <Compile Include="Commands\Test\myCommands.cs" />
     <Compile Include="Dialogs\PipeLabelDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -216,11 +211,6 @@
     <Compile Include="Settings\DrawingUnits.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Commands\Test\myCommands.resx">
-      <DependentUpon>myCommands.cs</DependentUpon>
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>myCommands.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
     <EmbeddedResource Include="Dialogs\AutoLabelDialog.resx">
       <DependentUpon>AutoLabelDialog.cs</DependentUpon>
     </EmbeddedResource>

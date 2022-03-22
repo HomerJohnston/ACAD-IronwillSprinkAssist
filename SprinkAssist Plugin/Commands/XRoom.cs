@@ -87,7 +87,7 @@ namespace Ironwill
 			}
 		}
 
-		[CommandMethod("XRoom")]
+		[CommandMethod("SpkAssist_XRoom")]
 		public void XRoomCmd()
 		{
 			bool bStopCommand = false;
@@ -141,8 +141,8 @@ namespace Ironwill
 							Line line1 = new Line(firstPoint, secondPoint);
 							Line line2 = new Line(thirdPoint, fourthPoint);
 
-							line1.Layer = Layers.Detail.Get();
-							line2.Layer = Layers.Detail.Get();
+							line1.Layer = Layers.Note.Get();
+							line2.Layer = Layers.Note.Get();
 
 							Session.AddNewObject(transaction, line1);
 							Session.AddNewObject(transaction, line2);
