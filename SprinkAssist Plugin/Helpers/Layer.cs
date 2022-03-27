@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ironwill
 {
-	class Layers
+	class Layer
 	{
 		const int White = 7;
 		const int DarkPurple = 180;

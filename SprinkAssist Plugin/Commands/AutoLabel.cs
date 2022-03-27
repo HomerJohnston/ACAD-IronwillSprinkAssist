@@ -29,9 +29,9 @@ namespace Ironwill
 
 			TypedValue[] filter = {
 				new TypedValue((int)DxfCode.Operator, "<or"),
-				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Armover.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Branchline.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Main.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Armover.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Branchline.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Main.Get()),
 				//new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_AuxDrain.Get()), // TODO label drains!
 				new TypedValue((int)DxfCode.Operator, "or>"),
 			};
@@ -104,15 +104,15 @@ namespace Ironwill
 			// TODO new labelling system
 			string labelBlockName = "PipeLabel_";
 
-			if (lineLayer == Layers.SystemPipe_Branchline.Get())
+			if (lineLayer == Layer.SystemPipe_Branchline.Get())
 			{
 				labelBlockName += "BL-";
 			}
-			else if (lineLayer == Layers.SystemPipe_Main.Get())
+			else if (lineLayer == Layer.SystemPipe_Main.Get())
 			{
 				labelBlockName += "ML-";
 			}
-			else if (lineLayer == Layers.SystemPipe_Armover.Get())
+			else if (lineLayer == Layer.SystemPipe_Armover.Get())
 			{
 				labelBlockName += "AO-";
 			}
@@ -161,12 +161,12 @@ namespace Ironwill
 
 			var blockLayers = new List<string>()
 			{
-				Layers.SystemFitting.Get(),
-				Layers.SystemHead.Get(),
-				Layers.SystemDevice.Get(), 
-				Layers.SystemPipe_Armover.Get(), 
-				Layers.SystemPipe_Branchline.Get(), 
-				Layers.SystemPipe_Main.Get()
+				Layer.SystemFitting.Get(),
+				Layer.SystemHead.Get(),
+				Layer.SystemDevice.Get(), 
+				Layer.SystemPipe_Armover.Get(), 
+				Layer.SystemPipe_Branchline.Get(), 
+				Layer.SystemPipe_Main.Get()
 				//Layers.SystemPipe_AuxDrain.Get() // TODO label drains
 			};
 			
@@ -185,9 +185,9 @@ namespace Ironwill
 
 			var LineLayers = new List<string>()
 			{
-				Layers.SystemPipe_Armover.Get(),
-				Layers.SystemPipe_Branchline.Get(),
-				Layers.SystemPipe_Main.Get()
+				Layer.SystemPipe_Armover.Get(),
+				Layer.SystemPipe_Branchline.Get(),
+				Layer.SystemPipe_Main.Get()
 			};
 
 			if (!LineLayers.Contains(line.Layer))
@@ -375,17 +375,17 @@ namespace Ironwill
 				return;
 			}*/
 
-			if (line.Layer == Layers.SystemPipe_Armover.Get())
+			if (line.Layer == Layer.SystemPipe_Armover.Get())
 			{
 				attributeText["DIA"] = PipeLabelDialog.armoverLabel;
 				bShowLength = PipeLabelDialog.showArmoverLengths;
 			}
-			else if (line.Layer == Layers.SystemPipe_Branchline.Get())
+			else if (line.Layer == Layer.SystemPipe_Branchline.Get())
 			{
 				attributeText["DIA"] = PipeLabelDialog.branchlineLabel;
 				bShowLength = PipeLabelDialog.showBranchlineLengths;
 			}
-			else if (line.Layer == Layers.SystemPipe_Main.Get())
+			else if (line.Layer == Layer.SystemPipe_Main.Get())
 			{
 				attributeText["DIA"] = PipeLabelDialog.mainLabel;
 				bShowLength = PipeLabelDialog.showMainLengths;
@@ -435,7 +435,7 @@ namespace Ironwill
 			blockReference.Position = midPoint;
 			blockReference.ScaleFactors = new Scale3d(GetScaleFactor());
 			blockReference.Rotation = Session.SanitizeAngle(segment.Angle, segmentDirection);
-			blockReference.Layer = Layers.PipeLabel.Get();
+			blockReference.Layer = Layer.PipeLabel.Get();
 
 			BlockDictionary.SetBlockAttributes(transaction, blockReference, attributeText);
 		}

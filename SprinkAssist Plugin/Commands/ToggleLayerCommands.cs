@@ -26,7 +26,16 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_ToggleDraftAid")]
 		public void ToggleDraftAidCmd()
 		{
-			LayerHelper.ToggleFrozen(Layers.HeadCoverage.Get());
+			LayerHelper.ToggleFrozen(Layer.HeadCoverage.Get());
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[CommandMethod("SpkAssist_ToggleXref")]
+		public void ToggleXrefCmd()
+		{
+			LayerHelper.ToggleFrozen(Layer.XREF.Get());
 		}
 
 		/// <summary>
@@ -35,7 +44,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_ToggleCoverage")]
 		public void ToggleCoverageCmd()
 		{
-			LayerHelper.ToggleFrozen(Layers.HeadCoverage.Get());
+			LayerHelper.ToggleFrozen(Layer.HeadCoverage.Get());
 		}
 
 		/// <summary>
@@ -44,7 +53,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_TogglePipeLabels")]
 		public void TogglePipeLabelsCmd()
 		{
-			LayerHelper.ToggleFrozen(Layers.PipeLabel.Get());
+			LayerHelper.ToggleFrozen(Layer.PipeLabel.Get());
 		}
 /*
 		[CommandMethod("ToggleLineSmoothing")]

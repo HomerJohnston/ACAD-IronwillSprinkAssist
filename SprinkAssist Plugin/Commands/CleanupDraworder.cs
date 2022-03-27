@@ -18,66 +18,120 @@ namespace Ironwill
 {
 	public class CleanupDraworder
 	{
-		[CommandMethod("SpkAssist_CleanupDrawOrder")]
-		public void CleanupDrawOrderCmd()
+		struct SortData
 		{
-			List<string> linesLayerOrder = new List<string>
-			{
-				// Bottom to top
-				Layers.Extinguisher.Get(),
-				Layers.SystemPipe_AuxDrain.Get(),
-				Layers.SystemPipe_Armover.Get(),
-				Layers.SystemPipe_Branchline.Get(),
-				Layers.SystemPipe_Main.Get(),
-				Layers.SystemFitting.Get(),
-				Layers.PipeLabel.Get(),
-				Layers.SystemDevice.Get(),
-				Layers.SystemHead.Get(),
-			};
+			public string layerName;
+			public TypedValue? objectType;
+			public string objectName;
 
-			List<TypedValue> typeOrder = new List<TypedValue>
+			public SortData(string inLayerName, TypedValue? inType, string inSpecificName = "")
 			{
-				// Bottom to top
-				new TypedValue((int)DxfCode.Start, "LINE"),
-				new TypedValue((int)DxfCode.Start, "INSERT"),
-			};
-
-			using (Transaction tr = Session.StartTransaction())
-			{
-				foreach (TypedValue typedValue in typeOrder)
-				{
-					foreach (string layer in linesLayerOrder)
-					{
-						MoveAllToTop(tr, layer, typedValue);
-					}
-				}
-				tr.Commit();
+				objectType = inType;
+				layerName = inLayerName;
+				objectName = inSpecificName;
 			}
 		}
 
-		void MoveAllToTop(Transaction tr, string layer, TypedValue objectType)
+		static TypedValue lines = new TypedValue((int)DxfCode.Start, "LINE");
+		static TypedValue blocks = new TypedValue((int)DxfCode.Start, "INSERT");
+		static TypedValue? any = null;
+		static TypedValue modelSpace = new TypedValue((int)DxfCode.ViewportVisibility, 0);
+		static string anyLayer = string.Empty;
+
+
+		[CommandMethod("SpkAssist_CleanupDrawOrder")]
+		public void CleanupDrawOrderCmd()
 		{
-			TypedValue[] filterList = new TypedValue[3];
-			filterList[0] = new TypedValue((int)DxfCode.LayerName, layer);
-			filterList[1] = objectType;
-			filterList[2] = new TypedValue((int)DxfCode.ViewportVisibility, 0);
-
-			SelectionFilter selectionFilter = new SelectionFilter(filterList);
-			
-
-			PromptSelectionResult promptSelectionResult = Session.GetEditor().SelectAll(selectionFilter);
-			
-			if (promptSelectionResult.Status != PromptStatus.OK)
+			List<SortData> allSortData = new List<SortData>()
 			{
-				return;
-			}
+				// Bottom to Top
+				new SortData(Layer.Extinguisher.Get(),				blocks),
 
-			Session.GetEditor().SetImpliedSelection(promptSelectionResult.Value);
-			
-			var CMDECHO = AcApplication.GetSystemVariable("CMDECHO");
-			AcApplication.SetSystemVariable("CMDECHO", 0);
-			Session.Command("draworder", "F");
-			AcApplication.SetSystemVariable("CMDECHO", CMDECHO);
+				new SortData(Layer.SystemPipe_AuxDrain.Get(),		lines),
+				new SortData(Layer.SystemPipe_Armover.Get(),		lines),
+				new SortData(Layer.SystemPipe_Branchline.Get(),		lines),
+				new SortData(Layer.SystemPipe_Main.Get(),			lines),
+
+				new SortData(anyLayer,								blocks, Blocks.Fitting_Cap.Get()),
+				new SortData(Layer.SystemFitting.Get(),				blocks),
+
+				new SortData(Layer.SystemPipe_Main.Get(),			blocks),
+				new SortData(Layer.SystemPipe_Branchline.Get(),		blocks),
+				new SortData(Layer.SystemPipe_Armover.Get(),		blocks),
+				new SortData(Layer.SystemPipe_AuxDrain.Get(),		blocks),
+
+				new SortData(Layer.PipeLabel.Get(),					blocks),
+
+				new SortData(Layer.SystemDevice.Get(),				blocks),
+				new SortData(Layer.SystemHead.Get(),				blocks),
+
+				new SortData(Layer.Dimension.Get(),					any),
+				new SortData(Layer.Note.Get(),						any),
+			};
+
+			HashSet<ObjectId> sortedObjects = new HashSet<ObjectId>();
+
+			using (Transaction tr = Session.StartTransaction())
+			{
+				foreach (SortData sortEntryData in allSortData)
+				{
+					List<TypedValue> filterList = new List<TypedValue>();
+
+					filterList.Add(modelSpace);
+
+					if (sortEntryData.layerName != anyLayer)
+					{
+						filterList.Add(new TypedValue((int)DxfCode.LayerName, sortEntryData.layerName));
+					}
+
+					if (sortEntryData.objectType != null)
+					{
+						filterList.Add(sortEntryData.objectType.Value);
+					}
+
+					if (sortEntryData.objectName != string.Empty)
+					{
+						filterList.Add(new TypedValue((int)DxfCode.BlockName, sortEntryData.objectName));
+					}
+
+					SelectionFilter selectionFilter = new SelectionFilter(filterList.ToArray());
+
+					PromptSelectionResult promptSelectionResult = Session.GetEditor().SelectAll(selectionFilter);
+
+					if (promptSelectionResult.Status != PromptStatus.OK)
+					{
+						continue;
+					}
+
+					ObjectIdCollection objectIdCollection = new ObjectIdCollection();
+					
+					SelectionSet selectionSet = promptSelectionResult.Value;
+
+					foreach (ObjectId objectId in selectionSet.GetObjectIds())
+					{
+						if (sortedObjects.Contains(objectId))
+						{
+							continue;
+						}
+
+						objectIdCollection.Add(objectId);
+					}
+
+					ObjectId[] objectIds = new ObjectId[objectIdCollection.Count];
+					objectIdCollection.CopyTo(objectIds, 0);
+
+					//Session.GetEditor().SetImpliedSelection(promptSelectionResult.Value);
+					Session.GetEditor().SetImpliedSelection(objectIds);
+					//Autodesk.AutoCAD.Internal.Utils.SelectObjects(objectIds);
+					
+					var CMDECHO = AcApplication.GetSystemVariable("CMDECHO");
+					AcApplication.SetSystemVariable("CMDECHO", 0);
+					Session.Command("draworder", "F");
+					AcApplication.SetSystemVariable("CMDECHO", CMDECHO);
+				}
+
+				tr.Commit();
+			}
 		}
 
 		/*

@@ -64,16 +64,16 @@ namespace Ironwill
 
 				if (allBoundaryRegions.Count == 0)
 				{
-					Session.WriteMessage("No boundaries found. Did you create any polylines on " + Layers.Area_CalcBackground.Get() + " layer?");
+					Session.WriteMessage("No boundaries found. Did you create any polylines on " + Layer.Area_CalcBackground.Get() + " layer?");
 					return;
 				}
 
 				LayerTable layerTable = transaction.GetObject(Session.GetDatabase().LayerTableId, OpenMode.ForRead) as LayerTable;
 
-				Session.GetDatabase().Clayer = layerTable[Layers.Default.Get()];
+				Session.GetDatabase().Clayer = layerTable[Layer.Default.Get()];
 
-				Session.Command("-laydel", "N", Layers.HeadCoverage.Get(), "", "Y");
-				Session.Command("-laydel", "N", Layers.Wipeout.Get(), "", "Y");
+				Session.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
+				Session.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
 
 				ObjectIdCollection objectIds = new ObjectIdCollection();
 
@@ -238,7 +238,7 @@ namespace Ironwill
 				{
 					Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
 
-					if (entity.Layer == Layers.Area_CalcBackground.Get())
+					if (entity.Layer == Layer.Area_CalcBackground.Get())
 					{
 						Curve curve = entity as Curve;
 						if (curve != null)
@@ -250,14 +250,14 @@ namespace Ironwill
 					{
 						List<string> suitableLayers = new List<string>
 						{
-							Layers.Calculation.Get(),
-							Layers.SystemDevice.Get(),
-							Layers.SystemFitting.Get(),
-							Layers.SystemHead.Get(),
-							Layers.SystemPipe_Armover.Get(),
-							Layers.SystemPipe_AuxDrain.Get(),
-							Layers.SystemPipe_Branchline.Get(),
-							Layers.SystemPipe_Main.Get()
+							Layer.Calculation.Get(),
+							Layer.SystemDevice.Get(),
+							Layer.SystemFitting.Get(),
+							Layer.SystemHead.Get(),
+							Layer.SystemPipe_Armover.Get(),
+							Layer.SystemPipe_AuxDrain.Get(),
+							Layer.SystemPipe_Branchline.Get(),
+							Layer.SystemPipe_Main.Get()
 						};
 
 						if (suitableLayers.Contains(entity.Layer))

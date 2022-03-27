@@ -141,8 +141,8 @@ namespace Ironwill
 							Line line1 = new Line(firstPoint, secondPoint);
 							Line line2 = new Line(thirdPoint, fourthPoint);
 
-							line1.Layer = Layers.Note.Get();
-							line2.Layer = Layers.Note.Get();
+							line1.Layer = Layer.Note.Get();
+							line2.Layer = Layer.Note.Get();
 
 							Session.AddNewObject(transaction, line1);
 							Session.AddNewObject(transaction, line2);
@@ -197,7 +197,7 @@ namespace Ironwill
 		{
 			Point3d P1 = new Point3d(point.X + offsetX, point.Y + offsetY, 0.0).TransformBy(ucs);
 			DBPoint p1 = new DBPoint(P1);
-			p1.Layer = Layers.DraftAid.Get();
+			p1.Layer = Layer.DraftAid.Get();
 			Session.AddNewObject(transaction, p1);
 		}
 

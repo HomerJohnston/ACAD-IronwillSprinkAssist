@@ -30,8 +30,8 @@ namespace Ironwill
 			TypedValue[] filter = {
 				new TypedValue((int)DxfCode.Operator, "<or"),
 				//new TypedValue((int)DxfCode.LayerName, Layers.Armover.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Branchline.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layers.SystemPipe_Main.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Branchline.Get()),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Main.Get()),
 				new TypedValue((int)DxfCode.Operator, "or>"),
 			};
 
@@ -192,7 +192,7 @@ namespace Ironwill
 				return;
 			}
 
-			List<string> validBlockLayers = new List<string> { Layers.SystemPipe_Main.Get(), Layers.SystemPipe_Branchline.Get(), Layers.SystemPipe_Armover.Get() };
+			List<string> validBlockLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
 
 			if (!validBlockLayers.Contains(block.Layer))
 			{
@@ -212,17 +212,17 @@ namespace Ironwill
 
 			List<string> validLineLayers;
 
-			if (targetLine.Layer == Layers.SystemPipe_Main.Get())
+			if (targetLine.Layer == Layer.SystemPipe_Main.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get() };
 			}
-			else if (targetLine.Layer == Layers.SystemPipe_Branchline.Get())
+			else if (targetLine.Layer == Layer.SystemPipe_Branchline.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get(), Layers.SystemPipe_Branchline.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get() };
 			}
-			else if (targetLine.Layer == Layers.SystemPipe_Armover.Get())
+			else if (targetLine.Layer == Layer.SystemPipe_Armover.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get(), Layers.SystemPipe_Branchline.Get(), Layers.SystemPipe_Armover.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
 			}
 			else
 			{
@@ -285,17 +285,17 @@ namespace Ironwill
 
 			List<string> validLineLayers;
 
-			if (targetLine.Layer == Layers.SystemPipe_Main.Get())
+			if (targetLine.Layer == Layer.SystemPipe_Main.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get() };
 			}
-			else if (targetLine.Layer == Layers.SystemPipe_Branchline.Get())
+			else if (targetLine.Layer == Layer.SystemPipe_Branchline.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get(), Layers.SystemPipe_Branchline.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get() };
 			}
-			else if (targetLine.Layer == Layers.SystemPipe_Armover.Get())
+			else if (targetLine.Layer == Layer.SystemPipe_Armover.Get())
 			{
-				validLineLayers = new List<string> { Layers.SystemPipe_Main.Get(), Layers.SystemPipe_Branchline.Get(), Layers.SystemPipe_Armover.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
 			}
 			else
 			{
@@ -430,7 +430,7 @@ namespace Ironwill
 				blockReference.Position = currentPoint;
 				blockReference.ScaleFactors = new Scale3d(Session.GetScaleFactor());
 				blockReference.Rotation = Session.SanitizeAngle(segment.Angle + Session.Radians(90), segmentDirection);
-				blockReference.Layer = Layers.SystemFitting.Get();
+				blockReference.Layer = Layer.SystemFitting.Get();
 
 				remainingLength -= pipeLength;
 			}
