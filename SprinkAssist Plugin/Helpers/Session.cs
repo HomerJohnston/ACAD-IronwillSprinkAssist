@@ -155,7 +155,13 @@ namespace Ironwill
 			return inDegrees * Math.PI / 180.0;
 		}
 
-		public static void WriteMessage(string Message)
+		[System.Diagnostics.Conditional("DEBUG")]
+		public static void LogDebug(string Message)
+		{
+			GetEditor().WriteMessage(Message + "\n");
+		}
+
+		public static void Log(string Message)
 		{
 			GetEditor().WriteMessage(Message + "\n");
 		}

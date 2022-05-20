@@ -66,7 +66,7 @@ namespace Ironwill
 
 								if (pickedLine == null)
 								{
-									Session.WriteMessage("You must pick a line");
+									Session.Log("You must pick a line");
 									continue;
 								}
 
@@ -93,17 +93,17 @@ namespace Ironwill
 		{
 			switch (fittingTypeSetting.stringValue)
 			{
-				case "Elbow":
+				case ElbowKeyword:
 					return Blocks.Fitting_Elbow.Get();
-				case "Tee":
+				case TeeKeyword:
 					return Blocks.Fitting_Tee.Get();
-				case "Cap":
+				case CapKeyword:
 					return Blocks.Fitting_Cap.Get();
-				case "Riser":
+				case RiserKeyword:
 					return Blocks.Fitting_Riser.Get();
-				case "COupling":
+				case CouplingKeyword:
 					return Blocks.Fitting_GroovedCoupling.Get();
-				case "REducer":
+				case ReducerKeyword:
 					return Blocks.Fitting_GroovedReducingCoupling.Get();
 			}
 
@@ -181,7 +181,7 @@ namespace Ironwill
 
 		void PlaceFitting(string blockName, Point3d position, double rotation, string layer)
 		{
-			BlockReference blockRef = BlockDictionary.InsertBlock(blockName);
+			BlockReference blockRef = BlockOps.InsertBlock(blockName);
 
 			if (blockRef == null)
 			{

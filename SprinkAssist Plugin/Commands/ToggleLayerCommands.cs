@@ -26,7 +26,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_ToggleDraftAid")]
 		public void ToggleDraftAidCmd()
 		{
-			LayerHelper.ToggleFrozen(Layer.HeadCoverage.Get());
+			LayerHelper.ToggleFrozen(Layer.DraftAid.Get());
 		}
 
 		/// <summary>

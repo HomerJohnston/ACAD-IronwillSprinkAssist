@@ -34,10 +34,9 @@ namespace Ironwill
 
 		static TypedValue lines = new TypedValue((int)DxfCode.Start, "LINE");
 		static TypedValue blocks = new TypedValue((int)DxfCode.Start, "INSERT");
-		static TypedValue? any = null;
+		static TypedValue? anyType = null;
 		static TypedValue modelSpace = new TypedValue((int)DxfCode.ViewportVisibility, 0);
 		static string anyLayer = string.Empty;
-
 
 		[CommandMethod("SpkAssist_CleanupDrawOrder")]
 		public void CleanupDrawOrderCmd()
@@ -52,7 +51,7 @@ namespace Ironwill
 				new SortData(Layer.SystemPipe_Branchline.Get(),		lines),
 				new SortData(Layer.SystemPipe_Main.Get(),			lines),
 
-				new SortData(anyLayer,								blocks, Blocks.Fitting_Cap.Get()),
+				new SortData(anyLayer,                              blocks, Blocks.Fitting_Cap.Get()),
 				new SortData(Layer.SystemFitting.Get(),				blocks),
 
 				new SortData(Layer.SystemPipe_Main.Get(),			blocks),
@@ -60,13 +59,14 @@ namespace Ironwill
 				new SortData(Layer.SystemPipe_Armover.Get(),		blocks),
 				new SortData(Layer.SystemPipe_AuxDrain.Get(),		blocks),
 
+
 				new SortData(Layer.PipeLabel.Get(),					blocks),
 
 				new SortData(Layer.SystemDevice.Get(),				blocks),
 				new SortData(Layer.SystemHead.Get(),				blocks),
 
-				new SortData(Layer.Dimension.Get(),					any),
-				new SortData(Layer.Note.Get(),						any),
+				new SortData(Layer.Dimension.Get(),					anyType),
+				new SortData(Layer.Note.Get(),						anyType),
 			};
 
 			HashSet<ObjectId> sortedObjects = new HashSet<ObjectId>();
@@ -114,6 +114,7 @@ namespace Ironwill
 							continue;
 						}
 
+						sortedObjects.Add(objectId);
 						objectIdCollection.Add(objectId);
 					}
 

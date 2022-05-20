@@ -9,6 +9,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.Colors;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
@@ -23,7 +24,7 @@ namespace Ironwill
 			foreach (ObjectId layerTableRecordID in layerTable)
 			{
 				LayerTableRecord layerTableRecord = transaction.GetObject(layerTableRecordID, OpenMode.ForWrite) as LayerTableRecord;
-
+				
 				if (layerTableRecord == null)
 					continue;
 
@@ -33,7 +34,7 @@ namespace Ironwill
 				}
 			}
 
-			Session.WriteMessage("Could not find layer: " + layerName);
+			Session.Log("Could not find layer: " + layerName);
 			return null;
 		}
 
@@ -79,12 +80,12 @@ namespace Ironwill
 
 					if (layerTable.Has(defaultLayerName))
 					{
-						Session.WriteMessage("Setting current layer to " + defaultLayerName);
+						Session.Log("Setting current layer to " + defaultLayerName);
 						database.Clayer = layerTable[defaultLayerName];
 					}
 					else
 					{
-						Session.WriteMessage("Failed - cannot freeze current layer");
+						Session.Log("Failed - cannot freeze current layer");
 					}
 				}
 
@@ -98,5 +99,165 @@ namespace Ironwill
 				transaction.Commit();
 			}
 		}
+
+		public static void SetLinetype(Transaction transaction, LayerTableRecord ltr, string name, bool forceLoad = false)
+		{
+			LinetypeTable linetypeTable = transaction.GetObject(Session.GetDatabase().LinetypeTableId, OpenMode.ForRead) as LinetypeTable;
+
+			if (linetypeTable == null)
+			{
+				Session.Log("Failed - could not find linetype table?");
+				return;
+			}
+
+			if (!linetypeTable.Has(name))
+			{
+				List<string> linetypeFiles = new List<string>()
+				{
+					"acad.lin",
+					"spkassist.lin",
+				};
+
+				foreach (string linetypeFile in linetypeFiles)
+				{
+					Session.GetDatabase().LoadLineTypeFile(name, linetypeFile);
+
+					if (linetypeTable.Has(name))
+					{
+						break;
+					}
+				}
+			}
+
+			if (!linetypeTable.Has(name))
+			{
+				Session.Log("Failed - linetype " + name + " could not be found");
+				return;
+			}
+
+			ltr.LinetypeObjectId = linetypeTable[name];
+		}
+
+		public static void SetAllObjectsLinetypeScale(Transaction transaction, LayerTableRecord ltr, double newScale)
+		{
+			TypedValue[] filterList = new TypedValue[1];
+			filterList[0] = new TypedValue((int)DxfCode.LayerName, ltr.Name);
+
+			SelectionFilter selectionFilter = new SelectionFilter(filterList);
+
+			PromptSelectionResult promptSelectionResult = Session.GetEditor().SelectAll(selectionFilter);
+
+			if (promptSelectionResult.Status == PromptStatus.OK)
+			{
+				SelectionSet selectionSet = promptSelectionResult.Value;
+
+				foreach (ObjectId objectId in selectionSet.GetObjectIds())
+				{
+					Entity entity = transaction.GetObject(objectId, OpenMode.ForWrite) as Entity;
+
+					if (entity == null)
+					{
+						continue;
+					}
+
+					entity.LinetypeScale = newScale;
+				}
+			}
+		}
+
+		public static void SetColor(LayerTableRecord ltr, short ColorIndex)
+		{
+			ltr.Color = Color.FromColorIndex(ColorMethod.ByAci, ColorIndex);
+		}
+
+		public static string Delete(string layerName)
+		{
+			Database database = Session.GetDatabase();
+
+			if (layerName == "0")
+			{
+				return "Layer '0' cannot be deleted.";
+			}
+
+			using (Transaction tr = Session.StartTransaction())
+			{
+				LayerTable layerTable = (LayerTable)tr.GetObject(database.LayerTableId, OpenMode.ForRead);
+
+				if (!layerTable.Has(layerName))
+				{
+					return "Layer '" + layerName + "' not found.";
+				}
+				try
+				{
+					ObjectId layerId = layerTable[layerName];
+					
+					if (database.Clayer == layerId)
+					{
+						return "Current layer cannot be deleted.";
+					}
+					LayerTableRecord layer = (LayerTableRecord)tr.GetObject(layerId, OpenMode.ForWrite);
+					layer.IsLocked = false;
+					BlockTable blockTable = (BlockTable)tr.GetObject(database.BlockTableId, OpenMode.ForRead);
+					foreach (ObjectId btrId in blockTable)
+					{
+						BlockTableRecord block = (BlockTableRecord)tr.GetObject(btrId, OpenMode.ForRead);
+						foreach (var entId in block)
+						{
+							Entity ent = (Entity)tr.GetObject(entId, OpenMode.ForRead);
+							if (ent.Layer == layerName)
+							{
+								ent.UpgradeOpen();
+								ent.Erase();
+							}
+						}
+					}
+					layer.Erase();
+					tr.Commit();
+					return "Layer '" + layerName + "' have been deleted.";
+				}
+				catch (System.Exception e)
+				{
+					return "Error: " + e.Message;
+				}
+			}
+		}
+
+		/** Given a string, find all of the layers in this drawing that contain the string */
+		public static List<string> CollectLayersWithString(string containingString)
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				Database database = Session.GetDatabase();
+				List<string> ceilingLayers = new List<string>();
+
+				SymbolTable symbolTable = transaction.GetObject(database.LayerTableId, OpenMode.ForWrite) as SymbolTable;
+
+				if (symbolTable == null)
+				{
+					Session.Log("Error, symbol table not found!");
+					return ceilingLayers;
+				}
+
+				foreach (ObjectId objectId in symbolTable)
+				{
+					LayerTableRecord layerTableRecord = transaction.GetObject(objectId, OpenMode.ForWrite) as LayerTableRecord;
+
+					if (layerTableRecord == null)
+					{
+						continue;
+					}
+
+					string name = layerTableRecord.Name;
+
+					if (name.Contains(containingString))
+					{
+						ceilingLayers.Add(name);
+					}
+				}
+
+				return ceilingLayers;
+			}
+		}
+
 	}
 }

@@ -14,7 +14,7 @@ using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace Ironwill
 {
-	public class BlockDictionary
+	public class BlockOps
 	{
 		//public const string FittingReducer = "F_Reducer";
 		//public const string FittingCoupling = "F_Coupling";
@@ -50,7 +50,7 @@ namespace Ironwill
 				ObjectId btrId = bt.Has(blockName) ? bt[blockName] : ImportBlock(db, blockName, blockPath);
 				if (btrId.IsNull)
 				{
-					Session.WriteMessage($"\nBlock '{blockName}' not found.");
+					Session.Log($"\nBlock '{blockName}' not found.");
 					tr.Abort();
 					return null;
 				}
@@ -128,7 +128,7 @@ namespace Ironwill
 					}
 					catch (Autodesk.AutoCAD.Runtime.Exception ex)
 					{
-						Session.WriteMessage("\nError during copy: " + ex.Message + "\n" + ex.StackTrace);
+						Session.Log("\nError during copy: " + ex.Message + "\n" + ex.StackTrace);
 					}
 				}
 			}
@@ -154,6 +154,76 @@ namespace Ironwill
 					attributeReference.TransformBy(blockReference.BlockTransform);
 				}
 			}
+		}
+
+		// TODO add layer as a parameter, rename to PickBlock
+		// TODO see if there is a simpler existing picker in Editor I can use?
+		public static BlockReference PickSprinkler(Transaction transaction, string prompt)
+		{
+			TypedValue[] filter =
+			{
+				new TypedValue((int)DxfCode.Operator, "<or"),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemHead.Get()),
+				new TypedValue((int)DxfCode.Operator, "or>"),
+			};
+
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions(prompt);
+			PromptEntityResult promptEntityResult = Session.GetEditor().GetEntity(promptEntityOptions);
+
+			if (promptEntityResult.Status != PromptStatus.OK)
+			{
+				return null;
+			}
+
+			ObjectId objectId = promptEntityResult.ObjectId;
+			return transaction.GetObject(objectId, OpenMode.ForRead) as BlockReference;
+		}
+
+		public static void CopyBlock(Transaction transaction, ObjectId sourceBlockId, Point3d newPosition)
+		{
+			var watch = System.Diagnostics.Stopwatch.StartNew();
+			BlockReference sourceBlock = transaction.GetObject(sourceBlockId, OpenMode.ForWrite) as BlockReference;
+
+			string newBlockName = BlockOps.GetDynamicBlockName(sourceBlock);
+
+			BlockReference newBlock = BlockOps.InsertBlock(newBlockName);
+
+			if (newBlock == null)
+			{
+				return;
+			}
+
+			// Must set scale etc. of new head BEFORE applying dynamic properties or size will be different
+			newBlock.Position = newPosition;
+			newBlock.Rotation = sourceBlock.Rotation;
+			newBlock.ScaleFactors = sourceBlock.ScaleFactors;
+			newBlock.Layer = sourceBlock.Layer;
+
+			DynamicBlockReferencePropertyCollection dynBlockProperties = sourceBlock.DynamicBlockReferencePropertyCollection;
+			DynamicBlockReferencePropertyCollection newBlockProperties = newBlock.DynamicBlockReferencePropertyCollection;
+
+			foreach (DynamicBlockReferenceProperty oldProp in dynBlockProperties)
+			{
+				foreach (DynamicBlockReferenceProperty newProp in newBlockProperties)
+				{
+					if (oldProp.PropertyName == newProp.PropertyName)
+					{
+						if (newProp.ReadOnly)
+						{
+							continue;
+						}
+
+						newProp.Value = oldProp.Value;
+					}
+				}
+			}
+			watch.Stop(); var elapsedMs = watch.ElapsedMilliseconds; Session.Log("CopyBlock took " + elapsedMs.ToString());
+		}
+
+		public static string GetDynamicBlockName(BlockReference block)
+		{
+			BlockTableRecord originalBlock = block.DynamicBlockTableRecord.GetObject(OpenMode.ForRead) as BlockTableRecord;
+			return originalBlock.Name;
 		}
 	}
 }

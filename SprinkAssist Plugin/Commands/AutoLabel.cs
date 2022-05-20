@@ -421,7 +421,7 @@ namespace Ironwill
 				}
 			}
 
-			BlockReference blockReference = BlockDictionary.InsertBlock(labelBlockName);
+			BlockReference blockReference = BlockOps.InsertBlock(labelBlockName);
 
 			if (blockReference == null)
 			{
@@ -437,7 +437,7 @@ namespace Ironwill
 			blockReference.Rotation = Session.SanitizeAngle(segment.Angle, segmentDirection);
 			blockReference.Layer = Layer.PipeLabel.Get();
 
-			BlockDictionary.SetBlockAttributes(transaction, blockReference, attributeText);
+			BlockOps.SetBlockAttributes(transaction, blockReference, attributeText);
 		}
 	}
 }

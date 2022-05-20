@@ -39,7 +39,7 @@ namespace Ironwill
 
 				if (promptSelectionResult.Status != PromptStatus.OK)
 				{
-					Session.WriteMessage("Invalid selection, aborting");
+					Session.Log("Invalid selection, aborting");
 					transaction.Commit();
 					return;
 				}
@@ -69,7 +69,7 @@ namespace Ironwill
 					sprinklerCounts[name]++;
 				}
 
-				Session.WriteMessage("\n");
+				Session.Log("\n");
 
 				sprinklerCounts.OrderBy(key => key.Key);
 
@@ -81,7 +81,7 @@ namespace Ironwill
 
 					s += x.Value.ToString();
 
-					Session.WriteMessage(s);
+					Session.Log(s);
 				}
 
 				transaction.Commit();

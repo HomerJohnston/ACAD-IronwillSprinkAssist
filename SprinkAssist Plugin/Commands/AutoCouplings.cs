@@ -72,7 +72,7 @@ namespace Ironwill
 
 					foreach (Line segment in segments)
 					{
-						Session.WriteMessage("Creating couplings for Line [" + segment.StartPoint.ToString() + ", " + segment.EndPoint.ToString() + "]");
+						Session.Log("Creating couplings for Line [" + segment.StartPoint.ToString() + ", " + segment.EndPoint.ToString() + "]");
 						CreateCouplings(transaction, segment);
 					}
 				}
@@ -95,7 +95,7 @@ namespace Ironwill
 			
 			GetLineSegments(line, ref segments, ref breakPoints);
 
-			Session.WriteMessage("Divided line into " + segments.Count + " segments");
+			Session.Log("Divided line into " + segments.Count + " segments");
 
 			return segments;
 		}
@@ -403,7 +403,7 @@ namespace Ironwill
 			}
 			else
 			{
-				Session.WriteMessage("Drawing units not properly set! Must be metric or architectural");
+				Session.Log("Drawing units not properly set! Must be metric or architectural");
 				return;
 			}
 
@@ -417,11 +417,11 @@ namespace Ironwill
 
 				currentPoint += pipeLengthDir;
 
-				BlockReference blockReference = BlockDictionary.InsertBlock(Blocks.Fitting_GroovedCoupling.Get());
+				BlockReference blockReference = BlockOps.InsertBlock(Blocks.Fitting_GroovedCoupling.Get());
 
 				if (blockReference == null)
 				{
-					Session.WriteMessage("Block " + Blocks.Fitting_GroovedCoupling.Get() + " was not found, aborting");
+					Session.Log("Block " + Blocks.Fitting_GroovedCoupling.Get() + " was not found, aborting");
 					return;
 				}
 

@@ -55,12 +55,12 @@ namespace Ironwill
 				promptPointResult = Session.GetEditor().GetPoint(promptPointOptions);
 			}
 
-			Session.WriteMessage(promptPointResult.StringResult);
+			Session.Log(promptPointResult.StringResult);
 
 			switch (promptPointResult.Status)
 			{
 				case PromptStatus.Keyword:
-					Session.WriteMessage("Keyword");
+					Session.Log("Keyword");
 					roomSetting.Set(promptPointResult.StringResult);
 					bStopCommand = false;
 					bAbortIteration = true;
@@ -70,17 +70,17 @@ namespace Ironwill
 					bAbortIteration = false;
 					return promptPointResult.Value.TransformBy(Session.GetEditor().CurrentUserCoordinateSystem);
 				case PromptStatus.Cancel:
-					Session.WriteMessage("Cancel");
+					Session.Log("Cancel");
 					bStopCommand = true;
 					bAbortIteration = true;
 					return new Point3d();
 				case PromptStatus.None:
-					Session.WriteMessage("None");
+					Session.Log("None");
 					bStopCommand = true;
 					bAbortIteration = true;
 					return new Point3d();
 				default:
-					Session.WriteMessage("Default");
+					Session.Log("Default");
 					bStopCommand = false;
 					bAbortIteration = true;
 					return new Point3d();
@@ -210,7 +210,7 @@ namespace Ironwill
 		protected double GetArea(Point3d firstPoint, Point3d secondPoint)
 		{
 			double area = Math.Abs((secondPoint.X - firstPoint.X) * (secondPoint.Y - firstPoint.Y));
-			Session.WriteMessage("Area: " + SprinkMath.FormatArea(area, Session.GetPrimaryUnits()) + " [" + SprinkMath.FormatArea(area, Session.GetSecondaryUnits()) + "]");
+			Session.Log("Area: " + SprinkMath.FormatArea(area, Session.GetPrimaryUnits()) + " [" + SprinkMath.FormatArea(area, Session.GetSecondaryUnits()) + "]");
 			return area;
 		}
 
@@ -220,7 +220,7 @@ namespace Ironwill
 
 			if (units == DrawingUnits.Undefined)
 			{
-				Session.WriteMessage("Warning: undefined drawing units, can't check area limit");
+				Session.Log("Warning: undefined drawing units, can't check area limit");
 				return -1.0;
 			}
 
@@ -262,7 +262,7 @@ namespace Ironwill
 
 			if (units == DrawingUnits.Undefined)
 			{
-				Session.WriteMessage("Warning: undefined drawing units, can't check area limit");
+				Session.Log("Warning: undefined drawing units, can't check area limit");
 				return -1.0;
 			}
 

@@ -70,7 +70,7 @@ namespace Ironwill
 						}
 					}
 
-					Session.WriteMessage("WARNING: Required block " + Name + " was not found");
+					Session.Log("WARNING: Required block " + Name + " was not found");
 					return "";
 				}
 			}

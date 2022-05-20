@@ -11,7 +11,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Ironwill</RootNamespace>
-    <AssemblyName>SprinkAssist Plugin</AssemblyName>
+    <AssemblyName>SprinkAssistPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -63,6 +63,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <PlatformTarget>x64</PlatformTarget>
@@ -154,6 +155,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\AutoCleanBackground.cs" />
     <Compile Include="Commands\AutoCouplings.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
     <Compile Include="Commands\AutoLabelNew.cs" />
@@ -163,8 +165,12 @@
     <Compile Include="Commands\DeleteDraftAidPoints.cs" />
     <Compile Include="Commands\DrawPipe.cs" />
     <Compile Include="Commands\GenerateCalcBackground.cs" />
+    <Compile Include="Commands\TestCmd.cs" />
+    <Compile Include="Extensions\LineExtensions.cs" />
+    <Compile Include="Helpers\Colors.cs" />
+    <Compile Include="Helpers\Drawing.cs" />
     <Compile Include="Helpers\LayerHelper.cs" />
-    <Compile Include="Commands\PlaceHead.cs" />
+    <Compile Include="Commands\AddSprinkler.cs" />
     <Compile Include="Commands\ReplaceHeads.cs" />
     <Compile Include="Commands\ToggleLayerCommands.cs" />
     <Compile Include="Commands\XRoom.cs" />
@@ -188,13 +194,16 @@
     <Compile Include="Dialogs\PipeGroupDialog.Designer.cs">
       <DependentUpon>PipeGroupDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Helpers\BlockDictionary.cs" />
+    <Compile Include="Helpers\BlockOps.cs" />
     <Compile Include="Helpers\Blocks.cs" />
     <Compile Include="Helpers\BlockStruct.cs" />
     <Compile Include="Helpers\DataStore.cs" />
     <Compile Include="Helpers\Layer.cs" />
     <Compile Include="Helpers\LayerStruct.cs" />
+    <Compile Include="Helpers\Linetypes.cs" />
     <Compile Include="Helpers\Math.cs" />
+    <Compile Include="Helpers\ModelSpace.cs" />
+    <Compile Include="Helpers\PerformanceTester.cs" />
     <Compile Include="Helpers\Session.cs" />
     <Compile Include="Helpers\WorldUCS.cs" />
     <Compile Include="Settings\DrawingSettings.cs" />

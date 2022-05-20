@@ -114,7 +114,7 @@ namespace Ironwill
 				{
 					string m = "Creating new XRecord: ";
 					foreach (string s in path.Get) { m += "\\" + s; }
-					Session.WriteMessage(m);
+					Session.Log(m);
 
 					Xrecord xrecord = new Xrecord();
 					dictionary.UpgradeOpen();
@@ -227,7 +227,7 @@ namespace Ironwill
 		{
 			string m = "Setting XRecord string: ";
 			foreach (string s in path.Get) { m += "\\" + s; }
-			Session.WriteMessage(m);
+			Session.Log(m);
 
 			ResultBuffer data = new ResultBuffer();
 			data.Add(new TypedValue((int)DxfCode.XTextString, value));

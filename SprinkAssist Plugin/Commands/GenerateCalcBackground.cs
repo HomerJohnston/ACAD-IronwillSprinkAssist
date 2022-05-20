@@ -37,7 +37,7 @@ namespace Ironwill
 				{
 					if (!curve.Closed)
 					{
-						Session.WriteMessage("Skipping open boundary shape (polylines must be closed)");
+						Session.Log("Skipping open boundary shape (polylines must be closed)");
 						continue;
 					}
 
@@ -49,12 +49,12 @@ namespace Ironwill
 					{
 						if (regions == null || regions.Count == 0)
 						{
-							Session.WriteMessage("Error: Failed to create regions");
+							Session.Log("Error: Failed to create regions");
 							continue;
 						}
 						if (regions.Count > 1)
 						{
-							Session.WriteMessage("Error: Multiple regions created for one curve");
+							Session.Log("Error: Multiple regions created for one curve");
 							continue;
 						}
 
@@ -64,7 +64,7 @@ namespace Ironwill
 
 				if (allBoundaryRegions.Count == 0)
 				{
-					Session.WriteMessage("No boundaries found. Did you create any polylines on " + Layer.Area_CalcBackground.Get() + " layer?");
+					Session.Log("No boundaries found. Did you create any polylines on " + Layer.Area_CalcBackground.Get() + " layer?");
 					return;
 				}
 
@@ -192,11 +192,11 @@ namespace Ironwill
 
 					if (fullPath == String.Empty)
 					{
-						Session.WriteMessage("Error: could not save calc background file");
+						Session.Log("Error: could not save calc background file");
 						return;
 					}
 
-					Session.WriteMessage("Saving: " + fullPath);
+					Session.Log("Saving: " + fullPath);
 					tempDb.SaveAs(fullPath, false, DwgVersion.Newest, tempDb.SecurityParameters);
 				}
 			}

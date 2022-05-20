@@ -77,5 +77,10 @@ namespace Ironwill
 		{
 			return 645.16 * squareIN;
 		}
+
+		public static bool NearlyEqual(double a, double b, double threshold = 0.0001)
+		{
+			return (Math.Abs(a - b) < threshold);
+		}
 	}
 }

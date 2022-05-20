@@ -69,7 +69,7 @@ namespace Ironwill
 						}
 					}
 
-					Session.WriteMessage("WARNING: Created missing layer " + Name);
+					Session.Log("WARNING: Created missing layer " + Name);
 
 					LayerTableRecord layer = new LayerTableRecord();
 					layer.Name = Name;

@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30523.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SprinkAssist Plugin", "SprinkAssist Plugin\SprinkAssist Plugin.csproj", "{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SprinkAssistPlugin", "SprinkAssist Plugin\SprinkAssistPlugin.csproj", "{AE32D153-8F4A-41D0-9BB9-686FF894A7C9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SprinkAssist Resources", "SprinkAssist Resources\Ironwill SprinkAssist Resources.vcxproj", "{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SprinkAssistResources", "SprinkAssist Resources\Ironwill SprinkAssist Resources.vcxproj", "{8F0F4DDF-E275-43A9-B5F9-B67E97D07638}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

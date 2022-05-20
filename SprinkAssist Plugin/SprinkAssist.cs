@@ -22,7 +22,7 @@ namespace Ironwill
 	public partial class SprinkAssist : IExtensionApplication
 	{
 		// TODO remove ghetto version
-		string GhettoVersion = "2022.03.19";
+		string GhettoVersion = "2022.04.07";
 
 		void IExtensionApplication.Initialize()
 		{
@@ -58,7 +58,7 @@ namespace Ironwill
 		private void DisplayVersion(object sender, DocumentCollectionEventArgs e)
 		{
 			//Autodesk.AutoCAD.ApplicationServices.Application.ShowAlertDialog("Helloe Workd");
-			Session.WriteMessage(String.Format(
+			Session.Log(String.Format(
 				"{0}" +
 				"-------------------{0}" +
 				"SprinkAssist Loaded{0}" +

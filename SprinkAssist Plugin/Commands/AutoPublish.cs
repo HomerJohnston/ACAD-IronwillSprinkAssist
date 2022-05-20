@@ -27,7 +27,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_AutoPublish")]
 		public void AutoPublishCmd()
 		{
-			Session.WriteMessage("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
+			Session.Log("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
 
 			// Store the current tab, we'll need to return to it when we're done
 			var ctab = Application.GetSystemVariable("CTAB");
@@ -37,7 +37,7 @@ namespace Ironwill
 
 			if (layouts.Count == 0)
 			{
-				Session.WriteMessage("No layouts found that start with FP!");
+				Session.Log("No layouts found that start with FP!");
 				return;
 			}
 
@@ -46,7 +46,12 @@ namespace Ironwill
 			
 			string destinationPath = dwgDirectory;
 			
-			string destinationFileName = Path.GetFileName(dwgName);
+			string issuedFor = Session.GetDatabase().GetCustomProperty("IssuedFor");
+			string date = DateTime.Now.ToString(@"yyyy-MM-dd");
+			string bareFileName = Path.GetFileNameWithoutExtension(dwgName);
+
+			string destinationFileName = bareFileName + " - Issued for " + issuedFor + " (" + date + ")";
+			
 			destinationFileName = Path.ChangeExtension(destinationFileName, "pdf");
 
 			string destinationLogName = Path.GetFileName(dwgName);
@@ -80,7 +85,7 @@ namespace Ironwill
 			dsdData.DestinationName = Path.Combine(destinationPath, destinationFileName);
 			dsdData.PromptForDwfName = false;
 			//dsdData.SheetSetName = "PublisherSet"; // TODO what is this? 
-			
+
 			int nbSheets = dsdEntryCollection.Count;
 
 			currentPdfFile = dsdData.DestinationName;
@@ -91,7 +96,7 @@ namespace Ironwill
 				progressDialog.set_PlotMsgString(PlotMessageIndex.CancelJobButtonMessage, "Cancel publishing");
 				progressDialog.set_PlotMsgString(PlotMessageIndex.CancelSheetButtonMessage, "Cancel this sheet");
 				progressDialog.set_PlotMsgString(PlotMessageIndex.SheetSetProgressCaption, "Publish progress");
-				progressDialog.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet progrees");
+				progressDialog.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet progress");
 
 				progressDialog.UpperPlotProgressRange = 100;
 				progressDialog.LowerPlotProgressRange = 0;
@@ -105,9 +110,12 @@ namespace Ironwill
 				
 				PlotConfigManager.SetCurrentConfig("DWG to PDF.pc3");
 				
-				publisher.EndPublish += EndPublishEventHandler;
+				//publisher.EndPublish += EndPublishEventHandler;
+				
+				Session.Log("Starting publish...");
 				publisher.PublishExecute(dsdData, PlotConfigManager.CurrentConfig);
-				publisher.EndPublish -= EndPublishEventHandler;
+				Session.Log("Publish ending... Opening file");
+				System.Diagnostics.Process.Start(currentPdfFile);
 			}
 
 			AcApplication.SetSystemVariable("CTAB", ctab);
@@ -115,8 +123,8 @@ namespace Ironwill
 
 		void EndPublishEventHandler(object sender, PublishEventArgs e)
 		{
-			Session.WriteMessage("Opening...");
-			System.Diagnostics.Process.Start(currentPdfFile);
+			//Session.WriteMessage("Publish ending... Opening file");
+			//System.Diagnostics.Process.Start(currentPdfFile);
 		}
 
 		List<string> GetLayouts()

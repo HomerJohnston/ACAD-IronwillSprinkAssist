@@ -27,11 +27,11 @@ namespace Ironwill
 
 				if (headToReplace == null)
 				{
-					Session.WriteMessage("No head selected, aborting");
+					Session.Log("No head selected, aborting");
 					return;
 				}
 
-				string replacedHeadName = GetHeadBlockName(headToReplace);
+				string replacedHeadName = BlockOps.GetDynamicBlockName(headToReplace);
 
 				List<string> dynamicNames = GetAllBlockNames(transaction, replacedHeadName);
 
@@ -40,7 +40,7 @@ namespace Ironwill
 
 				if (headsToReplace == null || headsToReplace.Count == 0)
 				{
-					Session.WriteMessage("No objects selected, aborting");
+					Session.Log("No objects selected, aborting");
 					return;
 				}
 
@@ -48,15 +48,15 @@ namespace Ironwill
 
 				if (replacementHeadBlock == null)
 				{
-					Session.WriteMessage("No head selected, aborting");
+					Session.Log("No head selected, aborting");
 					return;
 				}
 
-				string newHeadName = GetHeadBlockName(replacementHeadBlock);
+				string newHeadName = BlockOps.GetDynamicBlockName(replacementHeadBlock);
 
 				for (int i = 0; i < headsToReplace.Count; i++)
 				{
-					BlockReference newHead = BlockDictionary.InsertBlock(newHeadName);
+					BlockReference newHead = BlockOps.InsertBlock(newHeadName);
 
 					if (newHead == null)
 					{
@@ -100,12 +100,13 @@ namespace Ironwill
 			}
 		}
 
+		// TODO replace with BlockOps.PickSprinkler
 		private BlockReference PickHead(Transaction transaction, string prompt)
 		{
 			TypedValue[] filter =
 			{
 				new TypedValue((int)DxfCode.Operator, "<or"),
-				new TypedValue((int)DxfCode.LayerName, "SpkSystem_Head"),
+				new TypedValue((int)DxfCode.LayerName, Layer.SystemHead.Get()),
 				new TypedValue((int)DxfCode.Operator, "or>"),
 			};
 
@@ -133,12 +134,6 @@ namespace Ironwill
 			}
 
 			return headsToReplaceSelection.Value;
-		}
-
-		private string GetHeadBlockName(BlockReference headBlock)
-		{
-			BlockTableRecord originalHeadBlock = headBlock.DynamicBlockTableRecord.GetObject(OpenMode.ForRead) as BlockTableRecord;
-			return originalHeadBlock.Name;
 		}
 
 		private List<string> GetAllBlockNames(Transaction transaction, string blockName)
