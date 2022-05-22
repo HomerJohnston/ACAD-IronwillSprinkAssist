@@ -59,6 +59,8 @@
 			this.checkBoxOmitLengthsFromShortLines = new System.Windows.Forms.CheckBox();
 			this.labelSelectPipeGroup = new System.Windows.Forms.Label();
 			this.buttonDeleteGroup = new System.Windows.Forms.Button();
+			this.label7 = new System.Windows.Forms.Label();
+			this.label8 = new System.Windows.Forms.Label();
 			this.groupBoxSelectedGroup.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -66,20 +68,17 @@
 			// listBoxPipeGroup
 			// 
 			this.listBoxPipeGroup.FormattingEnabled = true;
-			this.listBoxPipeGroup.ItemHeight = 16;
-			this.listBoxPipeGroup.Location = new System.Drawing.Point(13, 37);
-			this.listBoxPipeGroup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.listBoxPipeGroup.Location = new System.Drawing.Point(10, 30);
 			this.listBoxPipeGroup.Name = "listBoxPipeGroup";
-			this.listBoxPipeGroup.Size = new System.Drawing.Size(159, 212);
+			this.listBoxPipeGroup.Size = new System.Drawing.Size(120, 173);
 			this.listBoxPipeGroup.TabIndex = 0;
 			this.listBoxPipeGroup.SelectedIndexChanged += new System.EventHandler(this.listBoxPipeGroup_SelectedIndexChanged);
 			// 
 			// buttonAddNewGroup
 			// 
-			this.buttonAddNewGroup.Location = new System.Drawing.Point(13, 262);
-			this.buttonAddNewGroup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonAddNewGroup.Location = new System.Drawing.Point(10, 213);
 			this.buttonAddNewGroup.Name = "buttonAddNewGroup";
-			this.buttonAddNewGroup.Size = new System.Drawing.Size(160, 28);
+			this.buttonAddNewGroup.Size = new System.Drawing.Size(120, 23);
 			this.buttonAddNewGroup.TabIndex = 1;
 			this.buttonAddNewGroup.Text = "Add New Group";
 			this.buttonAddNewGroup.UseVisualStyleBackColor = true;
@@ -89,10 +88,9 @@
 			// 
 			this.buttonRun.BackColor = System.Drawing.Color.PaleGreen;
 			this.buttonRun.DialogResult = System.Windows.Forms.DialogResult.OK;
-			this.buttonRun.Location = new System.Drawing.Point(96, 375);
-			this.buttonRun.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonRun.Location = new System.Drawing.Point(72, 305);
 			this.buttonRun.Name = "buttonRun";
-			this.buttonRun.Size = new System.Drawing.Size(77, 54);
+			this.buttonRun.Size = new System.Drawing.Size(58, 44);
 			this.buttonRun.TabIndex = 2;
 			this.buttonRun.Text = "Run";
 			this.buttonRun.UseVisualStyleBackColor = false;
@@ -101,20 +99,18 @@
 			// 
 			this.buttonCancel.BackColor = System.Drawing.Color.IndianRed;
 			this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.buttonCancel.Location = new System.Drawing.Point(13, 375);
-			this.buttonCancel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonCancel.Location = new System.Drawing.Point(10, 305);
 			this.buttonCancel.Name = "buttonCancel";
-			this.buttonCancel.Size = new System.Drawing.Size(77, 54);
+			this.buttonCancel.Size = new System.Drawing.Size(58, 44);
 			this.buttonCancel.TabIndex = 3;
 			this.buttonCancel.Text = "Cancel";
 			this.buttonCancel.UseVisualStyleBackColor = false;
 			// 
 			// buttonEditGroup
 			// 
-			this.buttonEditGroup.Location = new System.Drawing.Point(13, 298);
-			this.buttonEditGroup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonEditGroup.Location = new System.Drawing.Point(10, 242);
 			this.buttonEditGroup.Name = "buttonEditGroup";
-			this.buttonEditGroup.Size = new System.Drawing.Size(160, 28);
+			this.buttonEditGroup.Size = new System.Drawing.Size(120, 23);
 			this.buttonEditGroup.TabIndex = 4;
 			this.buttonEditGroup.Text = "Edit Group";
 			this.buttonEditGroup.UseVisualStyleBackColor = true;
@@ -123,6 +119,8 @@
 			// groupBoxSelectedGroup
 			// 
 			this.groupBoxSelectedGroup.BackColor = System.Drawing.SystemColors.Control;
+			this.groupBoxSelectedGroup.Controls.Add(this.label8);
+			this.groupBoxSelectedGroup.Controls.Add(this.label7);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelDrainsDiameter);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelMainsDiameter);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelBranchlinesDiameter);
@@ -131,11 +129,9 @@
 			this.groupBoxSelectedGroup.Controls.Add(this.label6);
 			this.groupBoxSelectedGroup.Controls.Add(this.label4);
 			this.groupBoxSelectedGroup.Controls.Add(this.label1);
-			this.groupBoxSelectedGroup.Location = new System.Drawing.Point(195, 10);
-			this.groupBoxSelectedGroup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.groupBoxSelectedGroup.Location = new System.Drawing.Point(146, 8);
 			this.groupBoxSelectedGroup.Name = "groupBoxSelectedGroup";
-			this.groupBoxSelectedGroup.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-			this.groupBoxSelectedGroup.Size = new System.Drawing.Size(463, 127);
+			this.groupBoxSelectedGroup.Size = new System.Drawing.Size(347, 103);
 			this.groupBoxSelectedGroup.TabIndex = 5;
 			this.groupBoxSelectedGroup.TabStop = false;
 			this.groupBoxSelectedGroup.Text = "Selected Group";
@@ -143,80 +139,72 @@
 			// labelDrainsDiameter
 			// 
 			this.labelDrainsDiameter.AutoSize = true;
-			this.labelDrainsDiameter.Location = new System.Drawing.Point(101, 97);
-			this.labelDrainsDiameter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.labelDrainsDiameter.Location = new System.Drawing.Point(76, 79);
 			this.labelDrainsDiameter.Name = "labelDrainsDiameter";
-			this.labelDrainsDiameter.Size = new System.Drawing.Size(13, 17);
+			this.labelDrainsDiameter.Size = new System.Drawing.Size(10, 13);
 			this.labelDrainsDiameter.TabIndex = 12;
 			this.labelDrainsDiameter.Text = "-";
 			// 
 			// labelMainsDiameter
 			// 
 			this.labelMainsDiameter.AutoSize = true;
-			this.labelMainsDiameter.Location = new System.Drawing.Point(101, 74);
-			this.labelMainsDiameter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.labelMainsDiameter.Location = new System.Drawing.Point(76, 60);
 			this.labelMainsDiameter.Name = "labelMainsDiameter";
-			this.labelMainsDiameter.Size = new System.Drawing.Size(13, 17);
+			this.labelMainsDiameter.Size = new System.Drawing.Size(10, 13);
 			this.labelMainsDiameter.TabIndex = 11;
 			this.labelMainsDiameter.Text = "-";
 			// 
 			// labelBranchlinesDiameter
 			// 
 			this.labelBranchlinesDiameter.AutoSize = true;
-			this.labelBranchlinesDiameter.Location = new System.Drawing.Point(101, 50);
-			this.labelBranchlinesDiameter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.labelBranchlinesDiameter.Location = new System.Drawing.Point(76, 41);
 			this.labelBranchlinesDiameter.Name = "labelBranchlinesDiameter";
-			this.labelBranchlinesDiameter.Size = new System.Drawing.Size(13, 17);
+			this.labelBranchlinesDiameter.Size = new System.Drawing.Size(10, 13);
 			this.labelBranchlinesDiameter.TabIndex = 10;
 			this.labelBranchlinesDiameter.Text = "-";
 			// 
 			// labelArmoversDiameter
 			// 
 			this.labelArmoversDiameter.AutoSize = true;
-			this.labelArmoversDiameter.Location = new System.Drawing.Point(101, 27);
-			this.labelArmoversDiameter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.labelArmoversDiameter.Location = new System.Drawing.Point(76, 22);
 			this.labelArmoversDiameter.Name = "labelArmoversDiameter";
-			this.labelArmoversDiameter.Size = new System.Drawing.Size(13, 17);
+			this.labelArmoversDiameter.Size = new System.Drawing.Size(10, 13);
 			this.labelArmoversDiameter.TabIndex = 9;
 			this.labelArmoversDiameter.Text = "-";
 			// 
 			// label5
 			// 
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(8, 74);
-			this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label5.Location = new System.Drawing.Point(6, 60);
 			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size(49, 17);
+			this.label5.Size = new System.Drawing.Size(38, 13);
 			this.label5.TabIndex = 2;
 			this.label5.Text = "Mains:";
 			// 
 			// label6
 			// 
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(8, 97);
-			this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label6.Location = new System.Drawing.Point(6, 79);
 			this.label6.Name = "label6";
-			this.label6.Size = new System.Drawing.Size(53, 17);
+			this.label6.Size = new System.Drawing.Size(40, 13);
 			this.label6.TabIndex = 3;
 			this.label6.Text = "Drains:";
 			// 
 			// label4
 			// 
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(8, 50);
-			this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label4.Location = new System.Drawing.Point(6, 41);
 			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(86, 17);
+			this.label4.Size = new System.Drawing.Size(65, 13);
 			this.label4.TabIndex = 1;
 			this.label4.Text = "Branchlines:";
 			// 
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(8, 27);
-			this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label1.Location = new System.Drawing.Point(6, 22);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(72, 17);
+			this.label1.Size = new System.Drawing.Size(54, 13);
 			this.label1.TabIndex = 0;
 			this.label1.Text = "Armovers:";
 			// 
@@ -225,10 +213,9 @@
 			this.checkBoxBreakAtLineEnds.AutoSize = true;
 			this.checkBoxBreakAtLineEnds.Checked = true;
 			this.checkBoxBreakAtLineEnds.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxBreakAtLineEnds.Location = new System.Drawing.Point(12, 95);
-			this.checkBoxBreakAtLineEnds.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxBreakAtLineEnds.Location = new System.Drawing.Point(9, 77);
 			this.checkBoxBreakAtLineEnds.Name = "checkBoxBreakAtLineEnds";
-			this.checkBoxBreakAtLineEnds.Size = new System.Drawing.Size(150, 21);
+			this.checkBoxBreakAtLineEnds.Size = new System.Drawing.Size(116, 17);
 			this.checkBoxBreakAtLineEnds.TabIndex = 31;
 			this.checkBoxBreakAtLineEnds.Text = "Break at Line Ends";
 			this.checkBoxBreakAtLineEnds.UseVisualStyleBackColor = true;
@@ -238,10 +225,9 @@
 			this.checkBoxConnectAcrossBreaks.AutoSize = true;
 			this.checkBoxConnectAcrossBreaks.Checked = true;
 			this.checkBoxConnectAcrossBreaks.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxConnectAcrossBreaks.Location = new System.Drawing.Point(12, 218);
-			this.checkBoxConnectAcrossBreaks.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxConnectAcrossBreaks.Location = new System.Drawing.Point(9, 177);
 			this.checkBoxConnectAcrossBreaks.Name = "checkBoxConnectAcrossBreaks";
-			this.checkBoxConnectAcrossBreaks.Size = new System.Drawing.Size(177, 21);
+			this.checkBoxConnectAcrossBreaks.Size = new System.Drawing.Size(137, 17);
 			this.checkBoxConnectAcrossBreaks.TabIndex = 30;
 			this.checkBoxConnectAcrossBreaks.Text = "Connect Across Breaks";
 			this.checkBoxConnectAcrossBreaks.UseVisualStyleBackColor = true;
@@ -249,19 +235,17 @@
 			// label2
 			// 
 			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(288, 219);
-			this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label2.Location = new System.Drawing.Point(216, 178);
 			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(112, 17);
+			this.label2.Size = new System.Drawing.Size(86, 13);
 			this.label2.TabIndex = 25;
 			this.label2.Text = "Search Distance";
 			// 
 			// textBoxConnectBreaksInLines
 			// 
-			this.textBoxConnectBreaksInLines.Location = new System.Drawing.Point(237, 215);
-			this.textBoxConnectBreaksInLines.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxConnectBreaksInLines.Location = new System.Drawing.Point(178, 175);
 			this.textBoxConnectBreaksInLines.Name = "textBoxConnectBreaksInLines";
-			this.textBoxConnectBreaksInLines.Size = new System.Drawing.Size(40, 22);
+			this.textBoxConnectBreaksInLines.Size = new System.Drawing.Size(31, 20);
 			this.textBoxConnectBreaksInLines.TabIndex = 24;
 			// 
 			// checkBoxBreakAtFittings
@@ -269,10 +253,9 @@
 			this.checkBoxBreakAtFittings.AutoSize = true;
 			this.checkBoxBreakAtFittings.Checked = true;
 			this.checkBoxBreakAtFittings.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxBreakAtFittings.Location = new System.Drawing.Point(12, 149);
-			this.checkBoxBreakAtFittings.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxBreakAtFittings.Location = new System.Drawing.Point(9, 121);
 			this.checkBoxBreakAtFittings.Name = "checkBoxBreakAtFittings";
-			this.checkBoxBreakAtFittings.Size = new System.Drawing.Size(132, 21);
+			this.checkBoxBreakAtFittings.Size = new System.Drawing.Size(102, 17);
 			this.checkBoxBreakAtFittings.TabIndex = 23;
 			this.checkBoxBreakAtFittings.Text = "Break at Fittings";
 			this.checkBoxBreakAtFittings.UseVisualStyleBackColor = true;
@@ -280,10 +263,9 @@
 			// checkBoxBreakAtLineIntersections
 			// 
 			this.checkBoxBreakAtLineIntersections.AutoSize = true;
-			this.checkBoxBreakAtLineIntersections.Location = new System.Drawing.Point(12, 122);
-			this.checkBoxBreakAtLineIntersections.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxBreakAtLineIntersections.Location = new System.Drawing.Point(9, 99);
 			this.checkBoxBreakAtLineIntersections.Name = "checkBoxBreakAtLineIntersections";
-			this.checkBoxBreakAtLineIntersections.Size = new System.Drawing.Size(198, 21);
+			this.checkBoxBreakAtLineIntersections.Size = new System.Drawing.Size(152, 17);
 			this.checkBoxBreakAtLineIntersections.TabIndex = 22;
 			this.checkBoxBreakAtLineIntersections.Text = "Break at Line Intersections";
 			this.checkBoxBreakAtLineIntersections.UseVisualStyleBackColor = true;
@@ -305,21 +287,18 @@
 			this.groupBox2.Controls.Add(this.checkBoxOmitLengthsFromShortLines);
 			this.groupBox2.Controls.Add(this.label2);
 			this.groupBox2.Controls.Add(this.textBoxConnectBreaksInLines);
-			this.groupBox2.Location = new System.Drawing.Point(193, 150);
-			this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.groupBox2.Location = new System.Drawing.Point(145, 122);
 			this.groupBox2.Name = "groupBox2";
-			this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-			this.groupBox2.Size = new System.Drawing.Size(463, 279);
+			this.groupBox2.Size = new System.Drawing.Size(347, 227);
 			this.groupBox2.TabIndex = 33;
 			this.groupBox2.TabStop = false;
 			this.groupBox2.Text = "Label Generation Options";
 			// 
 			// textBoxDontLabelShortLines
 			// 
-			this.textBoxDontLabelShortLines.Location = new System.Drawing.Point(237, 242);
-			this.textBoxDontLabelShortLines.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxDontLabelShortLines.Location = new System.Drawing.Point(178, 197);
 			this.textBoxDontLabelShortLines.Name = "textBoxDontLabelShortLines";
-			this.textBoxDontLabelShortLines.Size = new System.Drawing.Size(40, 22);
+			this.textBoxDontLabelShortLines.Size = new System.Drawing.Size(31, 20);
 			this.textBoxDontLabelShortLines.TabIndex = 36;
 			// 
 			// checkBoxBreakAtSprinklers
@@ -327,10 +306,9 @@
 			this.checkBoxBreakAtSprinklers.AutoSize = true;
 			this.checkBoxBreakAtSprinklers.Checked = true;
 			this.checkBoxBreakAtSprinklers.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxBreakAtSprinklers.Location = new System.Drawing.Point(12, 176);
-			this.checkBoxBreakAtSprinklers.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxBreakAtSprinklers.Location = new System.Drawing.Point(9, 143);
 			this.checkBoxBreakAtSprinklers.Name = "checkBoxBreakAtSprinklers";
-			this.checkBoxBreakAtSprinklers.Size = new System.Drawing.Size(150, 21);
+			this.checkBoxBreakAtSprinklers.Size = new System.Drawing.Size(115, 17);
 			this.checkBoxBreakAtSprinklers.TabIndex = 32;
 			this.checkBoxBreakAtSprinklers.Text = "Break at Sprinklers";
 			this.checkBoxBreakAtSprinklers.UseVisualStyleBackColor = true;
@@ -338,10 +316,9 @@
 			// label3
 			// 
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(288, 246);
-			this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label3.Location = new System.Drawing.Point(216, 200);
 			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(78, 17);
+			this.label3.Size = new System.Drawing.Size(60, 13);
 			this.label3.TabIndex = 37;
 			this.label3.Text = "Min Length";
 			// 
@@ -350,20 +327,18 @@
 			this.checkBoxDontLabelShortLines.AutoSize = true;
 			this.checkBoxDontLabelShortLines.Checked = true;
 			this.checkBoxDontLabelShortLines.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxDontLabelShortLines.Location = new System.Drawing.Point(12, 245);
-			this.checkBoxDontLabelShortLines.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxDontLabelShortLines.Location = new System.Drawing.Point(9, 199);
 			this.checkBoxDontLabelShortLines.Name = "checkBoxDontLabelShortLines";
-			this.checkBoxDontLabelShortLines.Size = new System.Drawing.Size(178, 21);
+			this.checkBoxDontLabelShortLines.Size = new System.Drawing.Size(136, 17);
 			this.checkBoxDontLabelShortLines.TabIndex = 35;
 			this.checkBoxDontLabelShortLines.Text = "Don\'t Label Short Lines";
 			this.checkBoxDontLabelShortLines.UseVisualStyleBackColor = true;
 			// 
 			// textBoxOmitLengthsFromShortLines
 			// 
-			this.textBoxOmitLengthsFromShortLines.Location = new System.Drawing.Point(237, 50);
-			this.textBoxOmitLengthsFromShortLines.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.textBoxOmitLengthsFromShortLines.Location = new System.Drawing.Point(178, 41);
 			this.textBoxOmitLengthsFromShortLines.Name = "textBoxOmitLengthsFromShortLines";
-			this.textBoxOmitLengthsFromShortLines.Size = new System.Drawing.Size(40, 22);
+			this.textBoxOmitLengthsFromShortLines.Size = new System.Drawing.Size(31, 20);
 			this.textBoxOmitLengthsFromShortLines.TabIndex = 33;
 			// 
 			// checkBoxShowLengths
@@ -371,10 +346,9 @@
 			this.checkBoxShowLengths.AutoSize = true;
 			this.checkBoxShowLengths.Checked = true;
 			this.checkBoxShowLengths.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxShowLengths.Location = new System.Drawing.Point(12, 28);
-			this.checkBoxShowLengths.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxShowLengths.Location = new System.Drawing.Point(9, 23);
 			this.checkBoxShowLengths.Name = "checkBoxShowLengths";
-			this.checkBoxShowLengths.Size = new System.Drawing.Size(119, 21);
+			this.checkBoxShowLengths.Size = new System.Drawing.Size(94, 17);
 			this.checkBoxShowLengths.TabIndex = 29;
 			this.checkBoxShowLengths.Text = "Show Lengths";
 			this.checkBoxShowLengths.UseVisualStyleBackColor = true;
@@ -382,10 +356,9 @@
 			// label11
 			// 
 			this.label11.AutoSize = true;
-			this.label11.Location = new System.Drawing.Point(288, 57);
-			this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.label11.Location = new System.Drawing.Point(216, 46);
 			this.label11.Name = "label11";
-			this.label11.Size = new System.Drawing.Size(78, 17);
+			this.label11.Size = new System.Drawing.Size(60, 13);
 			this.label11.TabIndex = 34;
 			this.label11.Text = "Min Length";
 			// 
@@ -394,10 +367,9 @@
 			this.checkBoxOmitLengthsFromShortLines.AutoSize = true;
 			this.checkBoxOmitLengthsFromShortLines.Checked = true;
 			this.checkBoxOmitLengthsFromShortLines.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxOmitLengthsFromShortLines.Location = new System.Drawing.Point(12, 55);
-			this.checkBoxOmitLengthsFromShortLines.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.checkBoxOmitLengthsFromShortLines.Location = new System.Drawing.Point(9, 45);
 			this.checkBoxOmitLengthsFromShortLines.Name = "checkBoxOmitLengthsFromShortLines";
-			this.checkBoxOmitLengthsFromShortLines.Size = new System.Drawing.Size(215, 21);
+			this.checkBoxOmitLengthsFromShortLines.Size = new System.Drawing.Size(162, 17);
 			this.checkBoxOmitLengthsFromShortLines.TabIndex = 32;
 			this.checkBoxOmitLengthsFromShortLines.Text = "Omit Length from Short Lines";
 			this.checkBoxOmitLengthsFromShortLines.UseVisualStyleBackColor = true;
@@ -405,31 +377,47 @@
 			// labelSelectPipeGroup
 			// 
 			this.labelSelectPipeGroup.AutoSize = true;
-			this.labelSelectPipeGroup.Location = new System.Drawing.Point(12, 10);
-			this.labelSelectPipeGroup.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+			this.labelSelectPipeGroup.Location = new System.Drawing.Point(9, 8);
 			this.labelSelectPipeGroup.Name = "labelSelectPipeGroup";
-			this.labelSelectPipeGroup.Size = new System.Drawing.Size(127, 17);
+			this.labelSelectPipeGroup.Size = new System.Drawing.Size(96, 13);
 			this.labelSelectPipeGroup.TabIndex = 34;
 			this.labelSelectPipeGroup.Text = "Select Pipe Group:";
 			// 
 			// buttonDeleteGroup
 			// 
-			this.buttonDeleteGroup.Location = new System.Drawing.Point(13, 334);
-			this.buttonDeleteGroup.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+			this.buttonDeleteGroup.Location = new System.Drawing.Point(10, 271);
 			this.buttonDeleteGroup.Name = "buttonDeleteGroup";
-			this.buttonDeleteGroup.Size = new System.Drawing.Size(160, 28);
+			this.buttonDeleteGroup.Size = new System.Drawing.Size(120, 23);
 			this.buttonDeleteGroup.TabIndex = 35;
 			this.buttonDeleteGroup.Text = "Delete Group";
 			this.buttonDeleteGroup.UseVisualStyleBackColor = true;
 			this.buttonDeleteGroup.Click += new System.EventHandler(this.buttonDeleteGroup_Click);
 			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Location = new System.Drawing.Point(163, 41);
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size(92, 13);
+			this.label7.TabIndex = 13;
+			this.label7.Text = "Branchline Risers:";
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Location = new System.Drawing.Point(267, 41);
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size(10, 13);
+			this.label8.TabIndex = 14;
+			this.label8.Text = "-";
+			// 
 			// AutoLabelDialog
 			// 
 			this.AcceptButton = this.buttonRun;
-			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.buttonCancel;
-			this.ClientSize = new System.Drawing.Size(676, 442);
+			this.ClientSize = new System.Drawing.Size(507, 359);
 			this.ControlBox = false;
 			this.Controls.Add(this.buttonDeleteGroup);
 			this.Controls.Add(this.labelSelectPipeGroup);
@@ -441,7 +429,6 @@
 			this.Controls.Add(this.buttonAddNewGroup);
 			this.Controls.Add(this.listBoxPipeGroup);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "AutoLabelDialog";
@@ -491,5 +478,7 @@
 		private System.Windows.Forms.Label labelBranchlinesDiameter;
 		private System.Windows.Forms.Label labelArmoversDiameter;
 		private System.Windows.Forms.Button buttonDeleteGroup;
+		private System.Windows.Forms.Label label7;
+		private System.Windows.Forms.Label label8;
 	}
 }

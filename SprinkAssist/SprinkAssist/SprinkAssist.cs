@@ -61,13 +61,13 @@ namespace Ironwill
 			string assemblyName = AssemblyName.GetAssemblyName(assembly.Location).Version.ToString();
 
 			//Autodesk.AutoCAD.ApplicationServices.Application.ShowAlertDialog("Helloe Workd");
-			Session.Log(String.Format(
+			Session.Log(
 				"{0}" +
 				"-------------------{0}" +
 				"SprinkAssist Loaded{0}" +
 				"Version: {1}{0}" +
 				//"-------------------", Environment.NewLine, GhettoVersion));
-				"-------------------", Environment.NewLine, assemblyName));
+				"-------------------", Environment.NewLine, assemblyName);
 		}
 	}
 }

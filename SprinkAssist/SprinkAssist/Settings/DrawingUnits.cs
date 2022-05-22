@@ -20,6 +20,4 @@ namespace Ironwill
         Metric,
         Imperial
     }
-
-    
 }

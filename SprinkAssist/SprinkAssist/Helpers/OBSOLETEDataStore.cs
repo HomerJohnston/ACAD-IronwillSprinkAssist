@@ -10,16 +10,16 @@ using Autodesk.AutoCAD.DatabaseServices;
 
 namespace Ironwill
 {
-	public struct DictionaryPath
+	public struct OBSOLETEDictionaryPath
 	{
 		List<string> path;
 
-		public DictionaryPath(params string[] inPath)
+		public OBSOLETEDictionaryPath(params string[] inPath)
 		{
 			path = new List<string>(inPath);
 		}
 
-		public DictionaryPath(DictionaryPath parent, params string[] child)
+		public OBSOLETEDictionaryPath(OBSOLETEDictionaryPath parent, params string[] child)
 		{
 			path = new List<string>(parent.Get);
 			path.AddRange(child);
@@ -31,7 +31,7 @@ namespace Ironwill
 		}
 	}
 
-	class DataStore
+	class OBSOLETEDataStore
 	{
 		protected const string PluginRoot = "SprinkAssist";
 
@@ -59,7 +59,7 @@ namespace Ironwill
 		}
 
 		/** Retrieve a given subdictionary for the plugin */
-		public static DBDictionary GetDictionary(Transaction transaction, DictionaryPath path, bool create = false)
+		public static DBDictionary GetDictionary(Transaction transaction, OBSOLETEDictionaryPath path, bool create = false)
 		{
 			DBDictionary pluginDictionary = GetPluginDictionary(transaction);
 
@@ -99,7 +99,7 @@ namespace Ironwill
 			return nestedDictionary;
 		}
 
-		protected static Xrecord GetXRecord(Transaction transaction, DictionaryPath path, string name, bool create = false)
+		protected static Xrecord GetXRecord(Transaction transaction, OBSOLETEDictionaryPath path, string name, bool create = false)
 		{
 			DBDictionary dictionary = GetDictionary(transaction, path, create);
 
@@ -133,7 +133,7 @@ namespace Ironwill
 			return transaction.GetObject(xrecordId, OpenMode.ForRead) as Xrecord;
 		}
 
-		protected static ResultBuffer GetXrecordData(DictionaryPath path, string name)
+		protected static ResultBuffer GetXrecordData(OBSOLETEDictionaryPath path, string name)
 		{
 			using (Session.LockDocument())
 			{
@@ -145,7 +145,7 @@ namespace Ironwill
 					{
 						return null;
 					}
-
+					
 					return xrecord.Data;
 				}
 			}
@@ -153,7 +153,7 @@ namespace Ironwill
 
 		// ================================================================================================
 		// Public Getters
-		public static object GetXrecordDataObject(DictionaryPath path, string name)
+		public static object GetXrecordDataObject(OBSOLETEDictionaryPath path, string name)
 		{
 			ResultBuffer data = GetXrecordData(path, name);
 
@@ -167,7 +167,7 @@ namespace Ironwill
 			return typedValue.Value;
 		}
 
-		public static string GetXrecordString(DictionaryPath path, string name, string defaultValue = "")
+		public static string GetXrecordString(OBSOLETEDictionaryPath path, string name, string defaultValue = "")
 		{
 			string val = GetXrecordDataObject(path, name) as string;// data.AsArray()[0];
 
@@ -179,7 +179,7 @@ namespace Ironwill
 			return val;
 		}
 
-		public static int GetXrecordInt(DictionaryPath path, string name, int defaultValue = 0)
+		public static int GetXrecordInt(OBSOLETEDictionaryPath path, string name, int defaultValue = 0)
 		{
 			int? val = GetXrecordDataObject(path, name) as int?;
 
@@ -191,7 +191,7 @@ namespace Ironwill
 			return (int)val;
 		}
 
-		public static double GetXrecordDouble(DictionaryPath path, string name, double defaultValue = 0.0)
+		public static double GetXrecordDouble(OBSOLETEDictionaryPath path, string name, double defaultValue = 0.0)
 		{
 			double? val = GetXrecordDataObject(path, name) as double?;
 
@@ -205,7 +205,7 @@ namespace Ironwill
 
 
 		// ================================================================================================
-		protected static void SetXrecordData(DictionaryPath path, string name, ResultBuffer data)
+		protected static void SetXrecordData(OBSOLETEDictionaryPath path, string name, ResultBuffer data)
 		{
 			using (Session.LockDocument())
 			{
@@ -223,32 +223,28 @@ namespace Ironwill
 			}
 		}
 
-		public static void SetXrecordString(DictionaryPath path, string name, string value)
+		public static void SetXrecordString(OBSOLETEDictionaryPath path, string name, string value)
 		{
-			string m = "Setting XRecord string: ";
-			foreach (string s in path.Get) { m += "\\" + s; }
-			Session.Log(m);
-
 			ResultBuffer data = new ResultBuffer();
 			data.Add(new TypedValue((int)DxfCode.XTextString, value));
 			SetXrecordData(path, name, data);
 		}
 
-		public static void SetXrecordInt(DictionaryPath path, string name, int value)
+		public static void SetXrecordInt(OBSOLETEDictionaryPath path, string name, int value)
 		{
 			ResultBuffer data = new ResultBuffer();
 			data.Add(new TypedValue((int)DxfCode.Int32, value));
 			SetXrecordData(path, name, data);
 		}
 
-		public static void SetXrecordDouble(DictionaryPath path, string name, double value)
+		public static void SetXrecordDouble(OBSOLETEDictionaryPath path, string name, double value)
 		{
 			ResultBuffer data = new ResultBuffer();
 			data.Add(new TypedValue((int)DxfCode.Real, value));
 			SetXrecordData(path, name, data);
 		}
 
-		public static void SetXrecordBool(DictionaryPath path, string name, bool value)
+		public static void SetXrecordBool(OBSOLETEDictionaryPath path, string name, bool value)
 		{
 			ResultBuffer data = new ResultBuffer();
 			data.Add(new TypedValue((int)DxfCode.Bool, value));

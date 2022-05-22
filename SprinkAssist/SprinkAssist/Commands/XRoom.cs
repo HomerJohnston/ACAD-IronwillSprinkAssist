@@ -16,10 +16,18 @@ using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace Ironwill
 {
-	// TODO: 
-	class XRoom
+	internal class XRoom : SprinkAssistCommand
 	{
-		StringSetting roomSetting = new StringSetting(new DictionaryPath("XRoom"), "RoomType", "Bathroom");
+		const string bathroomKeyword = "Bathroom";
+		const string closetKeyword = "Closet";
+		const string noneKeyword = "None";
+
+		const string roomType = "RoomType";
+
+		public XRoom()
+		{
+			settings.AddSetting(roomType, bathroomKeyword);
+		}
 
 		bool IsValid(PromptPointResult promptPointResult)
 		{
@@ -40,8 +48,8 @@ namespace Ironwill
 
 		protected Point3d GetPoint(string prompt, out bool bStopCommand, out bool bAbortIteration)
 		{
-			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + roomSetting.stringValue + ")");
-			promptPointOptions.Message = "Check " + roomSetting.stringValue;
+			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + settings[roomType].GetAs<String>() + ")");
+			promptPointOptions.Message = "Check " + settings[roomType].GetAs<String>();
 			promptPointOptions.AllowNone = true;
 			promptPointOptions.Keywords.Add("Closet");
 			promptPointOptions.Keywords.Add("Bathroom");
@@ -61,7 +69,7 @@ namespace Ironwill
 			{
 				case PromptStatus.Keyword:
 					Session.Log("Keyword");
-					roomSetting.Set(promptPointResult.StringResult);
+					settings[roomType].SetTo(promptPointResult.StringResult);
 					bStopCommand = false;
 					bAbortIteration = true;
 					return new Point3d();
@@ -224,7 +232,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (roomSetting.stringValue)
+			switch (settings[roomType].GetAs<String>())
 			{
 				case "Bathroom":
 					switch (units)
@@ -266,7 +274,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (roomSetting.stringValue)
+			switch (settings[roomType].GetAs<String>())
 			{
 				case "Bathroom":
 					return double.MaxValue;

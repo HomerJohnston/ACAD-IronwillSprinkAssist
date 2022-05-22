@@ -21,13 +21,13 @@ namespace Ironwill
 	public class PipeGroup
 	{
 		// Diameter labels for each pipe layer
-		public StringSetting armoverLabel;
+		public OBSOLETEStringSetting armoverLabel;
 
-		public StringSetting branchlineLabel;
+		public OBSOLETEStringSetting branchlineLabel;
 
-		public StringSetting mainLabel;
+		public OBSOLETEStringSetting mainLabel;
 
-		public StringSetting drainLabel;
+		public OBSOLETEStringSetting drainLabel;
 
 		// Generation properties
 		public BoolSetting showLength;
@@ -59,12 +59,12 @@ namespace Ironwill
 
 		private PipeGroup(string name)
 		{
-			DictionaryPath path = new DictionaryPath("PipeGroups", name);
+			OBSOLETEDictionaryPath path = new OBSOLETEDictionaryPath("PipeGroups", name);
 
-			armoverLabel = new StringSetting(path, "ArmoverLabel", "");
-			branchlineLabel = new StringSetting(path, "BranchlineLabel", "");
-			mainLabel = new StringSetting(path, "MainLabel", "");
-			drainLabel = new StringSetting(path, "DrainLabel", "");
+			armoverLabel = new OBSOLETEStringSetting(path, "ArmoverLabel", "");
+			branchlineLabel = new OBSOLETEStringSetting(path, "BranchlineLabel", "");
+			mainLabel = new OBSOLETEStringSetting(path, "MainLabel", "");
+			drainLabel = new OBSOLETEStringSetting(path, "DrainLabel", "");
 
 			showLength = new BoolSetting(path, "ShowLength", true);
 			omitLengthFromShort = new BoolSetting(path, "OmitLengthFromShort", true);

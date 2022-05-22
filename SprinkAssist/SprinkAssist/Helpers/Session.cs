@@ -27,14 +27,14 @@ namespace Ironwill
 			return GetDocument().LockDocument();
 		}
 
-		public static AcTransactionManager GetTransactionManager()
-		{
-			return GetDocument().TransactionManager;
-		}
-
 		public static Transaction StartTransaction()
 		{
-			return GetTransactionManager().StartTransaction();
+			return GetDocument().TransactionManager.StartTransaction();
+		}
+
+		public static Transaction TopTransaction()
+		{
+			return GetDocument().TransactionManager.TopTransaction;
 		}
 
 		public static Database GetDatabase()
@@ -156,14 +156,25 @@ namespace Ironwill
 		}
 
 		[System.Diagnostics.Conditional("DEBUG")]
-		public static void LogDebug(string Message)
+		public static void LogDebug(string message)
 		{
-			GetEditor().WriteMessage(Message + "\n");
+			GetEditor().WriteMessage(message + "\n");
 		}
 
-		public static void Log(string Message)
+		[System.Diagnostics.Conditional("DEBUG")]
+		public static void LogDebug(string formattedMessage, params string[] args)
 		{
-			GetEditor().WriteMessage(Message + "\n");
+			LogDebug(String.Format(formattedMessage, args));
+		}
+
+		public static void Log(string message)
+		{
+			GetEditor().WriteMessage(message + "\n");
+		}
+
+		public static void Log(string formattedMessage, params string[] args)
+		{
+			Log(String.Format(formattedMessage, args));
 		}
 
 		public static void Command(params object[] parameters)

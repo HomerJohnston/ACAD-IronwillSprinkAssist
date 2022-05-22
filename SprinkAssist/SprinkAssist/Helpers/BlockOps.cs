@@ -16,9 +16,6 @@ namespace Ironwill
 {
 	public class BlockOps
 	{
-		//public const string FittingReducer = "F_Reducer";
-		//public const string FittingCoupling = "F_Coupling";
-
 		struct TextInfo
 		{
 			public Point3d Position { get; private set; }

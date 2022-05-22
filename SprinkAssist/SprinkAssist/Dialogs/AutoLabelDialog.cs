@@ -69,9 +69,9 @@ namespace Ironwill
 		{
 			listBoxPipeGroup.Items.Clear();
 
-			DictionaryPath pipeGroupsPath = new DictionaryPath("PipeGroups");
+			OBSOLETEDictionaryPath pipeGroupsPath = new OBSOLETEDictionaryPath("PipeGroups");
 
-			DBDictionary pipeGroupsDictionary = DataStore.GetDictionary(transaction, pipeGroupsPath);
+			DBDictionary pipeGroupsDictionary = OBSOLETEDataStore.GetDictionary(transaction, pipeGroupsPath);
 
 			if (pipeGroupsDictionary == null)
 			{
@@ -82,7 +82,7 @@ namespace Ironwill
 			{
 				string groupID = pipeGroupEntry.Key;
 
-				string groupName = DataStore.GetXrecordString(new DictionaryPath(pipeGroupsPath, groupID), "Name", "___NULLGROUP___");
+				string groupName = OBSOLETEDataStore.GetXrecordString(new OBSOLETEDictionaryPath(pipeGroupsPath, groupID), "Name", "___NULLGROUP___");
 				
 				if (groupName != "___NULLGROUP___")
 				{
@@ -95,9 +95,9 @@ namespace Ironwill
 		{
 			string selectedGroupName = listBoxPipeGroup.SelectedItem as string;
 
-			DictionaryPath pipeGroupsPath = new DictionaryPath("PipeGroups");
+			OBSOLETEDictionaryPath pipeGroupsPath = new OBSOLETEDictionaryPath("PipeGroups");
 
-			DBDictionary pipeGroupsDictionary = DataStore.GetDictionary(transaction, pipeGroupsPath);
+			DBDictionary pipeGroupsDictionary = OBSOLETEDataStore.GetDictionary(transaction, pipeGroupsPath);
 
 			foreach (DBDictionaryEntry pipeGroupEntry in pipeGroupsDictionary)
 			{

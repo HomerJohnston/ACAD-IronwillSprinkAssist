@@ -9,11 +9,11 @@ namespace Ironwill
 {
 	public class Setting
 	{
-		protected DictionaryPath path;
+		protected OBSOLETEDictionaryPath path;
 		protected string name;
 		protected object defaultValue;
 
-		protected Setting(DictionaryPath path, string name, object defaultValue)
+		protected Setting(OBSOLETEDictionaryPath path, string name, object defaultValue)
 		{
 			this.path = path;
 			this.name = name;
@@ -24,15 +24,15 @@ namespace Ironwill
 		{
 			get
 			{
-				object data = DataStore.GetXrecordDataObject(path, name);
+				object data = OBSOLETEDataStore.GetXrecordDataObject(path, name);
 				return (data == null) ? defaultValue : data;
 			}
 		}
 	}
 
-	public class StringSetting : Setting
+	public class OBSOLETEStringSetting : Setting
 	{
-		public StringSetting(DictionaryPath path, string name, string defaultValue) : base(path, name, defaultValue) { }
+		public OBSOLETEStringSetting(OBSOLETEDictionaryPath path, string name, string defaultValue) : base(path, name, defaultValue) { }
 
 		public string stringValue
 		{
@@ -45,11 +45,11 @@ namespace Ironwill
 				if (value == null)
 					return;
 
-				DataStore.SetXrecordString(path, name, value);
+				OBSOLETEDataStore.SetXrecordString(path, name, value);
 			}
 		}
 
-		public static implicit operator string(StringSetting s) => s.stringValue;
+		public static implicit operator string(OBSOLETEStringSetting s) => s.stringValue;
 
 		public void Set(string val)
 		{
@@ -59,7 +59,7 @@ namespace Ironwill
 
 	public class IntSetting : Setting
 	{
-		public IntSetting(DictionaryPath path, string name, int defaultValue) : base(path, name, defaultValue) { }
+		public IntSetting(OBSOLETEDictionaryPath path, string name, int defaultValue) : base(path, name, defaultValue) { }
 
 		public int? intValue
 		{
@@ -72,7 +72,7 @@ namespace Ironwill
 				if (value == null)
 					return;
 
-				DataStore.SetXrecordInt(path, name, (int)value);
+				OBSOLETEDataStore.SetXrecordInt(path, name, (int)value);
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace Ironwill
 
 	public class DoubleSetting : Setting
 	{
-		public DoubleSetting(DictionaryPath path, string name, double defaultValue) : base(path, name, defaultValue) { }
+		public DoubleSetting(OBSOLETEDictionaryPath path, string name, double defaultValue) : base(path, name, defaultValue) { }
 
 		public double? doubleValue
 		{
@@ -99,7 +99,7 @@ namespace Ironwill
 				if (value == null)
 					return;
 
-				DataStore.SetXrecordDouble(path, name, (double)value);
+				OBSOLETEDataStore.SetXrecordDouble(path, name, (double)value);
 			}
 		}
 
@@ -113,7 +113,7 @@ namespace Ironwill
 
 	public class BoolSetting : Setting
 	{
-		public BoolSetting(DictionaryPath path, string name, bool defaultValue) : base(path, name, defaultValue) { }
+		public BoolSetting(OBSOLETEDictionaryPath path, string name, bool defaultValue) : base(path, name, defaultValue) { }
 
 		public bool? boolValue
 		{
@@ -126,7 +126,7 @@ namespace Ironwill
 				if (value == null)
 					return;
 
-				DataStore.SetXrecordBool(path, name, (bool)value);
+				OBSOLETEDataStore.SetXrecordBool(path, name, (bool)value);
 			}
 		}
 

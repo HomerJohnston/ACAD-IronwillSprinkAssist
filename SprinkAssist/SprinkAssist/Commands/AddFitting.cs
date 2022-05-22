@@ -16,30 +16,38 @@ using System.Collections.ObjectModel;
 
 namespace Ironwill
 {
-	public class AddFitting
+	internal class AddFitting : SprinkAssistCommand
 	{
-		const string ElbowKeyword = "Elbow";
-		const string TeeKeyword = "Tee";
-		const string CapKeyword = "Cap";
-		const string RiserKeyword = "Riser";
-		const string ReducerKeyword = "REducer";
-		const string CouplingKeyword = "COupling";
+		const string elbowKeyword = "Elbow";
+		const string teeKeyword = "Tee";
+		const string capKeyword = "Cap";
+		const string riserKeyword = "Riser";
+		const string reducerKeyword = "REducer";
+		const string couplingKeyword = "COupling";
 
-		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { ElbowKeyword, TeeKeyword, CapKeyword, RiserKeyword, ReducerKeyword, CouplingKeyword } );
+		const string selectedFitting = "SelectedFitting";
 
-		StringSetting fittingTypeSetting = new StringSetting(new DictionaryPath("AddFitting"), "SelectedFitting", ElbowKeyword);
+		CommandSettingsContainer pipeGroups;
+
+		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { elbowKeyword, teeKeyword, capKeyword, riserKeyword, reducerKeyword, couplingKeyword } );
+
+		public AddFitting()
+		{
+			settings.AddSetting(selectedFitting, elbowKeyword);
+		}
 
 		[CommandMethod("SpkAssist_AddFitting")]
 		public void AddFittingCmd()
 		{
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("\nPlace " + fittingTypeSetting.stringValue);
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + settings[selectedFitting].GetAs<String>());
 
 			foreach (string key in Keywords)
 			{
 				promptEntityOptions.Keywords.Add(key);
 			}
 
-			promptEntityOptions.Keywords.Default = fittingTypeSetting.stringValue;
+			//promptEntityOptions.Keywords.Default = settings.Get<String>(selectedFittingSetting);
+			promptEntityOptions.Keywords.Default = settings[selectedFitting].GetAs<String>();
 
 			bool bStopCommand = false;
 
@@ -54,14 +62,20 @@ namespace Ironwill
 						switch (promptEntityResult.Status)
 						{
 							case PromptStatus.Keyword:
-								fittingTypeSetting.Set(promptEntityResult.StringResult);
+							{
+								//fittingTypeSetting.Set(promptEntityResult.StringResult);
+								settings[selectedFitting].SetTo(promptEntityResult.StringResult);
 								promptEntityOptions.Message = "Place " + promptEntityResult.StringResult;
 								promptEntityOptions.Keywords.Default = promptEntityResult.StringResult;
 								break;
+							}
 							case PromptStatus.Cancel:
+							{
 								bStopCommand = true;
 								break;
+							}
 							case PromptStatus.OK:
+							{
 								Line pickedLine = transaction.GetObject(promptEntityResult.ObjectId, OpenMode.ForRead) as Line;
 
 								if (pickedLine == null)
@@ -81,6 +95,7 @@ namespace Ironwill
 								PlaceFitting(fittingName, fittingPosition, fittingRotation, fittingLayer);
 
 								break;
+							}
 						}
 
 						transaction.Commit();
@@ -91,19 +106,19 @@ namespace Ironwill
 
 		string GetFittingName()
 		{
-			switch (fittingTypeSetting.stringValue)
+			switch (settings[selectedFitting].GetAs<String>())
 			{
-				case ElbowKeyword:
+				case elbowKeyword:
 					return Blocks.Fitting_Elbow.Get();
-				case TeeKeyword:
+				case teeKeyword:
 					return Blocks.Fitting_Tee.Get();
-				case CapKeyword:
+				case capKeyword:
 					return Blocks.Fitting_Cap.Get();
-				case RiserKeyword:
+				case riserKeyword:
 					return Blocks.Fitting_Riser.Get();
-				case CouplingKeyword:
+				case couplingKeyword:
 					return Blocks.Fitting_GroovedCoupling.Get();
-				case ReducerKeyword:
+				case reducerKeyword:
 					return Blocks.Fitting_GroovedReducingCoupling.Get();
 			}
 

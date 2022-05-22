@@ -25,7 +25,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_OrientView")]
 		public void OrientViewCmd()
 		{
-			using (Transaction transaction = Session.GetTransactionManager().StartTransaction())
+			using (Transaction transaction = Session.StartTransaction())
 			{
 				Editor editor = Session.GetEditor();
 				Database database = Session.GetDatabase();
@@ -92,7 +92,7 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_ResetView")]
 		public void ResetViewCmd()
 		{
-			using (Transaction transaction = Session.GetTransactionManager().StartTransaction())
+			using (Transaction transaction = Session.StartTransaction())
 			{
 				Editor editor = Session.GetEditor();
 

@@ -85,13 +85,13 @@ namespace Ironwill
 
 					if (layer.IsFrozen)
 					{
-						Session.Log(String.Format("Warning: Layer {0} is frozen, can't switch!", layerName));
+						Session.Log("Warning: Layer {0} is frozen, can't switch!", layerName);
 						return false;
 					}
 
 					if (layer.IsOff)
 					{
-						Session.Log(String.Format("Warning: Layer {0} was off, turning layer on.", layerName));
+						Session.Log("Warning: Layer {0} was off, turning layer on.", layerName);
 						layer.UpgradeOpen();
 						layer.IsOff = false;
 						layer.DowngradeOpen();
@@ -103,7 +103,7 @@ namespace Ironwill
 					return true;
 				}
 
-				Session.Log(String.Format("Warning: Could not find layer {0}!", layerName));
+				Session.Log("Warning: Could not find layer {0}!", layerName);
 				return false;
 			}
 		}

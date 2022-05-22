@@ -23,10 +23,10 @@ using Autodesk.AutoCAD.Colors;
 
 namespace Ironwill
 {
-	public class AddSprinkler : DrawJig
+	internal class AddSprinkler : DrawJig
 	{
 		// Settings -----------------------------
-		static DictionaryPath dictionaryPath = new DictionaryPath("PlaceSprinkler");
+		static OBSOLETEDictionaryPath dictionaryPath = new OBSOLETEDictionaryPath("PlaceSprinkler");
 
 		BoolSetting tbarPlacement = new BoolSetting(dictionaryPath, "tbarPlacement", false);
 		DoubleSetting minRadius = new DoubleSetting(dictionaryPath, "minRadius", 0.0);
@@ -34,10 +34,10 @@ namespace Ironwill
 		DoubleSetting maxRadius2 = new DoubleSetting(dictionaryPath, "maxRadius2", 0.0);
 		
 		// TODO - global settings for layer names
-		StringSetting CeilingLayer = new StringSetting(dictionaryPath, "ceilingLayer", "CLNG");
-		StringSetting WallLayer = new StringSetting(dictionaryPath, "wallLayer", "WALL"); 
+		OBSOLETEStringSetting CeilingLayer = new OBSOLETEStringSetting(dictionaryPath, "ceilingLayer", "CLNG");
+		OBSOLETEStringSetting WallLayer = new OBSOLETEStringSetting(dictionaryPath, "wallLayer", "WALL"); 
 
-		StringSetting blockName = new StringSetting(dictionaryPath, "blockName", Blocks.Sprinkler_Head_02.Get());
+		OBSOLETEStringSetting blockName = new OBSOLETEStringSetting(dictionaryPath, "blockName", Blocks.Sprinkler_Head_02.Get());
 
 		const string CoverageStyleKeyword = "Style";
 		const string CoverageRadiusKeyword = "Radius";
@@ -606,6 +606,19 @@ namespace Ironwill
 					ceilingLine.ExtendBy(bStartFound ? 0.0 : extendAmount, bEndFound ? 0.0 : extendAmount);
 				}
 			}
+		}
+	}
+
+	internal class AddSprinklerJig : DrawJig
+	{
+		protected override SamplerStatus Sampler(JigPrompts prompts)
+		{
+			throw new NotImplementedException();
+		}
+
+		protected override bool WorldDraw(WorldDraw draw)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

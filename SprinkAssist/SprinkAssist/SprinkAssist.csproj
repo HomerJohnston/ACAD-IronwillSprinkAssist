@@ -165,14 +165,15 @@
     <Compile Include="Commands\AutoLabelNew.cs" />
     <Compile Include="Commands\AutoPublish.cs" />
     <Compile Include="Commands\CleanupDraworder.cs" />
+    <Compile Include="Commands\SprinkAssistCommand.cs" />
     <Compile Include="Commands\CountHeads.cs" />
-    <Compile Include="Commands\DeleteDraftAidPoints.cs" />
     <Compile Include="Commands\DrawPipe.cs" />
     <Compile Include="Commands\GenerateCalcBackground.cs" />
     <Compile Include="Commands\TestCmd.cs" />
     <Compile Include="Extensions\LineExtensions.cs" />
+    <Compile Include="Helpers\CommandSettings.cs" />
     <Compile Include="Helpers\Definitions\Colors.cs" />
-    <Compile Include="Helpers\Definitions\RecordDictionaries.cs" />
+    <Compile Include="Helpers\XRecordHelper.cs" />
     <Compile Include="Helpers\Drawing.cs" />
     <Compile Include="Helpers\LayerHelper.cs" />
     <Compile Include="Commands\AddSprinkler.cs" />
@@ -201,7 +202,7 @@
     </Compile>
     <Compile Include="Helpers\BlockOps.cs" />
     <Compile Include="Helpers\Definitions\Blocks.cs" />
-    <Compile Include="Helpers\DataStore.cs" />
+    <Compile Include="Helpers\OBSOLETEDataStore.cs" />
     <Compile Include="Helpers\Definitions\Layer.cs" />
     <Compile Include="Helpers\Linetypes.cs" />
     <Compile Include="Helpers\Math.cs" />
