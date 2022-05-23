@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Autodesk.AutoCAD.DatabaseServices;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,15 +9,11 @@ namespace Ironwill
 {
 	internal class SprinkAssistCommand
 	{
-		protected CommandSettingsContainer settings;
+		protected DBDictionary cmdSettings;
 
 		public SprinkAssistCommand()
 		{
-			string className = GetType().Name;
-
-			Session.LogDebug("new SprinkAssistCommand for {0}", className);
-
-			settings = new CommandSettingsContainer(className);
+			cmdSettings = XRecordLibrary.GetCommandDictionaryForClass(GetType());
 		}
 	}
 }

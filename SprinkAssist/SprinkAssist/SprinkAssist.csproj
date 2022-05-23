@@ -173,7 +173,8 @@
     <Compile Include="Extensions\LineExtensions.cs" />
     <Compile Include="Helpers\CommandSettings.cs" />
     <Compile Include="Helpers\Definitions\Colors.cs" />
-    <Compile Include="Helpers\XRecordHelper.cs" />
+    <Compile Include="Helpers\Drawing\CeilingProcessor.cs" />
+    <Compile Include="Helpers\XRecordLIbrary.cs" />
     <Compile Include="Helpers\Drawing.cs" />
     <Compile Include="Helpers\LayerHelper.cs" />
     <Compile Include="Commands\AddSprinkler.cs" />
@@ -206,7 +207,7 @@
     <Compile Include="Helpers\Definitions\Layer.cs" />
     <Compile Include="Helpers\Linetypes.cs" />
     <Compile Include="Helpers\Math.cs" />
-    <Compile Include="Helpers\ModelSpace.cs" />
+    <Compile Include="Helpers\Drawing\ModelSpaceHelper.cs" />
     <Compile Include="Helpers\PerformanceTester.cs" />
     <Compile Include="Helpers\Session.cs" />
     <Compile Include="Helpers\WorldUCS.cs" />
@@ -265,9 +266,7 @@
 copy /Y "$(TargetPath)" "$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Application\$(TargetFileName)"
 )
 
-if $(ConfigurationName) == Debug (
-copy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Application\$(TargetFileName)"
-)</PostBuildEvent>
+copy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Application\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if $(ConfigurationName) == Release (

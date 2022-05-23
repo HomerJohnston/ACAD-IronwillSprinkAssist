@@ -22,11 +22,11 @@ namespace Ironwill
 		const string closetKeyword = "Closet";
 		const string noneKeyword = "None";
 
-		const string roomType = "RoomType";
+		CommandSetting<string> roomTypeSetting;
 
 		public XRoom()
 		{
-			settings.AddSetting(roomType, bathroomKeyword);
+			roomTypeSetting = new CommandSetting<string>("RoomType", bathroomKeyword, cmdSettings);
 		}
 
 		bool IsValid(PromptPointResult promptPointResult)
@@ -48,8 +48,8 @@ namespace Ironwill
 
 		protected Point3d GetPoint(string prompt, out bool bStopCommand, out bool bAbortIteration)
 		{
-			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + settings[roomType].GetAs<String>() + ")");
-			promptPointOptions.Message = "Check " + settings[roomType].GetAs<String>();
+			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + roomTypeSetting.Get() + ")");
+			promptPointOptions.Message = "Check " + roomTypeSetting.Get();
 			promptPointOptions.AllowNone = true;
 			promptPointOptions.Keywords.Add("Closet");
 			promptPointOptions.Keywords.Add("Bathroom");
@@ -69,7 +69,7 @@ namespace Ironwill
 			{
 				case PromptStatus.Keyword:
 					Session.Log("Keyword");
-					settings[roomType].SetTo(promptPointResult.StringResult);
+					roomTypeSetting.Set(promptPointResult.StringResult);
 					bStopCommand = false;
 					bAbortIteration = true;
 					return new Point3d();
@@ -232,7 +232,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (settings[roomType].GetAs<String>())
+			switch (roomTypeSetting.Get())
 			{
 				case "Bathroom":
 					switch (units)
@@ -274,7 +274,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (settings[roomType].GetAs<String>())
+			switch (roomTypeSetting.Get())
 			{
 				case "Bathroom":
 					return double.MaxValue;

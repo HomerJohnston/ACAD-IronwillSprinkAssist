@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ironwill
 {
-	internal class XRecordHelper
+	internal class XRecordLibrary
 	{
 		protected const string sprinkAssistDictionaryName = "SprinkAssist";
 
@@ -18,7 +18,7 @@ namespace Ironwill
 		{
 			if (parent == null)
 			{
-				parent = GetSprinkAssistDictionary();
+				parent = GetGlobalDictionary();
 			}
 
 			using (Transaction transaction = Session.StartTransaction())
@@ -29,12 +29,12 @@ namespace Ironwill
 				}
 				catch
 				{
+					DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
 					DBDictionary namedDictionary = new DBDictionary();
 
-					parent.UpgradeOpen();
-					parent.SetAt(dictionaryName, namedDictionary);
+					parentMutable.SetAt(dictionaryName, namedDictionary);
 					transaction.AddNewlyCreatedDBObject(namedDictionary, true);
-					parent.DowngradeOpen();
 
 					transaction.Commit();
 
@@ -43,7 +43,7 @@ namespace Ironwill
 			}
 		}
 
-		static DBDictionary GetSprinkAssistDictionary()
+		public static DBDictionary GetGlobalDictionary()
 		{
 			using (Transaction transaction = Session.StartTransaction())
 			{
@@ -71,11 +71,25 @@ namespace Ironwill
 			}
 		}
 
+		public static DBDictionary GetCommandSettingsDictionary()
+		{
+			return GetNamedDictionary("CommandSettings");
+		}
+
+		public static DBDictionary GetCommandDictionaryForClass(Type command)
+		{
+			DBDictionary commandSettingsDictionary = GetCommandSettingsDictionary();
+
+			string commandName = command.Name;
+
+			return GetNamedDictionary(commandName, commandSettingsDictionary);
+		}
+
 		public static bool DestroyNamedDictionary(string dictionaryName, DBDictionary parent = null)
 		{
 			if (parent == null)
 			{
-				parent = GetSprinkAssistDictionary();
+				parent = GetGlobalDictionary();
 			}
 
 			using (Transaction transaction = Session.StartTransaction())
@@ -118,11 +132,9 @@ namespace Ironwill
 			{
 				Xrecord xrecord = new Xrecord();
 
-				dictionary.UpgradeOpen();
 				dictionary.SetAt(name, xrecord);
 				transaction.AddNewlyCreatedDBObject(xrecord, true);
-				dictionary.DowngradeOpen();
-
+				
 				return xrecord;
 			}
 		}
@@ -136,7 +148,9 @@ namespace Ironwill
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					Xrecord xrecord = GetXRecord(transaction, dictionary, xrecordName);
+					DBDictionary dictionaryMutable = transaction.GetObject(dictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
+					Xrecord xrecord = GetXRecord(transaction, dictionaryMutable, xrecordName);
 
 					xrecord.UpgradeOpen();
 

@@ -23,21 +23,17 @@ using Autodesk.AutoCAD.Colors;
 
 namespace Ironwill
 {
-	internal class AddSprinkler : DrawJig
+	internal class AddSprinkler : SprinkAssistCommand
 	{
 		// Settings -----------------------------
-		static OBSOLETEDictionaryPath dictionaryPath = new OBSOLETEDictionaryPath("PlaceSprinkler");
+		CommandSetting<bool> TBarPlacementSetting;
+		CommandSetting<double> MinRadiusSetting;
+		CommandSetting<double> MaxRadiusASetting;
+		CommandSetting<double> MaxRadiusBSetting;
 
-		BoolSetting tbarPlacement = new BoolSetting(dictionaryPath, "tbarPlacement", false);
-		DoubleSetting minRadius = new DoubleSetting(dictionaryPath, "minRadius", 0.0);
-		DoubleSetting maxRadius1 = new DoubleSetting(dictionaryPath, "maxRadius1", 0.0);
-		DoubleSetting maxRadius2 = new DoubleSetting(dictionaryPath, "maxRadius2", 0.0);
-		
-		// TODO - global settings for layer names
-		OBSOLETEStringSetting CeilingLayer = new OBSOLETEStringSetting(dictionaryPath, "ceilingLayer", "CLNG");
-		OBSOLETEStringSetting WallLayer = new OBSOLETEStringSetting(dictionaryPath, "wallLayer", "WALL"); 
-
-		OBSOLETEStringSetting blockName = new OBSOLETEStringSetting(dictionaryPath, "blockName", Blocks.Sprinkler_Head_02.Get());
+		CommandSetting<string> CeilingLayerSetting;
+		CommandSetting<string> WallLayerSetting;
+		CommandSetting<string> SprinklerBlockNameSetting;
 
 		const string CoverageStyleKeyword = "Style";
 		const string CoverageRadiusKeyword = "Radius";
@@ -49,10 +45,237 @@ namespace Ironwill
 		// State --------------------------------
 		List<Line> cachedCeilingLines = new List<Line>();
 		List<Line> cachedWallLines = new List<Line>();
+		ObjectId sprinklerBlockObjectId;
 
+		public AddSprinkler()
+		{
+			TBarPlacementSetting = new CommandSetting<bool>("TBarPlacement", true, cmdSettings);
+			MinRadiusSetting = new CommandSetting<double>("MinRadius", 1828, cmdSettings); // TODO metric conversion
+			MaxRadiusASetting = new CommandSetting<double>("MaxRadiusA", 2286, cmdSettings);
+			MaxRadiusBSetting = new CommandSetting<double>("MaxRadiusB", 2743, cmdSettings);
+			
+			CeilingLayerSetting = new CommandSetting<string>("CeilingLayer", "CLNG", cmdSettings); // TODO - global settings for sensing layers names
+			WallLayerSetting = new CommandSetting<string>("WallLayer", "WALL", cmdSettings);
+
+			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", Blocks.Sprinkler_Head_02.Get(), cmdSettings);
+		}
+
+		[CommandMethod("SpkAssist_AddSprinkler")]
+		public void AddSprinklerCmd()
+		{
+			GenerateCeilingGrid();
+
+			if (!EnsureValidSprinklerBlock())
+			{
+				Session.Log("Failed to find a valid sprinkler block!");
+				return;
+			}
+
+			Session.LogDebug("Selected object: " + sprinklerBlockObjectId.ToString());
+			
+			PromptResult promptResult;
+
+			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
+
+			AcApplication.SetSystemVariable("OSMODE", 0);
+
+			do
+			{
+				AddSprinklerJig jigger = new AddSprinklerJig(cachedCeilingLines, cachedWallLines, sprinklerBlockObjectId);
+
+				promptResult = Session.GetEditor().Drag(jigger);
+
+				using (Transaction transaction = Session.StartTransaction())
+				{
+					if (promptResult.Status == PromptStatus.OK)
+					{
+						BlockOps.CopyBlock(transaction, sprinklerBlockObjectId, jigger.snapPos);
+					}
+					transaction.Commit();
+				}
+			}
+			while (promptResult.Status == PromptStatus.OK);
+
+			AcApplication.SetSystemVariable("OSMODE", OSMODE);
+		}
+
+		private bool EnsureValidSprinklerBlock()
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				BlockReference blockReference = BlockOps.PickSprinkler(transaction, "Pick sprinkler type to place");
+
+				if (blockReference != null)
+				{
+					sprinklerBlockObjectId = blockReference.ObjectId;
+				}
+			}
+
+			return sprinklerBlockObjectId != ObjectId.Null;
+		}
+
+		static List<string> ceilingLayers;
+		static List<string> wallLayers;
+
+		private void GenerateCeilingGrid()
+		{
+			cachedCeilingLines.Clear();
+
+			ceilingLayers = LayerHelper.CollectLayersWithString(CeilingLayerSetting.Get()); // TODO: global settings for ceiling / wall layers
+			wallLayers = LayerHelper.CollectLayersWithString(WallLayerSetting.Get());
+
+			Database database = Session.GetDatabase();
+			ModelSpaceHelper.xxx = 0;
+			ModelSpaceHelper.ERecurseFlags recurseFlags = ModelSpaceHelper.ERecurseFlags.RecurseXrefs | ModelSpaceHelper.ERecurseFlags.RecurseBlocks;
+			ModelSpaceHelper.IterateAllEntities(database, recurseFlags, TryCacheEntity);
+
+			Session.LogDebug("Found " + cachedWallLines.Count + " wall lines");
+			Session.LogDebug("Found " + cachedCeilingLines.Count + " ceiling lines");
+
+			ProcessCeilingLines();
+		}
+		
+		void TryCacheEntity(Entity entity)
+		{
+			if (!wallLayers.Contains(entity.Layer) && !ceilingLayers.Contains(entity.Layer)) { return; }
+
+			if (TryCacheLine(entity)) { return; }
+
+			if (TryCachePolyline(entity)) { return; }
+
+			if (TryCacheHatch(entity)) { return; }
+		}
+
+		bool TryCacheLine(Entity entity)
+		{
+			Line line = entity as Line;
+
+			if (line == null)
+			{
+				return false;
+			}
+
+			Line lineCopy = new Line(line.StartPoint, line.EndPoint);
+
+			if (wallLayers.Contains(line.Layer))
+			{
+				if (line.Length > 300)
+				{
+					cachedWallLines.Add(lineCopy);
+				}
+			}
+			else if (ceilingLayers.Contains(line.Layer))
+			{
+				if (line.Length > 1250)
+				{
+					cachedCeilingLines.Add(lineCopy);
+				}
+			}
+
+			return true;
+		}
+
+		bool TryCachePolyline(Entity entity)
+		{
+			Polyline polyline = entity as Polyline;
+
+			if (polyline == null)
+			{
+				return false;
+			}
+
+			DBObjectCollection lineSegments = new DBObjectCollection();
+
+			polyline.Explode(lineSegments);
+
+			foreach (Entity lineSegment in lineSegments)
+			{
+				TryCacheEntity(lineSegment);
+			}
+
+			return true;
+		}
+
+		bool TryCacheHatch(Entity entity)
+		{
+			Hatch hatch = entity as Hatch;
+
+			if (hatch == null)
+			{
+				return false;
+			}
+
+			if (hatch.NumberOfHatchLines == 0 || hatch.HatchObjectType != HatchObjectType.HatchObject)
+			{
+				return true;
+			}
+
+			DBObjectCollection hatchObjects = new DBObjectCollection();
+
+			hatch.Explode(hatchObjects);
+
+			foreach (Entity hatchEntity in hatchObjects)
+			{
+				TryCacheEntity(hatchEntity);
+			}
+
+			return true;
+		}
+
+		private void ProcessCeilingLines()
+		{
+			// TODO imperial / metric
+			double equalPointTolerance = 2.0 * 2.0; // Tolerance.Global.EqualPoint * Tolerance.Global.EqualPoint;
+
+			foreach (Line ceilingLine in cachedCeilingLines)
+			{
+				bool bStartFound = false;
+				bool bEndFound = false;
+
+				Point3d startPoint = ceilingLine.StartPoint;
+				Point3d endPoint = ceilingLine.EndPoint;
+
+				foreach (Line wallLine in cachedWallLines)
+				{
+					if (!bStartFound)
+					{
+						Point3d closestPointToStart = wallLine.GetClosestPointTo(startPoint, false);
+						
+						if ((startPoint - closestPointToStart).LengthSqrd < equalPointTolerance)
+						{
+							bStartFound = true;
+						}
+					}
+
+					if (!bEndFound)
+					{
+						Point3d closestPointToEnd = wallLine.GetClosestPointTo(endPoint, false);
+
+						if ((endPoint - closestPointToEnd).LengthSqrd < equalPointTolerance)
+						{
+							bEndFound = true;
+						}
+					}
+
+					if (bStartFound && bEndFound)
+					{
+						break;
+					}
+				}
+
+				if (!bStartFound || !bEndFound)
+				{
+					// TODO imperial/metric
+					double extendAmount = 612.0;
+					ceilingLine.ExtendBy(bStartFound ? 0.0 : extendAmount, bEndFound ? 0.0 : extendAmount);
+				}
+			}
+		}
+	}
+
+	internal class AddSprinklerJig : DrawJig
+	{
 		Point3d cursorPos;
-		Point3d snapPos;
-		ObjectId sourceObject;
 
 		List<Vector3d> snapPoints = new List<Vector3d>();
 		List<Circle> snapPointMarkers = new List<Circle>();
@@ -66,49 +289,24 @@ namespace Ironwill
 		Circle placementCircle;
 		Circle coverageCircle;
 
-		[CommandMethod("SpkAssist_AddSprinkler")]
-		public void AddSprinklerCmd()
+		ObjectId sprinklerBlockObjectId;
+
+		public Point3d snapPos
 		{
-			GenerateCeilingGrid();
-
-			if (!EnsureSourceObjectIsValid())
-			{
-				Session.Log("Failed to find a valid sprinkler block!");
-				return;
-			}
-
-			Session.Log("Selected object: " + sourceObject.ToString());
-
-
-			
-			PromptResult promptResult;
-
-			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
-
-			AcApplication.SetSystemVariable("OSMODE", 0);
-
-			do
-			{
-				promptResult = Session.GetEditor().Drag(this);
-
-				using (Transaction transaction = Session.StartTransaction())
-				{
-					if (promptResult.Status == PromptStatus.OK)
-					{
-						BlockOps.CopyBlock(transaction, sourceObject, snapPos);
-					}
-					transaction.Commit();
-				}
-			}
-
-			while (promptResult.Status == PromptStatus.OK);
-
-			AcApplication.SetSystemVariable("OSMODE", OSMODE);
+			get;
+			private set;
 		}
 
-		// Constructor --------------------------
+		List<Line> cachedCeilingLines = new List<Line>();
+		List<Line> cachedWallLines = new List<Line>();
 
-		// API ----------------------------------
+		public AddSprinklerJig(List<Line> inCachedCeilingLines, List<Line> inCachedWallLines, ObjectId inSprinklerBlockObjectId)
+		{
+			cachedCeilingLines = inCachedCeilingLines;
+			cachedWallLines = inCachedWallLines;
+			sprinklerBlockObjectId = inSprinklerBlockObjectId;
+		}
+
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Click to place...");
@@ -265,11 +463,6 @@ namespace Ironwill
 				if (closest != null && closestDistance > 0)
 				{
 					snapPos = closest.Value;
-
-					if (sourceObject != null)
-					{
-						snapPos = closest.Value;
-					}
 				}
 			}
 			else
@@ -329,8 +522,8 @@ namespace Ironwill
 				marker.Center = debugPositions[i].Item1;
 				marker.Diameter = 10 + 5 * i;
 				marker.Color = Color.FromColorIndex(ColorMethod.ByAci, debugPositions[i].Item2);
-				
-				debugMarkers.Add(marker); 
+
+				debugMarkers.Add(marker);
 			}
 		}
 
@@ -417,208 +610,6 @@ namespace Ironwill
 			}
 
 			coverageCircle.Center = snapPos;
-		}
-
-		private bool EnsureSourceObjectIsValid()
-		{
-			//if (sourceObject == ObjectId.Null)
-			//{
-				using (Transaction transaction = Session.StartTransaction())
-				{
-					BlockReference blockReference = BlockOps.PickSprinkler(transaction, "Pick sprinkler type to place");
-
-					if (blockReference != null)
-					{
-						sourceObject = blockReference.ObjectId;
-					}
-				}
-			//}
-
-			return sourceObject != ObjectId.Null;
-		}
-
-		static List<string> ceilingLayers;
-		static List<string> wallLayers;
-
-		private void GenerateCeilingGrid()
-		{
-			cachedCeilingLines.Clear();
-
-			ceilingLayers = LayerHelper.CollectLayersWithString(CeilingLayer.stringValue);
-			wallLayers = LayerHelper.CollectLayersWithString(WallLayer.stringValue);
-
-			Database database = Session.GetDatabase();
-			ModelSpace.xxx = 0;
-			ModelSpace.ERecurseFlags recurseFlags = ModelSpace.ERecurseFlags.RecurseXrefs | ModelSpace.ERecurseFlags.RecurseBlocks;
-			ModelSpace.IterateAllEntities(database, recurseFlags, CacheRelevantEntity);
-
-			Session.LogDebug("Found " + cachedWallLines.Count + " wall lines");
-			Session.LogDebug("Found " + cachedCeilingLines.Count + " ceiling lines");
-
-			ProcessCeilingLines();
-		}
-
-		
-		void CacheRelevantEntity(Entity entity)
-		{
-			if (!wallLayers.Contains(entity.Layer) && !ceilingLayers.Contains(entity.Layer))
-			{
-				return;
-			}
-
-			if (TryCacheLine(entity))
-			{
-				return;
-			}
-
-			if (TryCachePolyline(entity))
-			{
-				return;
-			}
-
-			if (TryCacheHatch(entity))
-			{
-				return;
-			}
-		}
-
-		bool TryCacheLine(Entity entity)
-		{
-			Line line = entity as Line;
-
-			if (line == null)
-			{
-				return false;
-			}
-
-			Line lineCopy = new Line(line.StartPoint, line.EndPoint);
-
-			if (wallLayers.Contains(line.Layer))
-			{
-				if (line.Length > 300)
-				{
-					cachedWallLines.Add(lineCopy);
-				}
-			}
-			else if (ceilingLayers.Contains(line.Layer))
-			{
-				if (line.Length > 1250)
-				{
-					cachedCeilingLines.Add(lineCopy);
-				}
-			}
-
-			return true;
-		}
-
-		bool TryCachePolyline(Entity entity)
-		{
-			Polyline polyline = entity as Polyline;
-
-			if (polyline == null)
-			{
-				return false;
-			}
-
-			DBObjectCollection lineSegments = new DBObjectCollection();
-
-			polyline.Explode(lineSegments);
-
-			foreach (Entity lineSegment in lineSegments)
-			{
-				CacheRelevantEntity(lineSegment);
-			}
-
-			return true;
-		}
-
-		bool TryCacheHatch(Entity entity)
-		{
-			Hatch hatch = entity as Hatch;
-
-			if (hatch == null)
-			{
-				return false;
-			}
-
-			if (hatch.NumberOfHatchLines == 0 || hatch.HatchObjectType != HatchObjectType.HatchObject)
-			{
-				return true;
-			}
-
-			DBObjectCollection hatchObjects = new DBObjectCollection();
-
-			hatch.Explode(hatchObjects);
-
-			foreach (Entity hatchEntity in hatchObjects)
-			{
-				CacheRelevantEntity(hatchEntity);
-			}
-
-			return true;
-		}
-
-		private void ProcessCeilingLines()
-		{
-			// TODO imperial / metric
-			double equalPointTolerance = 2.0 * 2.0; // Tolerance.Global.EqualPoint * Tolerance.Global.EqualPoint;
-
-			foreach (Line ceilingLine in cachedCeilingLines)
-			{
-				bool bStartFound = false;
-				bool bEndFound = false;
-
-				Point3d startPoint = ceilingLine.StartPoint;
-				Point3d endPoint = ceilingLine.EndPoint;
-
-				foreach (Line wallLine in cachedWallLines)
-				{
-					if (!bStartFound)
-					{
-						Point3d closestPointToStart = wallLine.GetClosestPointTo(startPoint, false);
-						
-						if ((startPoint - closestPointToStart).LengthSqrd < equalPointTolerance)
-						{
-							bStartFound = true;
-						}
-					}
-
-					if (!bEndFound)
-					{
-						Point3d closestPointToEnd = wallLine.GetClosestPointTo(endPoint, false);
-
-						if ((endPoint - closestPointToEnd).LengthSqrd < equalPointTolerance)
-						{
-							bEndFound = true;
-						}
-					}
-
-					if (bStartFound && bEndFound)
-					{
-						break;
-					}
-				}
-
-				if (!bStartFound || !bEndFound)
-				{
-					// TODO imperial/metric
-					double extendAmount = 612.0;
-					ceilingLine.ExtendBy(bStartFound ? 0.0 : extendAmount, bEndFound ? 0.0 : extendAmount);
-				}
-			}
-		}
-	}
-
-	internal class AddSprinklerJig : DrawJig
-	{
-		protected override SamplerStatus Sampler(JigPrompts prompts)
-		{
-			throw new NotImplementedException();
-		}
-
-		protected override bool WorldDraw(WorldDraw draw)
-		{
-			throw new NotImplementedException();
 		}
 	}
 }

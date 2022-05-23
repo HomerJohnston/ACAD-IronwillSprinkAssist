@@ -27,27 +27,26 @@ namespace Ironwill
 
 		const string selectedFitting = "SelectedFitting";
 
-		CommandSettingsContainer pipeGroups;
-
 		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { elbowKeyword, teeKeyword, capKeyword, riserKeyword, reducerKeyword, couplingKeyword } );
+
+		CommandSetting<string> selectedFittingSetting;
 
 		public AddFitting()
 		{
-			settings.AddSetting(selectedFitting, elbowKeyword);
+			selectedFittingSetting = new CommandSetting<string>("SelectedFitting", elbowKeyword, cmdSettings);
 		}
 
 		[CommandMethod("SpkAssist_AddFitting")]
 		public void AddFittingCmd()
 		{
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + settings[selectedFitting].GetAs<String>());
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + selectedFittingSetting.Get());
 
 			foreach (string key in Keywords)
 			{
 				promptEntityOptions.Keywords.Add(key);
 			}
 
-			//promptEntityOptions.Keywords.Default = settings.Get<String>(selectedFittingSetting);
-			promptEntityOptions.Keywords.Default = settings[selectedFitting].GetAs<String>();
+			promptEntityOptions.Keywords.Default = selectedFittingSetting.Get();
 
 			bool bStopCommand = false;
 
@@ -64,7 +63,7 @@ namespace Ironwill
 							case PromptStatus.Keyword:
 							{
 								//fittingTypeSetting.Set(promptEntityResult.StringResult);
-								settings[selectedFitting].SetTo(promptEntityResult.StringResult);
+								selectedFittingSetting.Set(promptEntityResult.StringResult);
 								promptEntityOptions.Message = "Place " + promptEntityResult.StringResult;
 								promptEntityOptions.Keywords.Default = promptEntityResult.StringResult;
 								break;
@@ -106,7 +105,7 @@ namespace Ironwill
 
 		string GetFittingName()
 		{
-			switch (settings[selectedFitting].GetAs<String>())
+			switch (selectedFittingSetting.Get())
 			{
 				case elbowKeyword:
 					return Blocks.Fitting_Elbow.Get();

@@ -43,11 +43,11 @@ namespace Ironwill
 
 				PipeGroupDialog pipeGroupDialog = new PipeGroupDialog();
 				pipeGroupDialog.TopLevel = true;
-
+/*
 				if (AcApplication.ShowModalDialog(pipeGroupDialog) == DialogResult.OK);
 				{
 
-				}
+				}*/
 
 				PipeGroup newPipeGroup = pipeGroupDialog.pipeGroup;
 

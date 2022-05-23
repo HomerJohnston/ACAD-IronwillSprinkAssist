@@ -24,10 +24,8 @@ namespace Ironwill
 					arrayJig.DrawArray();
 				}
 			}
-			catch (System.Exception ex)
+			catch
 			{
-				//CadApp.ShowAlertDialog(
-				//	$"Error:\n{ex.Message}");
 			}
 		}
 	}

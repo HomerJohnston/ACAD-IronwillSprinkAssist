@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Ironwill
 {
-	internal class ModelSpace
+	internal class ModelSpaceHelper
 	{
 		[Flags]
 		public enum ERecurseFlags
