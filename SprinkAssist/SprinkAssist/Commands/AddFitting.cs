@@ -39,22 +39,30 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_AddFitting")]
 		public void AddFittingCmd()
 		{
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + selectedFittingSetting.Get());
+			bool bStopCommand = false;
+
+			string selectedFittingInitialSetting;
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				selectedFittingInitialSetting = selectedFittingSetting.Get(transaction);
+				transaction.Commit();
+			}
+
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + selectedFittingInitialSetting);
 
 			foreach (string key in Keywords)
 			{
 				promptEntityOptions.Keywords.Add(key);
 			}
 
-			promptEntityOptions.Keywords.Default = selectedFittingSetting.Get();
-
-			bool bStopCommand = false;
+			promptEntityOptions.Keywords.Default = selectedFittingInitialSetting;
 
 			using (new WorldUCS())
 			{
 				while (!bStopCommand)
 				{
-					using (Transaction transaction = Session.StartTransaction())
+					using (Transaction transaction2 = Session.StartTransaction())
 					{
 						PromptEntityResult promptEntityResult = Session.GetEditor().GetEntity(promptEntityOptions);
 
@@ -62,8 +70,7 @@ namespace Ironwill
 						{
 							case PromptStatus.Keyword:
 							{
-								//fittingTypeSetting.Set(promptEntityResult.StringResult);
-								selectedFittingSetting.Set(promptEntityResult.StringResult);
+								selectedFittingSetting.Set(transaction2, promptEntityResult.StringResult);
 								promptEntityOptions.Message = "Place " + promptEntityResult.StringResult;
 								promptEntityOptions.Keywords.Default = promptEntityResult.StringResult;
 								break;
@@ -75,7 +82,7 @@ namespace Ironwill
 							}
 							case PromptStatus.OK:
 							{
-								Line pickedLine = transaction.GetObject(promptEntityResult.ObjectId, OpenMode.ForRead) as Line;
+								Line pickedLine = transaction2.GetObject(promptEntityResult.ObjectId, OpenMode.ForRead) as Line;
 
 								if (pickedLine == null)
 								{
@@ -86,8 +93,8 @@ namespace Ironwill
 								Point3d cursorPoint = promptEntityResult.PickedPoint;
 								Point3d fittingPosition;
 
-								string fittingName = GetFittingName();
-								bool succ = FindPlacementPoint(transaction, cursorPoint, pickedLine, out fittingPosition);
+								string fittingName = GetFittingName(transaction2);
+								bool succ = FindPlacementPoint(transaction2, cursorPoint, pickedLine, out fittingPosition);
 								double fittingRotation = GetFittingRotation(cursorPoint, fittingPosition, pickedLine);
 								string fittingLayer = pickedLine.Layer;
 
@@ -97,15 +104,15 @@ namespace Ironwill
 							}
 						}
 
-						transaction.Commit();
+						transaction2.Commit();
 					}
 				}
 			}
 		}
 
-		string GetFittingName()
+		string GetFittingName(Transaction transaction)
 		{
-			switch (selectedFittingSetting.Get())
+			switch (selectedFittingSetting.Get(transaction))
 			{
 				case elbowKeyword:
 					return Blocks.Fitting_Elbow.Get();

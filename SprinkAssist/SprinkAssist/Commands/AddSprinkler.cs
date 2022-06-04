@@ -63,40 +63,43 @@ namespace Ironwill
 		[CommandMethod("SpkAssist_AddSprinkler")]
 		public void AddSprinklerCmd()
 		{
-			GenerateCeilingGrid();
-
-			if (!EnsureValidSprinklerBlock())
+			using (Transaction transaction = Session.StartTransaction())
 			{
-				Session.Log("Failed to find a valid sprinkler block!");
-				return;
-			}
+				GenerateCeilingGrid(transaction);
 
-			Session.LogDebug("Selected object: " + sprinklerBlockObjectId.ToString());
-			
-			PromptResult promptResult;
-
-			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
-
-			AcApplication.SetSystemVariable("OSMODE", 0);
-
-			do
-			{
-				AddSprinklerJig jigger = new AddSprinklerJig(cachedCeilingLines, cachedWallLines, sprinklerBlockObjectId);
-
-				promptResult = Session.GetEditor().Drag(jigger);
-
-				using (Transaction transaction = Session.StartTransaction())
+				if (!EnsureValidSprinklerBlock())
 				{
+					Session.Log("Failed to find a valid sprinkler block!");
+					return;
+				}
+
+				Session.LogDebug("Selected object: " + sprinklerBlockObjectId.ToString());
+
+				PromptResult promptResult;
+
+				int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
+
+				AcApplication.SetSystemVariable("OSMODE", 0);
+
+				do
+				{
+					AddSprinklerJig jigger = new AddSprinklerJig(cachedCeilingLines, cachedWallLines, sprinklerBlockObjectId);
+
+					promptResult = Session.GetEditor().Drag(jigger);
+
 					if (promptResult.Status == PromptStatus.OK)
 					{
 						BlockOps.CopyBlock(transaction, sprinklerBlockObjectId, jigger.snapPos);
 					}
 					transaction.Commit();
-				}
-			}
-			while (promptResult.Status == PromptStatus.OK);
 
-			AcApplication.SetSystemVariable("OSMODE", OSMODE);
+				}
+				while (promptResult.Status == PromptStatus.OK);
+
+				AcApplication.SetSystemVariable("OSMODE", OSMODE);
+
+				transaction.Commit();
+			}
 		}
 
 		private bool EnsureValidSprinklerBlock()
@@ -117,12 +120,12 @@ namespace Ironwill
 		static List<string> ceilingLayers;
 		static List<string> wallLayers;
 
-		private void GenerateCeilingGrid()
+		private void GenerateCeilingGrid(Transaction transaction)
 		{
 			cachedCeilingLines.Clear();
 
-			ceilingLayers = LayerHelper.CollectLayersWithString(CeilingLayerSetting.Get()); // TODO: global settings for ceiling / wall layers
-			wallLayers = LayerHelper.CollectLayersWithString(WallLayerSetting.Get());
+			ceilingLayers = LayerHelper.CollectLayersWithString(CeilingLayerSetting.Get(transaction)); // TODO: global settings for ceiling / wall layers
+			wallLayers = LayerHelper.CollectLayersWithString(WallLayerSetting.Get(transaction));
 
 			Database database = Session.GetDatabase();
 			ModelSpaceHelper.xxx = 0;

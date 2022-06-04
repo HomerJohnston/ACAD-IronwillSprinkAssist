@@ -13,7 +13,11 @@ namespace Ironwill
 
 		public SprinkAssistCommand()
 		{
-			cmdSettings = XRecordLibrary.GetCommandDictionaryForClass(GetType());
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				cmdSettings = XRecordLibrary.GetCommandDictionaryForClass(transaction, GetType());
+				transaction.Commit();
+			}
 		}
 	}
 }

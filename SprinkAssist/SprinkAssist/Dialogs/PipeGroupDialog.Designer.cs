@@ -28,162 +28,170 @@
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.labelBranchlines = new System.Windows.Forms.Label();
-			this.buttonCancel = new System.Windows.Forms.Button();
-			this.textBoxMains = new System.Windows.Forms.TextBox();
-			this.textBoxBranchlines = new System.Windows.Forms.TextBox();
-			this.labelMains = new System.Windows.Forms.Label();
-			this.textBoxName = new System.Windows.Forms.TextBox();
-			this.textBoxArmovers = new System.Windows.Forms.TextBox();
-			this.labelArmovers = new System.Windows.Forms.Label();
-			this.buttonSave = new System.Windows.Forms.Button();
-			this.labelName = new System.Windows.Forms.Label();
-			this.labelDrains = new System.Windows.Forms.Label();
-			this.textBoxDrains = new System.Windows.Forms.TextBox();
+			this.Label_Branchlines = new System.Windows.Forms.Label();
+			this.Button_Cancel = new System.Windows.Forms.Button();
+			this.TextBox_Mains = new System.Windows.Forms.TextBox();
+			this.TextBox_Branchlines = new System.Windows.Forms.TextBox();
+			this.Label_Mains = new System.Windows.Forms.Label();
+			this.TextBox_GroupName = new System.Windows.Forms.TextBox();
+			this.TextBox_Armovers = new System.Windows.Forms.TextBox();
+			this.Label_Armovers = new System.Windows.Forms.Label();
+			this.Button_Save = new System.Windows.Forms.Button();
+			this.Label_Name = new System.Windows.Forms.Label();
+			this.Label_Drains = new System.Windows.Forms.Label();
+			this.TextBox_Drains = new System.Windows.Forms.TextBox();
+			this.Label_BranchlineRisers = new System.Windows.Forms.Label();
+			this.TextBox_BranchlineRisers = new System.Windows.Forms.TextBox();
 			this.SuspendLayout();
 			// 
-			// labelBranchlines
+			// Label_Branchlines
 			// 
-			this.labelBranchlines.AutoSize = true;
-			this.labelBranchlines.Location = new System.Drawing.Point(16, 80);
-			this.labelBranchlines.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.labelBranchlines.Name = "labelBranchlines";
-			this.labelBranchlines.Size = new System.Drawing.Size(82, 17);
-			this.labelBranchlines.TabIndex = 29;
-			this.labelBranchlines.Text = "Branchlines";
-			this.labelBranchlines.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			this.Label_Branchlines.AutoSize = true;
+			this.Label_Branchlines.Location = new System.Drawing.Point(12, 65);
+			this.Label_Branchlines.Name = "Label_Branchlines";
+			this.Label_Branchlines.Size = new System.Drawing.Size(62, 13);
+			this.Label_Branchlines.TabIndex = 29;
+			this.Label_Branchlines.Text = "Branchlines";
+			this.Label_Branchlines.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
-			// buttonCancel
+			// Button_Cancel
 			// 
-			this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.buttonCancel.Location = new System.Drawing.Point(16, 203);
-			this.buttonCancel.Margin = new System.Windows.Forms.Padding(4);
-			this.buttonCancel.Name = "buttonCancel";
-			this.buttonCancel.Size = new System.Drawing.Size(79, 28);
-			this.buttonCancel.TabIndex = 7;
-			this.buttonCancel.Text = "Cancel";
-			this.buttonCancel.UseVisualStyleBackColor = true;
+			this.Button_Cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+			this.Button_Cancel.Location = new System.Drawing.Point(12, 165);
+			this.Button_Cancel.Name = "Button_Cancel";
+			this.Button_Cancel.Size = new System.Drawing.Size(59, 23);
+			this.Button_Cancel.TabIndex = 7;
+			this.Button_Cancel.Text = "Cancel";
+			this.Button_Cancel.UseVisualStyleBackColor = true;
 			// 
-			// textBoxMains
+			// TextBox_Mains
 			// 
-			this.textBoxMains.Location = new System.Drawing.Point(117, 102);
-			this.textBoxMains.Margin = new System.Windows.Forms.Padding(4);
-			this.textBoxMains.Name = "textBoxMains";
-			this.textBoxMains.Size = new System.Drawing.Size(93, 22);
-			this.textBoxMains.TabIndex = 30;
+			this.TextBox_Mains.Location = new System.Drawing.Point(88, 104);
+			this.TextBox_Mains.Name = "TextBox_Mains";
+			this.TextBox_Mains.Size = new System.Drawing.Size(71, 20);
+			this.TextBox_Mains.TabIndex = 30;
 			// 
-			// textBoxBranchlines
+			// TextBox_Branchlines
 			// 
-			this.textBoxBranchlines.Location = new System.Drawing.Point(117, 76);
-			this.textBoxBranchlines.Margin = new System.Windows.Forms.Padding(4);
-			this.textBoxBranchlines.Name = "textBoxBranchlines";
-			this.textBoxBranchlines.Size = new System.Drawing.Size(93, 22);
-			this.textBoxBranchlines.TabIndex = 28;
+			this.TextBox_Branchlines.Location = new System.Drawing.Point(88, 62);
+			this.TextBox_Branchlines.Name = "TextBox_Branchlines";
+			this.TextBox_Branchlines.Size = new System.Drawing.Size(71, 20);
+			this.TextBox_Branchlines.TabIndex = 28;
 			// 
-			// labelMains
+			// Label_Mains
 			// 
-			this.labelMains.AutoSize = true;
-			this.labelMains.Location = new System.Drawing.Point(16, 106);
-			this.labelMains.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.labelMains.Name = "labelMains";
-			this.labelMains.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.labelMains.Size = new System.Drawing.Size(45, 17);
-			this.labelMains.TabIndex = 31;
-			this.labelMains.Text = "Mains";
-			this.labelMains.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			this.Label_Mains.AutoSize = true;
+			this.Label_Mains.Location = new System.Drawing.Point(12, 107);
+			this.Label_Mains.Name = "Label_Mains";
+			this.Label_Mains.RightToLeft = System.Windows.Forms.RightToLeft.No;
+			this.Label_Mains.Size = new System.Drawing.Size(35, 13);
+			this.Label_Mains.TabIndex = 31;
+			this.Label_Mains.Text = "Mains";
+			this.Label_Mains.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
-			// textBoxName
+			// TextBox_GroupName
 			// 
-			this.textBoxName.Location = new System.Drawing.Point(117, 12);
-			this.textBoxName.Margin = new System.Windows.Forms.Padding(4);
-			this.textBoxName.Name = "textBoxName";
-			this.textBoxName.Size = new System.Drawing.Size(93, 22);
-			this.textBoxName.TabIndex = 9;
+			this.TextBox_GroupName.Location = new System.Drawing.Point(88, 10);
+			this.TextBox_GroupName.Name = "TextBox_GroupName";
+			this.TextBox_GroupName.Size = new System.Drawing.Size(71, 20);
+			this.TextBox_GroupName.TabIndex = 9;
 			// 
-			// textBoxArmovers
+			// TextBox_Armovers
 			// 
-			this.textBoxArmovers.Location = new System.Drawing.Point(117, 50);
-			this.textBoxArmovers.Margin = new System.Windows.Forms.Padding(4);
-			this.textBoxArmovers.Name = "textBoxArmovers";
-			this.textBoxArmovers.Size = new System.Drawing.Size(93, 22);
-			this.textBoxArmovers.TabIndex = 26;
+			this.TextBox_Armovers.Location = new System.Drawing.Point(88, 41);
+			this.TextBox_Armovers.Name = "TextBox_Armovers";
+			this.TextBox_Armovers.Size = new System.Drawing.Size(71, 20);
+			this.TextBox_Armovers.TabIndex = 26;
 			// 
-			// labelArmovers
+			// Label_Armovers
 			// 
-			this.labelArmovers.AutoSize = true;
-			this.labelArmovers.Location = new System.Drawing.Point(16, 54);
-			this.labelArmovers.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.labelArmovers.Name = "labelArmovers";
-			this.labelArmovers.Size = new System.Drawing.Size(68, 17);
-			this.labelArmovers.TabIndex = 27;
-			this.labelArmovers.Text = "Armovers";
-			this.labelArmovers.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			this.Label_Armovers.AutoSize = true;
+			this.Label_Armovers.Location = new System.Drawing.Point(12, 44);
+			this.Label_Armovers.Name = "Label_Armovers";
+			this.Label_Armovers.Size = new System.Drawing.Size(51, 13);
+			this.Label_Armovers.TabIndex = 27;
+			this.Label_Armovers.Text = "Armovers";
+			this.Label_Armovers.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
-			// buttonSave
+			// Button_Save
 			// 
-			this.buttonSave.DialogResult = System.Windows.Forms.DialogResult.OK;
-			this.buttonSave.Location = new System.Drawing.Point(133, 203);
-			this.buttonSave.Margin = new System.Windows.Forms.Padding(4);
-			this.buttonSave.Name = "buttonSave";
-			this.buttonSave.Size = new System.Drawing.Size(79, 28);
-			this.buttonSave.TabIndex = 32;
-			this.buttonSave.Text = "Save";
-			this.buttonSave.UseVisualStyleBackColor = true;
-			this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
+			this.Button_Save.DialogResult = System.Windows.Forms.DialogResult.OK;
+			this.Button_Save.Location = new System.Drawing.Point(100, 165);
+			this.Button_Save.Name = "Button_Save";
+			this.Button_Save.Size = new System.Drawing.Size(59, 23);
+			this.Button_Save.TabIndex = 32;
+			this.Button_Save.Text = "Save";
+			this.Button_Save.UseVisualStyleBackColor = true;
+			this.Button_Save.Click += new System.EventHandler(this.Button_Save_Click);
 			// 
-			// labelName
+			// Label_Name
 			// 
-			this.labelName.AutoSize = true;
-			this.labelName.Location = new System.Drawing.Point(16, 16);
-			this.labelName.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.labelName.Name = "labelName";
-			this.labelName.Size = new System.Drawing.Size(45, 17);
-			this.labelName.TabIndex = 33;
-			this.labelName.Text = "Name";
-			this.labelName.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			this.Label_Name.AutoSize = true;
+			this.Label_Name.Location = new System.Drawing.Point(12, 13);
+			this.Label_Name.Name = "Label_Name";
+			this.Label_Name.Size = new System.Drawing.Size(35, 13);
+			this.Label_Name.TabIndex = 33;
+			this.Label_Name.Text = "Name";
+			this.Label_Name.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
-			// labelDrains
+			// Label_Drains
 			// 
-			this.labelDrains.AutoSize = true;
-			this.labelDrains.Location = new System.Drawing.Point(16, 132);
-			this.labelDrains.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-			this.labelDrains.Name = "labelDrains";
-			this.labelDrains.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.labelDrains.Size = new System.Drawing.Size(49, 17);
-			this.labelDrains.TabIndex = 35;
-			this.labelDrains.Text = "Drains";
-			this.labelDrains.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			this.Label_Drains.AutoSize = true;
+			this.Label_Drains.Location = new System.Drawing.Point(12, 128);
+			this.Label_Drains.Name = "Label_Drains";
+			this.Label_Drains.RightToLeft = System.Windows.Forms.RightToLeft.No;
+			this.Label_Drains.Size = new System.Drawing.Size(37, 13);
+			this.Label_Drains.TabIndex = 35;
+			this.Label_Drains.Text = "Drains";
+			this.Label_Drains.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
-			// textBoxDrains
+			// TextBox_Drains
 			// 
-			this.textBoxDrains.Location = new System.Drawing.Point(117, 128);
-			this.textBoxDrains.Margin = new System.Windows.Forms.Padding(4);
-			this.textBoxDrains.Name = "textBoxDrains";
-			this.textBoxDrains.Size = new System.Drawing.Size(93, 22);
-			this.textBoxDrains.TabIndex = 34;
+			this.TextBox_Drains.Location = new System.Drawing.Point(88, 125);
+			this.TextBox_Drains.Name = "TextBox_Drains";
+			this.TextBox_Drains.Size = new System.Drawing.Size(71, 20);
+			this.TextBox_Drains.TabIndex = 34;
+			// 
+			// Label_BranchlineRisers
+			// 
+			this.Label_BranchlineRisers.AutoSize = true;
+			this.Label_BranchlineRisers.Location = new System.Drawing.Point(22, 86);
+			this.Label_BranchlineRisers.Name = "Label_BranchlineRisers";
+			this.Label_BranchlineRisers.Size = new System.Drawing.Size(36, 13);
+			this.Label_BranchlineRisers.TabIndex = 37;
+			this.Label_BranchlineRisers.Text = "Risers";
+			this.Label_BranchlineRisers.TextAlign = System.Drawing.ContentAlignment.TopRight;
+			// 
+			// TextBox_BranchlineRisers
+			// 
+			this.TextBox_BranchlineRisers.Location = new System.Drawing.Point(98, 83);
+			this.TextBox_BranchlineRisers.Name = "TextBox_BranchlineRisers";
+			this.TextBox_BranchlineRisers.Size = new System.Drawing.Size(61, 20);
+			this.TextBox_BranchlineRisers.TabIndex = 36;
 			// 
 			// PipeGroupDialog
 			// 
-			this.AcceptButton = this.buttonSave;
-			this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+			this.AcceptButton = this.Button_Save;
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.CancelButton = this.buttonCancel;
-			this.ClientSize = new System.Drawing.Size(231, 246);
+			this.CancelButton = this.Button_Cancel;
+			this.ClientSize = new System.Drawing.Size(173, 200);
 			this.ControlBox = false;
-			this.Controls.Add(this.labelDrains);
-			this.Controls.Add(this.textBoxDrains);
-			this.Controls.Add(this.labelName);
-			this.Controls.Add(this.buttonSave);
-			this.Controls.Add(this.labelArmovers);
-			this.Controls.Add(this.textBoxArmovers);
-			this.Controls.Add(this.buttonCancel);
-			this.Controls.Add(this.textBoxName);
-			this.Controls.Add(this.labelBranchlines);
-			this.Controls.Add(this.labelMains);
-			this.Controls.Add(this.textBoxMains);
-			this.Controls.Add(this.textBoxBranchlines);
+			this.Controls.Add(this.Label_BranchlineRisers);
+			this.Controls.Add(this.TextBox_BranchlineRisers);
+			this.Controls.Add(this.Label_Drains);
+			this.Controls.Add(this.TextBox_Drains);
+			this.Controls.Add(this.Label_Name);
+			this.Controls.Add(this.Button_Save);
+			this.Controls.Add(this.Label_Armovers);
+			this.Controls.Add(this.TextBox_Armovers);
+			this.Controls.Add(this.Button_Cancel);
+			this.Controls.Add(this.TextBox_GroupName);
+			this.Controls.Add(this.Label_Branchlines);
+			this.Controls.Add(this.Label_Mains);
+			this.Controls.Add(this.TextBox_Mains);
+			this.Controls.Add(this.TextBox_Branchlines);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-			this.Margin = new System.Windows.Forms.Padding(4);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "PipeGroupDialog";
@@ -197,17 +205,19 @@
 		}
 
 		#endregion
-		private System.Windows.Forms.Label labelBranchlines;
-		private System.Windows.Forms.Button buttonCancel;
-		private System.Windows.Forms.TextBox textBoxMains;
-		private System.Windows.Forms.TextBox textBoxBranchlines;
-		private System.Windows.Forms.Label labelMains;
-		private System.Windows.Forms.TextBox textBoxName;
-		private System.Windows.Forms.TextBox textBoxArmovers;
-		private System.Windows.Forms.Label labelArmovers;
-		private System.Windows.Forms.Button buttonSave;
-		private System.Windows.Forms.Label labelName;
-		private System.Windows.Forms.Label labelDrains;
-		private System.Windows.Forms.TextBox textBoxDrains;
+		private System.Windows.Forms.Label Label_Branchlines;
+		private System.Windows.Forms.Button Button_Cancel;
+		private System.Windows.Forms.TextBox TextBox_Mains;
+		private System.Windows.Forms.TextBox TextBox_Branchlines;
+		private System.Windows.Forms.Label Label_Mains;
+		private System.Windows.Forms.TextBox TextBox_GroupName;
+		private System.Windows.Forms.TextBox TextBox_Armovers;
+		private System.Windows.Forms.Label Label_Armovers;
+		private System.Windows.Forms.Button Button_Save;
+		private System.Windows.Forms.Label Label_Name;
+		private System.Windows.Forms.Label Label_Drains;
+		private System.Windows.Forms.TextBox TextBox_Drains;
+		private System.Windows.Forms.Label Label_BranchlineRisers;
+		private System.Windows.Forms.TextBox TextBox_BranchlineRisers;
 	}
 }

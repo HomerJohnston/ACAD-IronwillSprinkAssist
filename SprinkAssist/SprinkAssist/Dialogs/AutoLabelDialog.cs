@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Autodesk.AutoCAD.ApplicationServices;
 
 [assembly: CommandClass(typeof(Ironwill.AutoLabelDialog))]
 
@@ -19,49 +20,20 @@ namespace Ironwill
 	public partial class AutoLabelDialog : Form
 	{
 		// State
-		Transaction transaction = null;
 		static int selectedGroupIndex;
 
 		// Constructors/Destructors
-		public AutoLabelDialog(Transaction transaction)
+		public AutoLabelDialog()
 		{
-			this.transaction = transaction;
 			InitializeComponent();
 		}
 
 		~AutoLabelDialog()
 		{
-			transaction = null;
-		}
-
-		// Methods
-		private void buttonAddNewGroup_Click(object sender, EventArgs e)
-		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				//PipeGroup newGroup = PipeGroup.CreateNew();
-
-				PipeGroupDialog pipeGroupDialog = new PipeGroupDialog();
-				pipeGroupDialog.TopLevel = true;
-/*
-				if (AcApplication.ShowModalDialog(pipeGroupDialog) == DialogResult.OK);
-				{
-
-				}*/
-
-				PipeGroup newPipeGroup = pipeGroupDialog.pipeGroup;
-
-				transaction.Commit();
-			}
-
-			UpdatePipeGroupList();
-
-			// If OK, save it, otherwise ignore
 		}
 
 		private void AutoLabelDialog_Load(object sender, EventArgs e)
 		{
-			//TestCreatePipeGroup();
 			UpdatePipeGroupList();
 		}
 		
@@ -69,36 +41,39 @@ namespace Ironwill
 		{
 			listBoxPipeGroup.Items.Clear();
 
-			OBSOLETEDictionaryPath pipeGroupsPath = new OBSOLETEDictionaryPath("PipeGroups");
-
-			DBDictionary pipeGroupsDictionary = OBSOLETEDataStore.GetDictionary(transaction, pipeGroupsPath);
-
-			if (pipeGroupsDictionary == null)
+			using (Transaction transaction = Session.StartTransaction())
 			{
-				return;
-			}
+				DBDictionary pipeGroupsDictionary = XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
 
-			foreach(DBDictionaryEntry pipeGroupEntry in pipeGroupsDictionary)
-			{
-				string groupID = pipeGroupEntry.Key;
-
-				string groupName = OBSOLETEDataStore.GetXrecordString(new OBSOLETEDictionaryPath(pipeGroupsPath, groupID), "Name", "___NULLGROUP___");
-				
-				if (groupName != "___NULLGROUP___")
+				if (pipeGroupsDictionary == null)
 				{
-					listBoxPipeGroup.Items.Add(groupName);
+					return;
 				}
+
+				foreach (DBDictionaryEntry pipeGroupEntry in pipeGroupsDictionary)
+				{
+					string groupName = pipeGroupEntry.Key;
+
+					if (groupName != "___NULLGROUP___")
+					{
+						listBoxPipeGroup.Items.Add(groupName);
+					}
+				}
+
+				transaction.Commit();
 			}
 		}
 
 		private void UpdateDialog()
 		{
-			string selectedGroupName = listBoxPipeGroup.SelectedItem as string;
+			return;
 
-			OBSOLETEDictionaryPath pipeGroupsPath = new OBSOLETEDictionaryPath("PipeGroups");
+			//string selectedGroupName = listBoxPipeGroup.SelectedItem as string;
 
-			DBDictionary pipeGroupsDictionary = OBSOLETEDataStore.GetDictionary(transaction, pipeGroupsPath);
+			//OBSOLETEDictionaryPath pipeGroupsPath = new OBSOLETEDictionaryPath("PipeGroups");
 
+			//DBDictionary pipeGroupsDictionary = OBSOLETEDataStore.GetDictionary(transaction, pipeGroupsPath);
+/*
 			foreach (DBDictionaryEntry pipeGroupEntry in pipeGroupsDictionary)
 			{
 				string groupName = pipeGroupEntry.Key;
@@ -113,23 +88,72 @@ namespace Ironwill
 					labelMainsDiameter.Text = string.IsNullOrEmpty(group.mainLabel) ? "UNSET" : group.mainLabel;
 					labelDrainsDiameter.Text = string.IsNullOrEmpty(group.drainLabel) ? "UNSET" : group.drainLabel;
 				}
-			}
+			}*/
 		}
 
-		private void buttonEditGroup_Click(object sender, EventArgs e)
-		{
-			
-		}
-
-		private void buttonDeleteGroup_Click(object sender, EventArgs e)
-		{
-
-		}
-
-		private void listBoxPipeGroup_SelectedIndexChanged(object sender, EventArgs e)
+		private void ListBox_PipeGroup_SelectedIndexChanged(object sender, EventArgs e)
 		{
 			selectedGroupIndex = listBoxPipeGroup.SelectedIndex;
 			UpdateDialog();
+		}
+
+		private void Button_AddNewGroup_Click(object sender, EventArgs e)
+		{
+			PipeGroupDialog pipeGroupDialog = new PipeGroupDialog();
+
+			AcApplication.ShowModalDialog(pipeGroupDialog);
+
+			UpdatePipeGroupList();
+
+			if (pipeGroupDialog.DialogResult == DialogResult.OK)
+			{
+			}
+			else
+			{
+			}
+		}
+
+		private void Button_EditGroup_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void Button_DeleteGroup_Click(object sender, EventArgs e)
+		{
+			string groupName = listBoxPipeGroup.Text;
+
+			using (DocumentLock documentLock = Session.LockDocument())
+			{
+				using (Transaction transaction = Session.StartTransaction())
+				{
+					DBDictionary pipeGroupsDictionary = XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
+
+					DBDictionary dictionaryMutable = transaction.GetObject(pipeGroupsDictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
+					dictionaryMutable.Remove(groupName);
+
+					transaction.Commit();
+				}
+			}
+
+			UpdatePipeGroupList();
+		}
+
+		private void Button_Run_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void Button_Cancel_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		protected PipeGroupDialog ShowPipeGroupDialog()
+		{
+			PipeGroupDialog autoLabelDialog = new PipeGroupDialog();
+			AcApplication.ShowModalDialog(null, autoLabelDialog, false);
+			return autoLabelDialog;
 		}
 	}
 }

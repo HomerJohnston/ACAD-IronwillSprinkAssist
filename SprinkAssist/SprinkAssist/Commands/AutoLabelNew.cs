@@ -17,37 +17,22 @@ using DialogResult = System.Windows.Forms.DialogResult;
 
 namespace Ironwill
 {
-	public class AutoLabelNew
+	internal class AutoLabelNew : SprinkAssistCommand
 	{		
-		[CommandMethod("SpkAssist_AutoLabelNew", CommandFlags.UsePickSet | CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist_AutoLabelNew", CommandFlags.UsePickSet)]
 		public void AutoLabelNewCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
 			Database database = doc.Database;
 			Editor editor = doc.Editor;
 
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				AutoLabelDialog autoLabelDialog = ShowAutoLabelDialog(transaction);
-
-				if (autoLabelDialog.DialogResult == DialogResult.OK)
-				{
-					editor.WriteMessage("We're OK");
-				}
-				else
-				{
-					editor.WriteMessage("We're not OK");
-				}
-
-				transaction.Commit();
-			}
+			ShowAutoLabelDialog();
 		}
 
-		protected AutoLabelDialog ShowAutoLabelDialog(Transaction transaction)
+		protected void ShowAutoLabelDialog()
 		{
-			AutoLabelDialog autoLabelDialog = new AutoLabelDialog(transaction);
-			AcApplication.ShowModalDialog(null, autoLabelDialog, false);
-			return autoLabelDialog;
+			AutoLabelDialog autoLabelDialog = new AutoLabelDialog();
+			AcApplication.ShowModelessDialog(null, autoLabelDialog, false);
 		}
 	}
 }

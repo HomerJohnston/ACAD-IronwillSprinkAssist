@@ -14,110 +14,93 @@ namespace Ironwill
 		// ==============================================================================================
 		// DICTIONARY MANAGEMENT
 		// ==============================================================================================
-		public static DBDictionary GetNamedDictionary(string dictionaryName, DBDictionary parent = null)
+		public static DBDictionary GetNamedDictionary(Transaction transaction, string dictionaryName, DBDictionary parent = null)
 		{
 			if (parent == null)
 			{
-				parent = GetGlobalDictionary();
+				parent = GetGlobalDictionary(transaction);
 			}
 
-			using (Transaction transaction = Session.StartTransaction())
+			try
 			{
-				try
-				{
-					return transaction.GetObject(parent.GetAt(dictionaryName), OpenMode.ForRead) as DBDictionary;
-				}
-				catch
-				{
-					DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
+				return transaction.GetObject(parent.GetAt(dictionaryName), OpenMode.ForRead) as DBDictionary;
+			}
+			catch
+			{
+				DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
 
-					DBDictionary namedDictionary = new DBDictionary();
+				DBDictionary namedDictionary = new DBDictionary();
 
-					parentMutable.SetAt(dictionaryName, namedDictionary);
-					transaction.AddNewlyCreatedDBObject(namedDictionary, true);
+				parentMutable.SetAt(dictionaryName, namedDictionary);
+				transaction.AddNewlyCreatedDBObject(namedDictionary, true);
 
-					transaction.Commit();
-
-					return namedDictionary;
-				}
+				return namedDictionary;
 			}
 		}
 
-		public static DBDictionary GetGlobalDictionary()
+		public static DBDictionary GetGlobalDictionary(Transaction transaction)
 		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				ObjectId masterDictionaryId = Session.GetDatabase().NamedObjectsDictionaryId;
-				DBDictionary masterDictionary = transaction.GetObject(masterDictionaryId, OpenMode.ForRead) as DBDictionary;
+			ObjectId masterDictionaryId = Session.GetDatabase().NamedObjectsDictionaryId;
+			DBDictionary masterDictionary = transaction.GetObject(masterDictionaryId, OpenMode.ForRead) as DBDictionary;
 
-				try
-				{
-					ObjectId PluginDictionaryId = masterDictionary.GetAt(sprinkAssistDictionaryName);
-					return transaction.GetObject(PluginDictionaryId, OpenMode.ForRead) as DBDictionary;
-				}
-				catch
-				{
-					DBDictionary pluginDictionary = new DBDictionary();
+			try
+			{
+				ObjectId PluginDictionaryId = masterDictionary.GetAt(sprinkAssistDictionaryName);
+				return transaction.GetObject(PluginDictionaryId, OpenMode.ForRead) as DBDictionary;
+			}
+			catch
+			{
+				DBDictionary pluginDictionary = new DBDictionary();
 					
-					masterDictionary.UpgradeOpen();
-					masterDictionary.SetAt(sprinkAssistDictionaryName, pluginDictionary);
-					transaction.AddNewlyCreatedDBObject(pluginDictionary, true);
-					masterDictionary.DowngradeOpen();
+				masterDictionary.UpgradeOpen();
+				masterDictionary.SetAt(sprinkAssistDictionaryName, pluginDictionary);
+				transaction.AddNewlyCreatedDBObject(pluginDictionary, true);
+				masterDictionary.DowngradeOpen();
 
-					transaction.Commit();
-
-					return pluginDictionary;
-				}
+				return pluginDictionary;
 			}
 		}
 
-		public static DBDictionary GetCommandSettingsDictionary()
+		public static DBDictionary GetCommandSettingsDictionary(Transaction transaction)
 		{
-			return GetNamedDictionary("CommandSettings");
+			return GetNamedDictionary(transaction, "CommandSettings");
 		}
 
-		public static DBDictionary GetCommandDictionaryForClass(Type command)
+		public static DBDictionary GetCommandDictionaryForClass(Transaction transaction, Type command)
 		{
-			DBDictionary commandSettingsDictionary = GetCommandSettingsDictionary();
+			DBDictionary commandSettingsDictionary = GetCommandSettingsDictionary(transaction);
 
 			string commandName = command.Name;
 
-			return GetNamedDictionary(commandName, commandSettingsDictionary);
+			return GetNamedDictionary(transaction, commandName, commandSettingsDictionary);
 		}
 
-		public static bool DestroyNamedDictionary(string dictionaryName, DBDictionary parent = null)
+		public static bool DestroyNamedDictionary(Transaction transaction, string dictionaryName, DBDictionary parent = null)
 		{
 			if (parent == null)
 			{
-				parent = GetGlobalDictionary();
+				parent = GetGlobalDictionary(transaction);
 			}
 
-			using (Transaction transaction = Session.StartTransaction())
+			if (parent.Remove(dictionaryName) != ObjectId.Null)
 			{
-				if (parent.Remove(dictionaryName) != ObjectId.Null)
-				{
-					transaction.Commit();
-					return true;
-				}
-
-				return false;
+				return true;
 			}
+
+			return false;
 		}
 
 		// ==============================================================================================
 		// GETTING DATA
 		// ==============================================================================================
-		public static object ReadXRecordData(DBDictionary dictionary, string xrecordName)
+		public static object ReadXRecordData(Transaction transaction, DBDictionary dictionary, string xrecordName)
 		{
 			using (Session.LockDocument())
 			{
-				using (Transaction transaction = Session.StartTransaction())
-				{
-					Xrecord xrecord = GetXRecord(transaction, dictionary, xrecordName);
+				Xrecord xrecord = GetXRecord(transaction, dictionary, xrecordName);
 
-					TypedValue typedValue = xrecord.Data.AsArray()[0];
-					return typedValue.Value;
-				}
+				TypedValue typedValue = xrecord.Data.AsArray()[0];
+				return typedValue.Value;
 			}
 		}
 
@@ -142,73 +125,67 @@ namespace Ironwill
 		// ==============================================================================================
 		// SETTING DATA
 		// ==============================================================================================
-		public static bool SetXRecordAs<T>(DBDictionary dictionary, string xrecordName, T val)
+		public static bool SetXRecord<T>(Transaction transaction, DBDictionary dictionary, string xrecordName, T val)
 		{
 			using (Session.LockDocument())
 			{
-				using (Transaction transaction = Session.StartTransaction())
+				DBDictionary dictionaryMutable = transaction.GetObject(dictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
+				Xrecord xrecord = GetXRecord(transaction, dictionaryMutable, xrecordName);
+
+				xrecord.UpgradeOpen();
+
+				DxfCode code = DxfCode.End;
+
+				switch (val)
 				{
-					DBDictionary dictionaryMutable = transaction.GetObject(dictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
-
-					Xrecord xrecord = GetXRecord(transaction, dictionaryMutable, xrecordName);
-
-					xrecord.UpgradeOpen();
-
-					DxfCode code = DxfCode.End;
-
-					switch (val)
+					case string s:
 					{
-						case string s:
-						{
-							code = DxfCode.XTextString;
-							break;
-						}
-						case int i:
-						{
-							code = DxfCode.Int32;
-							break;
-						}
-						case double d:
-						{
-							code = DxfCode.Real;
-							break;
-						}
-						case bool b:
-						{
-							code = DxfCode.Bool;
-							break;
-						}
-						default:
-						{
-							return false;
-						}
+						code = DxfCode.XTextString;
+						break;
 					}
-
-					ResultBuffer buffer = new ResultBuffer();
-					buffer.Add(new TypedValue((int)code, val));
-					xrecord.Data = buffer;
-
-					transaction.Commit();
-					return true;
+					case int i:
+					{
+						code = DxfCode.Int32;
+						break;
+					}
+					case double d:
+					{
+						code = DxfCode.Real;
+						break;
+					}
+					case bool b:
+					{
+						code = DxfCode.Bool;
+						break;
+					}
+					default:
+					{
+						return false;
+					}
 				}
+
+				ResultBuffer buffer = new ResultBuffer();
+				buffer.Add(new TypedValue((int)code, val));
+				xrecord.Data = buffer;
+
+				xrecord.DowngradeOpen();
+
+				return true;
 			}
 		}
 
 		// ==============================================================================================
 		// DESTROYING DATA
 		// ==============================================================================================
-		public static bool DestroyXRecord(DBDictionary dictionary, string xrecordName)
+		public static bool DestroyXRecord(Transaction transaction, DBDictionary dictionary, string xrecordName)
 		{
-			using (Transaction transaction = Session.StartTransaction())
+			if (dictionary.Remove(xrecordName) != ObjectId.Null)
 			{
-				if (dictionary.Remove(xrecordName) != ObjectId.Null)
-				{
-					transaction.Commit();
-					return true;
-				}
-
-				return false;
+				return true;
 			}
+
+			return false;
 		}
 	}
 }

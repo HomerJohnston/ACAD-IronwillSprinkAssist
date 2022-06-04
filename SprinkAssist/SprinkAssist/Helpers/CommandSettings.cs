@@ -17,58 +17,6 @@ namespace Ironwill
 
 		readonly object defaultValue;
 
-		private object CurrentValue
-		{
-			get
-			{
-				DBDictionary lookupDictionary = owningDictionary;
-
-				if (lookupDictionary == null)
-				{
-					Session.LogDebug("Warning: CommandSetting {0} has no owning dictionary, using global store");
-					lookupDictionary = XRecordLibrary.GetGlobalDictionary();
-				}
-
-				if (!owningDictionary.Contains(settingName))
-				{
-					return defaultValue;
-				}
-
-				return XRecordLibrary.ReadXRecordData(owningDictionary, settingName);
-			}
-			set
-			{
-				switch (value)
-				{
-					case string s:
-					{
-						XRecordLibrary.SetXRecordAs(owningDictionary, settingName, s);
-						break;
-					}
-					case int i:
-					{
-						XRecordLibrary.SetXRecordAs(owningDictionary, settingName, i);
-						break;
-					}
-					case double d:
-					{
-						XRecordLibrary.SetXRecordAs(owningDictionary, settingName, d);
-						break;
-					}
-					case bool b:
-					{
-						XRecordLibrary.SetXRecordAs(owningDictionary, settingName, b);
-						break;
-					}
-					default:
-					{
-						Session.Log("Error, tried to set setting {0} with unhandled type!", settingName);
-						break;
-					}
-				}
-			}
-		}
-
 		public CommandSetting(string inSettingName, object inDefaultValue, DBDictionary inOwningDictionary)
 		{
 			settingName = inSettingName;
@@ -76,14 +24,54 @@ namespace Ironwill
 			owningDictionary = inOwningDictionary;
 		}
 
-		public T Get()
+		public T Get(Transaction transaction)
 		{
-			return (T)CurrentValue;
+			DBDictionary lookupDictionary = owningDictionary;
+
+			if (lookupDictionary == null)
+			{
+				Session.LogDebug("Warning: CommandSetting {0} has no owning dictionary, using global store");
+				lookupDictionary = XRecordLibrary.GetGlobalDictionary(transaction);
+			}
+
+			if (!owningDictionary.Contains(settingName))
+			{
+				return (T)defaultValue;
+			}
+
+			return (T)XRecordLibrary.ReadXRecordData(transaction, owningDictionary, settingName);
 		}
 
-		public void Set(T newValue)
+		public void Set(Transaction transaction, T newValue)
 		{
-			CurrentValue = newValue;
+			switch (newValue)
+			{
+				case string s:
+				{
+					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, s);
+					break;
+				}
+				case int i:
+				{
+					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, i);
+					break;
+				}
+				case double d:
+				{
+					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, d);
+					break;
+				}
+				case bool b:
+				{
+					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, b);
+					break;
+				}
+				default:
+				{
+					Session.Log("Error, tried to set setting {0} with unhandled type!", settingName);
+					break;
+				}
+			}
 		}
 	}
 }

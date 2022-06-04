@@ -46,10 +46,10 @@ namespace Ironwill
 			return true;
 		}
 
-		protected Point3d GetPoint(string prompt, out bool bStopCommand, out bool bAbortIteration)
+		protected Point3d GetPoint(Transaction transaction, string prompt, out bool bStopCommand, out bool bAbortIteration)
 		{
-			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + roomTypeSetting.Get() + ")");
-			promptPointOptions.Message = "Check " + roomTypeSetting.Get();
+			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + roomTypeSetting.Get(transaction) + ")");
+			promptPointOptions.Message = "Check " + roomTypeSetting.Get(transaction);
 			promptPointOptions.AllowNone = true;
 			promptPointOptions.Keywords.Add("Closet");
 			promptPointOptions.Keywords.Add("Bathroom");
@@ -69,7 +69,7 @@ namespace Ironwill
 			{
 				case PromptStatus.Keyword:
 					Session.Log("Keyword");
-					roomTypeSetting.Set(promptPointResult.StringResult);
+					roomTypeSetting.Set(transaction, promptPointResult.StringResult);
 					bStopCommand = false;
 					bAbortIteration = true;
 					return new Point3d();
@@ -111,12 +111,12 @@ namespace Ironwill
 
 					if (!bAbortIteration)
 					{
-						firstPoint = GetPoint("Pick first corner", out bStopCommand, out bAbortIteration);
+						firstPoint = GetPoint(transaction, "Pick first corner", out bStopCommand, out bAbortIteration);
 					}
 
 					if (!bAbortIteration)
 					{
-						secondPoint = GetPoint("Pick opposite corner", out bStopCommand, out bAbortIteration);
+						secondPoint = GetPoint(transaction, "Pick opposite corner", out bStopCommand, out bAbortIteration);
 					}
 
 					if (!bAbortIteration)
@@ -128,12 +128,12 @@ namespace Ironwill
 
 						bool bNoSprinklerRequired = true;
 
-						if (GetArea(firstPointUCS, secondPointUCS) > GetAreaLimit())
+						if (GetArea(firstPointUCS, secondPointUCS) > GetAreaLimit(transaction))
 						{
 							bNoSprinklerRequired = false;
 						}
 
-						if (GetMinDimension(firstPointUCS, secondPointUCS) > GetMinDimensionLimit())
+						if (GetMinDimension(firstPointUCS, secondPointUCS) > GetMinDimensionLimit(transaction))
 						{
 							bNoSprinklerRequired = false;
 						}
@@ -222,7 +222,7 @@ namespace Ironwill
 			return area;
 		}
 
-		protected double GetAreaLimit()
+		protected double GetAreaLimit(Transaction transaction)
 		{
 			DrawingUnits units = Session.GetPrimaryUnits();
 
@@ -232,7 +232,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (roomTypeSetting.Get())
+			switch (roomTypeSetting.Get(transaction))
 			{
 				case "Bathroom":
 					switch (units)
@@ -264,7 +264,7 @@ namespace Ironwill
 			return Math.Min(Math.Abs(secondPoint.X - firstPoint.X), Math.Abs(secondPoint.Y - firstPoint.Y));
 		}
 
-		protected double GetMinDimensionLimit()
+		protected double GetMinDimensionLimit(Transaction transaction)
 		{
 			DrawingUnits units = Session.GetPrimaryUnits();
 
@@ -274,7 +274,7 @@ namespace Ironwill
 				return -1.0;
 			}
 
-			switch (roomTypeSetting.Get())
+			switch (roomTypeSetting.Get(transaction))
 			{
 				case "Bathroom":
 					return double.MaxValue;

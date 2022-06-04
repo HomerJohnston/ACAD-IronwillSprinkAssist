@@ -34,6 +34,8 @@
 			this.buttonCancel = new System.Windows.Forms.Button();
 			this.buttonEditGroup = new System.Windows.Forms.Button();
 			this.groupBoxSelectedGroup = new System.Windows.Forms.GroupBox();
+			this.label8 = new System.Windows.Forms.Label();
+			this.label7 = new System.Windows.Forms.Label();
 			this.labelDrainsDiameter = new System.Windows.Forms.Label();
 			this.labelMainsDiameter = new System.Windows.Forms.Label();
 			this.labelBranchlinesDiameter = new System.Windows.Forms.Label();
@@ -59,8 +61,6 @@
 			this.checkBoxOmitLengthsFromShortLines = new System.Windows.Forms.CheckBox();
 			this.labelSelectPipeGroup = new System.Windows.Forms.Label();
 			this.buttonDeleteGroup = new System.Windows.Forms.Button();
-			this.label7 = new System.Windows.Forms.Label();
-			this.label8 = new System.Windows.Forms.Label();
 			this.groupBoxSelectedGroup.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -72,7 +72,7 @@
 			this.listBoxPipeGroup.Name = "listBoxPipeGroup";
 			this.listBoxPipeGroup.Size = new System.Drawing.Size(120, 173);
 			this.listBoxPipeGroup.TabIndex = 0;
-			this.listBoxPipeGroup.SelectedIndexChanged += new System.EventHandler(this.listBoxPipeGroup_SelectedIndexChanged);
+			this.listBoxPipeGroup.SelectedIndexChanged += new System.EventHandler(this.ListBox_PipeGroup_SelectedIndexChanged);
 			// 
 			// buttonAddNewGroup
 			// 
@@ -82,29 +82,31 @@
 			this.buttonAddNewGroup.TabIndex = 1;
 			this.buttonAddNewGroup.Text = "Add New Group";
 			this.buttonAddNewGroup.UseVisualStyleBackColor = true;
-			this.buttonAddNewGroup.Click += new System.EventHandler(this.buttonAddNewGroup_Click);
+			this.buttonAddNewGroup.Click += new System.EventHandler(this.Button_AddNewGroup_Click);
 			// 
 			// buttonRun
 			// 
 			this.buttonRun.BackColor = System.Drawing.Color.PaleGreen;
 			this.buttonRun.DialogResult = System.Windows.Forms.DialogResult.OK;
-			this.buttonRun.Location = new System.Drawing.Point(72, 305);
+			this.buttonRun.Location = new System.Drawing.Point(10, 579);
 			this.buttonRun.Name = "buttonRun";
-			this.buttonRun.Size = new System.Drawing.Size(58, 44);
+			this.buttonRun.Size = new System.Drawing.Size(483, 44);
 			this.buttonRun.TabIndex = 2;
-			this.buttonRun.Text = "Run";
+			this.buttonRun.Text = "Assign Group to Selected";
 			this.buttonRun.UseVisualStyleBackColor = false;
+			this.buttonRun.Click += new System.EventHandler(this.Button_Run_Click);
 			// 
 			// buttonCancel
 			// 
 			this.buttonCancel.BackColor = System.Drawing.Color.IndianRed;
 			this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.buttonCancel.Location = new System.Drawing.Point(10, 305);
+			this.buttonCancel.Location = new System.Drawing.Point(10, 529);
 			this.buttonCancel.Name = "buttonCancel";
-			this.buttonCancel.Size = new System.Drawing.Size(58, 44);
+			this.buttonCancel.Size = new System.Drawing.Size(482, 44);
 			this.buttonCancel.TabIndex = 3;
-			this.buttonCancel.Text = "Cancel";
+			this.buttonCancel.Text = "Clear Group from Selected";
 			this.buttonCancel.UseVisualStyleBackColor = false;
+			this.buttonCancel.Click += new System.EventHandler(this.Button_Cancel_Click);
 			// 
 			// buttonEditGroup
 			// 
@@ -114,7 +116,7 @@
 			this.buttonEditGroup.TabIndex = 4;
 			this.buttonEditGroup.Text = "Edit Group";
 			this.buttonEditGroup.UseVisualStyleBackColor = true;
-			this.buttonEditGroup.Click += new System.EventHandler(this.buttonEditGroup_Click);
+			this.buttonEditGroup.Click += new System.EventHandler(this.Button_EditGroup_Click);
 			// 
 			// groupBoxSelectedGroup
 			// 
@@ -135,6 +137,24 @@
 			this.groupBoxSelectedGroup.TabIndex = 5;
 			this.groupBoxSelectedGroup.TabStop = false;
 			this.groupBoxSelectedGroup.Text = "Selected Group";
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Location = new System.Drawing.Point(267, 41);
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size(10, 13);
+			this.label8.TabIndex = 14;
+			this.label8.Text = "-";
+			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Location = new System.Drawing.Point(163, 41);
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size(92, 13);
+			this.label7.TabIndex = 13;
+			this.label7.Text = "Branchline Risers:";
 			// 
 			// labelDrainsDiameter
 			// 
@@ -391,25 +411,7 @@
 			this.buttonDeleteGroup.TabIndex = 35;
 			this.buttonDeleteGroup.Text = "Delete Group";
 			this.buttonDeleteGroup.UseVisualStyleBackColor = true;
-			this.buttonDeleteGroup.Click += new System.EventHandler(this.buttonDeleteGroup_Click);
-			// 
-			// label7
-			// 
-			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(163, 41);
-			this.label7.Name = "label7";
-			this.label7.Size = new System.Drawing.Size(92, 13);
-			this.label7.TabIndex = 13;
-			this.label7.Text = "Branchline Risers:";
-			// 
-			// label8
-			// 
-			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(267, 41);
-			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size(10, 13);
-			this.label8.TabIndex = 14;
-			this.label8.Text = "-";
+			this.buttonDeleteGroup.Click += new System.EventHandler(this.Button_DeleteGroup_Click);
 			// 
 			// AutoLabelDialog
 			// 
@@ -417,8 +419,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.buttonCancel;
-			this.ClientSize = new System.Drawing.Size(507, 359);
-			this.ControlBox = false;
+			this.ClientSize = new System.Drawing.Size(507, 635);
 			this.Controls.Add(this.buttonDeleteGroup);
 			this.Controls.Add(this.labelSelectPipeGroup);
 			this.Controls.Add(this.groupBox2);
