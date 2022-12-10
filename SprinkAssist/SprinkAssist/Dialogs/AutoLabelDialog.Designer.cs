@@ -39,11 +39,10 @@
 			this.labelDrainsDiameter = new System.Windows.Forms.Label();
 			this.labelMainsDiameter = new System.Windows.Forms.Label();
 			this.labelBranchlinesDiameter = new System.Windows.Forms.Label();
-			this.labelArmoversDiameter = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label4 = new System.Windows.Forms.Label();
-			this.label1 = new System.Windows.Forms.Label();
+			this.Label_Color = new System.Windows.Forms.Label();
 			this.checkBoxBreakAtLineEnds = new System.Windows.Forms.CheckBox();
 			this.checkBoxConnectAcrossBreaks = new System.Windows.Forms.CheckBox();
 			this.label2 = new System.Windows.Forms.Label();
@@ -61,6 +60,8 @@
 			this.checkBoxOmitLengthsFromShortLines = new System.Windows.Forms.CheckBox();
 			this.labelSelectPipeGroup = new System.Windows.Forms.Label();
 			this.buttonDeleteGroup = new System.Windows.Forms.Button();
+			this.button1 = new System.Windows.Forms.Button();
+			this.listView1 = new System.Windows.Forms.ListView();
 			this.groupBoxSelectedGroup.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -70,7 +71,7 @@
 			this.listBoxPipeGroup.FormattingEnabled = true;
 			this.listBoxPipeGroup.Location = new System.Drawing.Point(10, 30);
 			this.listBoxPipeGroup.Name = "listBoxPipeGroup";
-			this.listBoxPipeGroup.Size = new System.Drawing.Size(120, 173);
+			this.listBoxPipeGroup.Size = new System.Drawing.Size(130, 173);
 			this.listBoxPipeGroup.TabIndex = 0;
 			this.listBoxPipeGroup.SelectedIndexChanged += new System.EventHandler(this.ListBox_PipeGroup_SelectedIndexChanged);
 			// 
@@ -94,19 +95,19 @@
 			this.buttonRun.TabIndex = 2;
 			this.buttonRun.Text = "Assign Group to Selected";
 			this.buttonRun.UseVisualStyleBackColor = false;
-			this.buttonRun.Click += new System.EventHandler(this.Button_Run_Click);
+			this.buttonRun.Click += new System.EventHandler(this.Button_AssignToSelected_Click);
 			// 
 			// buttonCancel
 			// 
 			this.buttonCancel.BackColor = System.Drawing.Color.IndianRed;
 			this.buttonCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.buttonCancel.Location = new System.Drawing.Point(10, 529);
+			this.buttonCancel.Location = new System.Drawing.Point(10, 451);
 			this.buttonCancel.Name = "buttonCancel";
 			this.buttonCancel.Size = new System.Drawing.Size(482, 44);
 			this.buttonCancel.TabIndex = 3;
 			this.buttonCancel.Text = "Clear Group from Selected";
 			this.buttonCancel.UseVisualStyleBackColor = false;
-			this.buttonCancel.Click += new System.EventHandler(this.Button_Cancel_Click);
+			this.buttonCancel.Click += new System.EventHandler(this.Button_ClearFromSelected_Click);
 			// 
 			// buttonEditGroup
 			// 
@@ -121,16 +122,16 @@
 			// groupBoxSelectedGroup
 			// 
 			this.groupBoxSelectedGroup.BackColor = System.Drawing.SystemColors.Control;
+			this.groupBoxSelectedGroup.Controls.Add(this.button1);
 			this.groupBoxSelectedGroup.Controls.Add(this.label8);
 			this.groupBoxSelectedGroup.Controls.Add(this.label7);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelDrainsDiameter);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelMainsDiameter);
 			this.groupBoxSelectedGroup.Controls.Add(this.labelBranchlinesDiameter);
-			this.groupBoxSelectedGroup.Controls.Add(this.labelArmoversDiameter);
 			this.groupBoxSelectedGroup.Controls.Add(this.label5);
 			this.groupBoxSelectedGroup.Controls.Add(this.label6);
 			this.groupBoxSelectedGroup.Controls.Add(this.label4);
-			this.groupBoxSelectedGroup.Controls.Add(this.label1);
+			this.groupBoxSelectedGroup.Controls.Add(this.Label_Color);
 			this.groupBoxSelectedGroup.Location = new System.Drawing.Point(146, 8);
 			this.groupBoxSelectedGroup.Name = "groupBoxSelectedGroup";
 			this.groupBoxSelectedGroup.Size = new System.Drawing.Size(347, 103);
@@ -183,15 +184,6 @@
 			this.labelBranchlinesDiameter.TabIndex = 10;
 			this.labelBranchlinesDiameter.Text = "-";
 			// 
-			// labelArmoversDiameter
-			// 
-			this.labelArmoversDiameter.AutoSize = true;
-			this.labelArmoversDiameter.Location = new System.Drawing.Point(76, 22);
-			this.labelArmoversDiameter.Name = "labelArmoversDiameter";
-			this.labelArmoversDiameter.Size = new System.Drawing.Size(10, 13);
-			this.labelArmoversDiameter.TabIndex = 9;
-			this.labelArmoversDiameter.Text = "-";
-			// 
 			// label5
 			// 
 			this.label5.AutoSize = true;
@@ -219,14 +211,14 @@
 			this.label4.TabIndex = 1;
 			this.label4.Text = "Branchlines:";
 			// 
-			// label1
+			// Label_Color
 			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(6, 22);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(54, 13);
-			this.label1.TabIndex = 0;
-			this.label1.Text = "Armovers:";
+			this.Label_Color.AutoSize = true;
+			this.Label_Color.Location = new System.Drawing.Point(6, 22);
+			this.Label_Color.Name = "Label_Color";
+			this.Label_Color.Size = new System.Drawing.Size(34, 13);
+			this.Label_Color.TabIndex = 0;
+			this.Label_Color.Text = "Color:";
 			// 
 			// checkBoxBreakAtLineEnds
 			// 
@@ -413,6 +405,24 @@
 			this.buttonDeleteGroup.UseVisualStyleBackColor = true;
 			this.buttonDeleteGroup.Click += new System.EventHandler(this.Button_DeleteGroup_Click);
 			// 
+			// button1
+			// 
+			this.button1.BackColor = System.Drawing.Color.Red;
+			this.button1.Location = new System.Drawing.Point(69, 19);
+			this.button1.Name = "button1";
+			this.button1.Size = new System.Drawing.Size(55, 19);
+			this.button1.TabIndex = 36;
+			this.button1.UseVisualStyleBackColor = false;
+			// 
+			// listView1
+			// 
+			this.listView1.HideSelection = false;
+			this.listView1.Location = new System.Drawing.Point(36, 351);
+			this.listView1.Name = "listView1";
+			this.listView1.Size = new System.Drawing.Size(138, 100);
+			this.listView1.TabIndex = 36;
+			this.listView1.UseCompatibleStateImageBehavior = false;
+			// 
 			// AutoLabelDialog
 			// 
 			this.AcceptButton = this.buttonRun;
@@ -420,6 +430,7 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.buttonCancel;
 			this.ClientSize = new System.Drawing.Size(507, 635);
+			this.Controls.Add(this.listView1);
 			this.Controls.Add(this.buttonDeleteGroup);
 			this.Controls.Add(this.labelSelectPipeGroup);
 			this.Controls.Add(this.groupBox2);
@@ -464,7 +475,7 @@
 		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.Label label6;
 		private System.Windows.Forms.Label label4;
-		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Label Label_Color;
 		private System.Windows.Forms.TextBox textBoxOmitLengthsFromShortLines;
 		private System.Windows.Forms.Label label11;
 		private System.Windows.Forms.CheckBox checkBoxOmitLengthsFromShortLines;
@@ -477,9 +488,10 @@
 		private System.Windows.Forms.Label labelDrainsDiameter;
 		private System.Windows.Forms.Label labelMainsDiameter;
 		private System.Windows.Forms.Label labelBranchlinesDiameter;
-		private System.Windows.Forms.Label labelArmoversDiameter;
 		private System.Windows.Forms.Button buttonDeleteGroup;
 		private System.Windows.Forms.Label label7;
 		private System.Windows.Forms.Label label8;
+		private System.Windows.Forms.Button button1;
+		private System.Windows.Forms.ListView listView1;
 	}
 }

@@ -15,9 +15,9 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-[assembly: CommandClass(typeof(Ironwill.GenerateCalcBackground))]
+[assembly: CommandClass(typeof(Ironwill.Commands.GenerateCalcBackground))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class GenerateCalcBackground
 	{

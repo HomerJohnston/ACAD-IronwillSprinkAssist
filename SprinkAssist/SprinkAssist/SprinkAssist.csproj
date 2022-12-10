@@ -149,16 +149,19 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Ironwill.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\AddSprinkler_New.cs" />
     <Compile Include="Commands\AutoCleanBackground.cs" />
     <Compile Include="Commands\AutoCouplings.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
@@ -170,6 +173,9 @@
     <Compile Include="Commands\DrawPipe.cs" />
     <Compile Include="Commands\GenerateCalcBackground.cs" />
     <Compile Include="Commands\TestCmd.cs" />
+    <Compile Include="Dialogs\PipesPalette.xaml.cs">
+      <DependentUpon>PipesPalette.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Extensions\LineExtensions.cs" />
     <Compile Include="Helpers\CommandSettings.cs" />
     <Compile Include="Helpers\Definitions\Colors.cs" />
@@ -223,6 +229,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\CalcCoverage.cs" />
     <Compile Include="Settings\DrawingUnits.cs" />
+    <Compile Include="UserControl2.xaml.cs">
+      <DependentUpon>UserControl2.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WIP\TestListViewItem.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Dialogs\AutoLabelDialog.resx">
@@ -259,6 +269,20 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Objects\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Dialogs\PipesPalette.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\Styles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="UserControl2.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

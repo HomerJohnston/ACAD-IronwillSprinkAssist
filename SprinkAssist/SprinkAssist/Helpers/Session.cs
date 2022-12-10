@@ -97,7 +97,7 @@ namespace Ironwill
 			}
 		}
 
-		public static double GetScaleFactor()
+		public static double GetBlockScaleFactor()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
 			Database db = doc.Database;
@@ -106,18 +106,29 @@ namespace Ironwill
 			switch (Lunits)
 			{
 				case 2:
-					{
-						return 100.0;
-					}
+					return 100.0;
 				case 4:
-					{
-						//return 96.0;
-						return 3.93701;
-					}
+					return 3.937007874015748031496062992126;
 				default:
-					{
-						return 1.0;
-					}
+					return 1.0;
+			}
+		}
+
+		/** Assumes all standard input comes in metric units. */
+		public static double AutoScaleFactor()
+		{
+			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
+			Database db = doc.Database;
+			int Lunits = db.Lunits;
+
+			switch (Lunits)
+			{
+				case 2:
+				return 1.0;
+				case 4:
+				return 0.03937007874015748031496062992126;
+				default:
+				return 1.0;
 			}
 		}
 

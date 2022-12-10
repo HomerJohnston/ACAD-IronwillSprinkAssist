@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.CountHeads))]
+[assembly: CommandClass(typeof(Ironwill.Commands.CountHeads))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class CountHeads
 	{

@@ -11,10 +11,10 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 using System.Collections.ObjectModel;
 
-[assembly: CommandClass(typeof(Ironwill.AddFitting))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AddFitting))]
 
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	internal class AddFitting : SprinkAssistCommand
 	{
@@ -24,8 +24,6 @@ namespace Ironwill
 		const string riserKeyword = "Riser";
 		const string reducerKeyword = "REducer";
 		const string couplingKeyword = "COupling";
-
-		const string selectedFitting = "SelectedFitting";
 
 		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { elbowKeyword, teeKeyword, capKeyword, riserKeyword, reducerKeyword, couplingKeyword } );
 
@@ -211,7 +209,7 @@ namespace Ironwill
 
 			blockRef.Position = position;
 			blockRef.Rotation = rotation;
-			blockRef.ScaleFactors = new Scale3d(Session.GetScaleFactor());
+			blockRef.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
 			blockRef.Layer = layer;
 		}
 	}

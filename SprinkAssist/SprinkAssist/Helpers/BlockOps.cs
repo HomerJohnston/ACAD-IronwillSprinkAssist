@@ -157,23 +157,31 @@ namespace Ironwill
 		// TODO see if there is a simpler existing picker in Editor I can use?
 		public static BlockReference PickSprinkler(Transaction transaction, string prompt)
 		{
-			TypedValue[] filter =
-			{
-				new TypedValue((int)DxfCode.Operator, "<or"),
-				new TypedValue((int)DxfCode.LayerName, Layer.SystemHead.Get()),
-				new TypedValue((int)DxfCode.Operator, "or>"),
-			};
+			BlockReference selectedBlock = null;
 
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions(prompt);
-			PromptEntityResult promptEntityResult = Session.GetEditor().GetEntity(promptEntityOptions);
-
-			if (promptEntityResult.Status != PromptStatus.OK)
+			while (selectedBlock == null)
 			{
-				return null;
+				PromptEntityOptions promptEntityOptions = new PromptEntityOptions(prompt);
+
+				PromptEntityResult promptEntityResult = Session.GetEditor().GetEntity(promptEntityOptions);
+
+				if (promptEntityResult.Status != PromptStatus.OK)
+				{
+					return null;
+				}
+
+				ObjectId objectId = promptEntityResult.ObjectId;
+
+				selectedBlock = transaction.GetObject(objectId, OpenMode.ForRead) as BlockReference;
+
+				if (selectedBlock.Layer != Layer.SystemHead.Get())
+				{
+					Session.Log("You must pick a block on the sprinkler system heads layer!");
+					selectedBlock = null;
+				}
 			}
 
-			ObjectId objectId = promptEntityResult.ObjectId;
-			return transaction.GetObject(objectId, OpenMode.ForRead) as BlockReference;
+			return selectedBlock;
 		}
 
 		public static void CopyBlock(Transaction transaction, ObjectId sourceBlockId, Point3d newPosition)
@@ -196,8 +204,30 @@ namespace Ironwill
 			newBlock.ScaleFactors = sourceBlock.ScaleFactors;
 			newBlock.Layer = sourceBlock.Layer;
 
+			CopyDynamicBlockProperties(sourceBlock, newBlock);
+
+			watch.Stop(); var elapsedMs = watch.ElapsedMilliseconds; Session.Log("CopyBlock took " + elapsedMs.ToString());
+		}
+
+		public static string GetDynamicBlockName(BlockReference block)
+		{
+			BlockTableRecord originalBlock = block.DynamicBlockTableRecord.GetObject(OpenMode.ForRead) as BlockTableRecord;
+			return originalBlock.Name;
+		}
+
+		public static void CopyCommonProperties(BlockReference sourceBlock, BlockReference targetBlock)
+		{
+			targetBlock.Rotation = sourceBlock.Rotation;
+
+			targetBlock.ScaleFactors = sourceBlock.ScaleFactors;
+
+			targetBlock.Layer = sourceBlock.Layer;
+		}
+
+		public static void CopyDynamicBlockProperties(BlockReference sourceBlock, BlockReference targetBlock)
+		{
 			DynamicBlockReferencePropertyCollection dynBlockProperties = sourceBlock.DynamicBlockReferencePropertyCollection;
-			DynamicBlockReferencePropertyCollection newBlockProperties = newBlock.DynamicBlockReferencePropertyCollection;
+			DynamicBlockReferencePropertyCollection newBlockProperties = targetBlock.DynamicBlockReferencePropertyCollection;
 
 			foreach (DynamicBlockReferenceProperty oldProp in dynBlockProperties)
 			{
@@ -214,13 +244,7 @@ namespace Ironwill
 					}
 				}
 			}
-			watch.Stop(); var elapsedMs = watch.ElapsedMilliseconds; Session.Log("CopyBlock took " + elapsedMs.ToString());
-		}
 
-		public static string GetDynamicBlockName(BlockReference block)
-		{
-			BlockTableRecord originalBlock = block.DynamicBlockTableRecord.GetObject(OpenMode.ForRead) as BlockTableRecord;
-			return originalBlock.Name;
 		}
 	}
 }

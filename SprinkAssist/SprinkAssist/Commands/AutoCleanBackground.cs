@@ -13,9 +13,9 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Colors;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.AutoCleanBackground))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AutoCleanBackground))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class AutoCleanBackground
 	{

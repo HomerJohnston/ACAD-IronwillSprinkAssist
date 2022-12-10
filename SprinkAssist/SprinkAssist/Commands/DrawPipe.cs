@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.DrawPipe))]
+[assembly: CommandClass(typeof(Ironwill.Commands.DrawPipe))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class DrawPipe
 	{

@@ -13,9 +13,9 @@ using Autodesk.AutoCAD.GraphicsInterface;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.OrientView))]
+[assembly: CommandClass(typeof(Ironwill.Commands.OrientView))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class OrientView
 	{

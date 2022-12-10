@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.ReplaceHeads))]
+[assembly: CommandClass(typeof(Ironwill.Commands.ReplaceHeads))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class ReplaceHeads
 	{
@@ -73,25 +73,7 @@ namespace Ironwill
 					newHead.ScaleFactors = oldHead.ScaleFactors;
 					newHead.Layer = oldHead.Layer;
 
-					DynamicBlockReferencePropertyCollection dynBlockProperties = oldHead.DynamicBlockReferencePropertyCollection;
-					DynamicBlockReferencePropertyCollection newBlockProperties = newHead.DynamicBlockReferencePropertyCollection;
-
-					foreach (DynamicBlockReferenceProperty oldProp in dynBlockProperties)
-					{
-						foreach (DynamicBlockReferenceProperty newProp in newBlockProperties)
-						{
-							if (oldProp.PropertyName == newProp.PropertyName)
-							{
-								if (newProp.ReadOnly)
-								{
-									continue;
-								}
-
-								newProp.Value = oldProp.Value;
-							}
-						}
-					}
-
+					BlockOps.CopyDynamicBlockProperties(oldHead, newHead);
 
 					oldHead.Erase();
 				}

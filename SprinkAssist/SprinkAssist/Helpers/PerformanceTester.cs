@@ -10,8 +10,6 @@ namespace Ironwill
 {
 	internal class PerformanceTester
 	{
-		static int CurrentIndex = 0;
-
 		static Dictionary<string, Stopwatch> timers = new Dictionary<string, Stopwatch>();
 
 		[System.Diagnostics.Conditional("DEBUG")]

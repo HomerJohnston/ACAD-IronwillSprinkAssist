@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.AutoCouplings))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AutoCouplings))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	class AutoCouplings
 	{
@@ -428,7 +428,7 @@ namespace Ironwill
 				Vector3d segmentDirection = (segment.EndPoint - segment.StartPoint).GetNormal();
 
 				blockReference.Position = currentPoint;
-				blockReference.ScaleFactors = new Scale3d(Session.GetScaleFactor());
+				blockReference.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
 				blockReference.Rotation = Session.SanitizeAngle(segment.Angle + Session.Radians(90), segmentDirection);
 				blockReference.Layer = Layer.SystemFitting.Get();
 

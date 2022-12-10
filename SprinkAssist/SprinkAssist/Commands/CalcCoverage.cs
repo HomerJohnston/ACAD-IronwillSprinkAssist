@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.SprinklerArea))]
+[assembly: CommandClass(typeof(Ironwill.Commands.SprinklerArea))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class SprinklerArea
 	{

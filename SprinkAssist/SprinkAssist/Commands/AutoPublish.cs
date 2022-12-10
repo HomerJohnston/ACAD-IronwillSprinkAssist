@@ -16,9 +16,9 @@ using Autodesk.AutoCAD.Publishing;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
 
-[assembly: CommandClass(typeof(Ironwill.AutoPublish))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AutoPublish))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class AutoPublish
 	{
@@ -50,13 +50,15 @@ namespace Ironwill
 			string date = DateTime.Now.ToString(@"yyyy-MM-dd");
 			string bareFileName = Path.GetFileNameWithoutExtension(dwgName);
 
-			string destinationFileName = bareFileName + " - Issued for " + issuedFor + " (" + date + ")";
+			string issuedForAbbrev = new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();
+
+			string destinationFileName = bareFileName + " - IF" + issuedForAbbrev + " (" + date + ")";
 			
 			destinationFileName = Path.ChangeExtension(destinationFileName, "pdf");
 
 			string destinationLogName = Path.GetFileName(dwgName);
 			destinationLogName = Path.ChangeExtension(destinationLogName, "log");
-
+			
 			// TODO fix hardcoding of folder names
 			if (dwgDirectory.EndsWith("3. Design"))
 			{

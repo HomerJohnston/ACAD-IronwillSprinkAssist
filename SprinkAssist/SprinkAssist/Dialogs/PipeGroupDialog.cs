@@ -15,6 +15,13 @@ namespace Ironwill
 {
 	public partial class PipeGroupDialog : Form
 	{
+		const string GroupName = "Name";
+		const string Mains = "Mains";
+		const string Branchlines = "Branchlines";
+		const string BranchlineRisers = "BranchlineRisers";
+		const string Armovers = "Armovers";
+		const string Drains = "Drains";
+
 		// State
 		public PipeGroupDialog()
 		{
@@ -28,7 +35,7 @@ namespace Ironwill
 
 		private void Button_Save_Click(object sender, EventArgs e)
 		{
-			CreateGroup(
+			CreateOrUpdateGroup(
 				TextBox_GroupName.Text, 
 				TextBox_Mains.Text, 
 				TextBox_Branchlines.Text, 
@@ -65,25 +72,102 @@ namespace Ironwill
 			get { return TextBox_Drains.Text; }
 		}
 
-		void CreateGroup(string groupName, string mainsLabel, string branchlinesLabel, string branchlineRisersLabel, string armoversLabel, string drainsLabel)
+		protected void CreateOrUpdateGroup(string groupName, string mainsLabel, string branchlinesLabel, string branchlineRisersLabel, string armoversLabel, string drainsLabel)
 		{
 			using (DocumentLock x = Session.LockDocument())
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					DBDictionary pipeGroupsDictionary = XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
+					DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
 
-					DBDictionary groupDictionary = XRecordLibrary.GetNamedDictionary(transaction, groupName, pipeGroupsDictionary);
+					DBDictionary pipeGroupDictionary = null;
 
-					XRecordLibrary.SetXRecord(transaction, groupDictionary, "MainsLabel", mainsLabel);
-					XRecordLibrary.SetXRecord(transaction, groupDictionary, "BranchlinesLabel", branchlinesLabel);
-					XRecordLibrary.SetXRecord(transaction, groupDictionary, "BranchlineRisersLabel", branchlineRisersLabel);
-					XRecordLibrary.SetXRecord(transaction, groupDictionary, "ArmoversLabel", armoversLabel);
-					XRecordLibrary.SetXRecord(transaction, groupDictionary, "DrainsLabel", drainsLabel);
+					// Check to see if this group already exists
+					foreach (DBDictionaryEntry dicEntry in pipeGroupsDictionary)
+					{
+						DBDictionary candidateGroupDictionary = transaction.GetObject(dicEntry.Value, OpenMode.ForRead) as DBDictionary;
+
+						if (candidateGroupDictionary != null)
+						{
+							string name = string.Empty;
+
+							if (XRecordLibrary.ReadXRecord(transaction, candidateGroupDictionary, "Name", ref name))
+							{
+								if (name == groupName)
+								{
+									pipeGroupDictionary = candidateGroupDictionary;
+									break;
+								}
+							}
+						}
+					}
+
+					if (pipeGroupDictionary == null)
+					{
+						int groupId = Drawing.GenerateUniqueID(transaction);
+
+						pipeGroupDictionary = XRecordLibrary.GetNamedDictionary(transaction, groupId.ToString(), pipeGroupsDictionary);
+
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, GroupName, groupName);
+						
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Mains, mainsLabel);
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Branchlines, branchlinesLabel);
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, BranchlineRisers, branchlineRisersLabel);
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Armovers, armoversLabel);
+						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Drains, drainsLabel);
+					}
+					else
+					{
+						string oldMainsLabel = string.Empty;
+						string oldBranchlinesLabel = string.Empty;
+						string oldBranchlineRisersLabel = string.Empty;
+						string oldArmoversLabel = string.Empty;
+						string oldDrainsLabel = string.Empty;
+
+						XRecordLibrary.ReadXRecord(transaction, pipeGroupDictionary, Mains, ref oldMainsLabel);
+						XRecordLibrary.ReadXRecord(transaction, pipeGroupDictionary, Branchlines, ref oldMainsLabel);
+						XRecordLibrary.ReadXRecord(transaction, pipeGroupDictionary, BranchlineRisers, ref oldMainsLabel);
+						XRecordLibrary.ReadXRecord(transaction, pipeGroupDictionary, Armovers, ref oldMainsLabel);
+						XRecordLibrary.ReadXRecord(transaction, pipeGroupDictionary, Drains, ref oldMainsLabel);
+
+						if (oldMainsLabel != mainsLabel)
+						{
+							XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Mains, mainsLabel);
+							BroadcastUpdate();
+						}
+
+						if (oldBranchlinesLabel != branchlinesLabel)
+						{
+							XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Branchlines, branchlinesLabel);
+							BroadcastUpdate();
+						}
+
+						if (oldBranchlineRisersLabel != branchlineRisersLabel)
+						{
+							XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, BranchlineRisers, branchlineRisersLabel);
+							BroadcastUpdate();
+						}
+
+						if (oldArmoversLabel != armoversLabel)
+						{
+							XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Armovers, armoversLabel);
+							BroadcastUpdate();
+						}
+
+						if (oldDrainsLabel != drainsLabel)
+						{
+							XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, Drains, drainsLabel);
+							BroadcastUpdate();
+						}
+					}
 
 					transaction.Commit();
 				}
 			}
+		}
+
+		void BroadcastUpdate()
+		{ 
 		}
 	}
 }

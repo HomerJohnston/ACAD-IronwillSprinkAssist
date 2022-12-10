@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.XRoom))]
+[assembly: CommandClass(typeof(Ironwill.Commands.XRoom))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	internal class XRoom : SprinkAssistCommand
 	{

@@ -62,7 +62,6 @@ namespace Ironwill
 
 		public static void ToggleFrozen(string layerName)
 		{
-
 			using (Transaction transaction = Session.StartTransaction())
 			{
 				LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
@@ -258,6 +257,5 @@ namespace Ironwill
 				return ceilingLayers;
 			}
 		}
-
 	}
 }

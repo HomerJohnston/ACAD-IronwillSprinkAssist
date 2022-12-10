@@ -93,18 +93,25 @@ namespace Ironwill
 		// ==============================================================================================
 		// GETTING DATA
 		// ==============================================================================================
-		public static object ReadXRecordData(Transaction transaction, DBDictionary dictionary, string xrecordName)
+		public static bool ReadXRecord<T>(Transaction transaction, DBDictionary dictionary, string xrecordName, ref T recordValue)
 		{
 			using (Session.LockDocument())
 			{
 				Xrecord xrecord = GetXRecord(transaction, dictionary, xrecordName);
 
+				if (xrecord == null)
+				{
+					return false;
+				}
+
 				TypedValue typedValue = xrecord.Data.AsArray()[0];
-				return typedValue.Value;
+				recordValue = (T)typedValue.Value;
+
+				return true;
 			}
 		}
 
-		static Xrecord GetXRecord(Transaction transaction, DBDictionary dictionary, string name)
+		private static Xrecord GetXRecord(Transaction transaction, DBDictionary dictionary, string name)
 		{
 			try
 			{
@@ -113,25 +120,25 @@ namespace Ironwill
 			}
 			catch
 			{
-				Xrecord xrecord = new Xrecord();
-
-				dictionary.SetAt(name, xrecord);
-				transaction.AddNewlyCreatedDBObject(xrecord, true);
-				
-				return xrecord;
+				return null;
 			}
 		}
 
 		// ==============================================================================================
 		// SETTING DATA
 		// ==============================================================================================
-		public static bool SetXRecord<T>(Transaction transaction, DBDictionary dictionary, string xrecordName, T val)
+		public static bool WriteXRecord<T>(Transaction transaction, DBDictionary dictionary, string xrecordName, T val)
 		{
 			using (Session.LockDocument())
 			{
 				DBDictionary dictionaryMutable = transaction.GetObject(dictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
 
 				Xrecord xrecord = GetXRecord(transaction, dictionaryMutable, xrecordName);
+
+				if (xrecord == null)
+				{
+					xrecord = CreateXRecord(transaction, dictionaryMutable, xrecordName);
+				}
 
 				xrecord.UpgradeOpen();
 
@@ -173,6 +180,16 @@ namespace Ironwill
 
 				return true;
 			}
+		}
+
+		private static Xrecord CreateXRecord(Transaction transaction, DBDictionary dictionary, string xrecordName)
+		{
+			Xrecord xrecord = new Xrecord();
+
+			dictionary.SetAt(xrecordName, xrecord);
+			transaction.AddNewlyCreatedDBObject(xrecord, true);
+
+			return xrecord;
 		}
 
 		// ==============================================================================================

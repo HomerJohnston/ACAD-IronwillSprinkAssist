@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.CleanupDraworder))]
+[assembly: CommandClass(typeof(Ironwill.Commands.CleanupDraworder))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class CleanupDraworder
 	{

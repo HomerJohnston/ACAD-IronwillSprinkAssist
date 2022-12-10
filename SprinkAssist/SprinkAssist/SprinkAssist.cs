@@ -21,9 +21,6 @@ namespace Ironwill
 	// then you should remove this class.
 	public partial class SprinkAssist : IExtensionApplication
 	{
-		// TODO remove ghetto version
-		string ghettoVersion = "2022.04.07";
-
 		void IExtensionApplication.Initialize()
 		{
 			// Add one time initialization here

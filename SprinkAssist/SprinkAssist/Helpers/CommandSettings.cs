@@ -34,12 +34,11 @@ namespace Ironwill
 				lookupDictionary = XRecordLibrary.GetGlobalDictionary(transaction);
 			}
 
-			if (!owningDictionary.Contains(settingName))
-			{
-				return (T)defaultValue;
-			}
+			T val = (T)defaultValue;
 
-			return (T)XRecordLibrary.ReadXRecordData(transaction, owningDictionary, settingName);
+			XRecordLibrary.ReadXRecord<T>(transaction, owningDictionary, settingName, ref val);
+
+			return val;
 		}
 
 		public void Set(Transaction transaction, T newValue)
@@ -48,22 +47,22 @@ namespace Ironwill
 			{
 				case string s:
 				{
-					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, s);
+					XRecordLibrary.WriteXRecord(transaction, owningDictionary, settingName, s);
 					break;
 				}
 				case int i:
 				{
-					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, i);
+					XRecordLibrary.WriteXRecord(transaction, owningDictionary, settingName, i);
 					break;
 				}
 				case double d:
 				{
-					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, d);
+					XRecordLibrary.WriteXRecord(transaction, owningDictionary, settingName, d);
 					break;
 				}
 				case bool b:
 				{
-					XRecordLibrary.SetXRecord(transaction, owningDictionary, settingName, b);
+					XRecordLibrary.WriteXRecord(transaction, owningDictionary, settingName, b);
 					break;
 				}
 				default:

@@ -8,9 +8,9 @@ using Autodesk.AutoCAD.Geometry;
 
 using Autodesk.AutoCAD.Runtime;
 
-[assembly: CommandClass(typeof(Ironwill.TestCmd))]
+[assembly: CommandClass(typeof(Ironwill.Commands.TestCmd))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class TestCmd
 	{

@@ -12,9 +12,9 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.AutoLabelOld))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AutoLabelOld))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class AutoLabelOld
 	{

@@ -37,6 +37,7 @@ namespace Ironwill
 		public static LayerStruct SystemFitting				= new LayerStruct(	Pfix + "System_Fitting",			Colors.Orange,			true,	"SpkSystem_Fitting");
 		public static LayerStruct SystemHead				= new LayerStruct(	Pfix + "System_Head",				Colors.LightRed,		true,	"SpkSystem_Head");
 
+		public static LayerStruct SystemPipe				= new LayerStruct(	Pfix + "System_Pipe",				Colors.OrangeRed,		true,	"SpkPipe");
 		public static LayerStruct SystemPipe_Armover		= new LayerStruct(	Pfix + "System_Pipe_Armover",		Colors.DarkRed,			true,	"SpkPipe_Armover");
 		public static LayerStruct SystemPipe_AuxDrain		= new LayerStruct(	Pfix + "System_Pipe_AuxDrain",		Colors.DarkRed,			true,	"SpkPipe_AuxDrain");
 		public static LayerStruct SystemPipe_Branchline		= new LayerStruct(	Pfix + "System_Pipe_Branchline",	Colors.OrangeRed,		true,	"SpkPipe_Branchline");

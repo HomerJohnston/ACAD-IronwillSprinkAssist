@@ -49,5 +49,18 @@ namespace Ironwill
 
 			database.SummaryInfo = summaryInfoBuilder.ToDatabaseSummaryInfo();
 		}
+
+		public static int GenerateUniqueID(Transaction transaction)
+		{
+			DBDictionary dictionary = XRecordLibrary.GetGlobalDictionary(transaction);
+
+			int nextId = 0;
+
+			XRecordLibrary.ReadXRecord<int>(transaction, dictionary, "UniqueID", ref nextId);
+
+			XRecordLibrary.WriteXRecord(transaction, dictionary, "UniqueID", ++nextId);
+
+			return nextId;
+		}
 	}
 }

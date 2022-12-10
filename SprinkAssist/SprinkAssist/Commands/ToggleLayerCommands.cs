@@ -14,9 +14,9 @@ using Autodesk.AutoCAD.GraphicsSystem;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
-[assembly: CommandClass(typeof(Ironwill.ToggleLayerCommands))]
+[assembly: CommandClass(typeof(Ironwill.Commands.ToggleLayerCommands))]
 
-namespace Ironwill
+namespace Ironwill.Commands
 {
 	public class ToggleLayerCommands
 	{

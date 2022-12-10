@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.DatabaseServices;
 
+using Autodesk.AutoCAD.EditorInput;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Autodesk.AutoCAD.ApplicationServices;
 
@@ -43,7 +44,7 @@ namespace Ironwill
 
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				DBDictionary pipeGroupsDictionary = XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
+				DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
 
 				if (pipeGroupsDictionary == null)
 				{
@@ -126,7 +127,7 @@ namespace Ironwill
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					DBDictionary pipeGroupsDictionary = XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
+					DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
 
 					DBDictionary dictionaryMutable = transaction.GetObject(pipeGroupsDictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
 
@@ -154,6 +155,52 @@ namespace Ironwill
 			PipeGroupDialog autoLabelDialog = new PipeGroupDialog();
 			AcApplication.ShowModalDialog(null, autoLabelDialog, false);
 			return autoLabelDialog;
+		}
+
+		private void Button_AssignToSelected_Click(object sender, EventArgs e)
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				Editor editor = Session.GetEditor();
+
+				SelectionSet currentSelection = editor.SelectImplied().Value;
+
+				List<string> PipeLayers = Commands.AutoLabelNew.GetPipeLayers();
+
+				List<string> PipeBlocks = Commands.AutoLabelNew.GetPipeBlocks();
+
+				DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupAssignmentsDictionary(transaction);
+
+				foreach (ObjectId objectId in currentSelection)
+				{
+					Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
+
+					bool validEntity = false;
+
+					if (entity is Line line && PipeLayers.Contains(line.Layer) || entity is BlockReference blockReference && PipeBlocks.Contains(blockReference.Name))
+					{
+						validEntity = true;
+					}
+
+					if (validEntity)
+					{
+						//string GroupName = listBoxPipeGroup.Text
+						//XRecordLibrary.WriteXRecord(transaction, pipeGroupsDictionary, entity.ObjectId.ToString(), );
+					}
+				}
+			}
+		}
+
+		private void DetermineGroupId(Transaction transaction, string groupName)
+		{
+			DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
+
+
+		}
+
+		private void Button_ClearFromSelected_Click(object sender, EventArgs e)
+		{
+
 		}
 	}
 }

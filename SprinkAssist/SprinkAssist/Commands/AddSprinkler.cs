@@ -19,17 +19,24 @@ using Autodesk.AutoCAD.GraphicsInterface;
 using System.Collections.ObjectModel;
 using Autodesk.AutoCAD.Colors;
 
-[assembly: CommandClass(typeof(Ironwill.AddSprinkler))]
+[assembly: CommandClass(typeof(Ironwill.Commands.AddSprinkler_OLD))]
 
-namespace Ironwill
+// Click to set anchor point
+// Click-click to set short tile length
+// Click-click to set long tile length
+// Click-click to set long tile orientation
+
+namespace Ironwill.Commands
 {
-	internal class AddSprinkler : SprinkAssistCommand
+	internal class AddSprinkler_OLD : SprinkAssistCommand
 	{
 		// Settings -----------------------------
-		CommandSetting<bool> TBarPlacementSetting;
-		CommandSetting<double> MinRadiusSetting;
-		CommandSetting<double> MaxRadiusASetting;
-		CommandSetting<double> MaxRadiusBSetting;
+		public CommandSetting<bool> TBarPlacementSetting;
+		public CommandSetting<double> TBarTileGrid;
+
+		public CommandSetting<double> MinRadiusSetting;
+		public CommandSetting<double> MaxPrimaryCoverageRadiusSetting;
+		public CommandSetting<double> MaxSecondaryCoverageRadiusSetting;
 
 		CommandSetting<string> CeilingLayerSetting;
 		CommandSetting<string> WallLayerSetting;
@@ -42,48 +49,75 @@ namespace Ironwill
 		const string CoverageFlipKeyword = "Flip";
 		const string CoverageAlignKeyword = "Align";
 
+
+
 		// State --------------------------------
+		List<Point3d> cachedSnapPoints = new List<Point3d>();
 		List<Line> cachedCeilingLines = new List<Line>();
 		List<Line> cachedWallLines = new List<Line>();
 		ObjectId sprinklerBlockObjectId;
 
-		public AddSprinkler()
+		public AddSprinkler_OLD()
 		{
+			switch (Session.GetPrimaryUnits())
+			{
+				case DrawingUnits.Metric:
+				{
+					// TODO rework CommandSetting so I can define its name once at declaration and set up its runtime data (default and dictionary) separately?
+					MinRadiusSetting = new CommandSetting<double>("MinRadius", 1828.0, cmdSettings);
+					MaxPrimaryCoverageRadiusSetting = new CommandSetting<double>("MaxPrimaryCoverageRadius", 4572.0, cmdSettings);
+					MaxSecondaryCoverageRadiusSetting = new CommandSetting<double>("MaxSecondaryCoverageRadius", 2743.0, cmdSettings);
+
+					TBarTileGrid = new CommandSetting<double>("TBarTileGrid", 609.6, cmdSettings);
+					break;
+				}
+				case DrawingUnits.Imperial:
+				{
+					MinRadiusSetting = new CommandSetting<double>("MinRadius", 72.0, cmdSettings);
+					MaxPrimaryCoverageRadiusSetting = new CommandSetting<double>("MaxPrimaryCoverageRadius", 180.0, cmdSettings);
+					MaxSecondaryCoverageRadiusSetting = new CommandSetting<double>("MaxSecondaryCoverageRadius", 108.0, cmdSettings);
+
+					TBarTileGrid = new CommandSetting<double>("TBarTileGrid", 24.0, cmdSettings);
+					break;
+				}
+			}
+
 			TBarPlacementSetting = new CommandSetting<bool>("TBarPlacement", true, cmdSettings);
-			MinRadiusSetting = new CommandSetting<double>("MinRadius", 1828, cmdSettings); // TODO metric conversion
-			MaxRadiusASetting = new CommandSetting<double>("MaxRadiusA", 2286, cmdSettings);
-			MaxRadiusBSetting = new CommandSetting<double>("MaxRadiusB", 2743, cmdSettings);
 			
 			CeilingLayerSetting = new CommandSetting<string>("CeilingLayer", "CLNG", cmdSettings); // TODO - global settings for sensing layers names
 			WallLayerSetting = new CommandSetting<string>("WallLayer", "WALL", cmdSettings);
 
-			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", Blocks.Sprinkler_Head_02.Get(), cmdSettings);
+			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", Blocks.Sprinkler_Head_02.Get(), cmdSettings); // TODO - global settings for available sprinkler blocks
 		}
 
-		[CommandMethod("SpkAssist_AddSprinkler")]
-		public void AddSprinklerCmd()
+		[CommandMethod("SpkAssist_AddSprinklerOLD")]
+		public void AddSprinkler_OLDCmd()
 		{
+			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
+			AcApplication.SetSystemVariable("OSMODE", 0);
+
 			using (Transaction transaction = Session.StartTransaction())
 			{
 				GenerateCeilingGrid(transaction);
 
-				if (!EnsureValidSprinklerBlock())
+				if (!EnsureValidSprinklerBlock(transaction))
 				{
 					Session.Log("Failed to find a valid sprinkler block!");
 					return;
 				}
 
 				Session.LogDebug("Selected object: " + sprinklerBlockObjectId.ToString());
+				
+				transaction.Commit();
+			}
 
-				PromptResult promptResult;
+			PromptResult promptResult;
 
-				int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));
-
-				AcApplication.SetSystemVariable("OSMODE", 0);
-
-				do
+			do
+			{
+				using (Transaction transaction = Session.StartTransaction())
 				{
-					AddSprinklerJig jigger = new AddSprinklerJig(cachedCeilingLines, cachedWallLines, sprinklerBlockObjectId);
+					AddSprinklerJig jigger = new AddSprinklerJig(this, transaction, cachedCeilingLines, cachedWallLines, sprinklerBlockObjectId);
 
 					promptResult = Session.GetEditor().Drag(jigger);
 
@@ -92,143 +126,113 @@ namespace Ironwill
 						BlockOps.CopyBlock(transaction, sprinklerBlockObjectId, jigger.snapPos);
 					}
 					transaction.Commit();
-
 				}
-				while (promptResult.Status == PromptStatus.OK);
-
-				AcApplication.SetSystemVariable("OSMODE", OSMODE);
-
-				transaction.Commit();
 			}
+			while (promptResult.Status == PromptStatus.OK);
+
+			AcApplication.SetSystemVariable("OSMODE", OSMODE);
 		}
 
-		private bool EnsureValidSprinklerBlock()
+		private bool EnsureValidSprinklerBlock(Transaction transaction)
 		{
-			using (Transaction transaction = Session.StartTransaction())
+			BlockReference blockReference = BlockOps.PickSprinkler(transaction, "Pick sprinkler type to place");
+				
+			if (blockReference != null)
 			{
-				BlockReference blockReference = BlockOps.PickSprinkler(transaction, "Pick sprinkler type to place");
-
-				if (blockReference != null)
-				{
-					sprinklerBlockObjectId = blockReference.ObjectId;
-				}
+				sprinklerBlockObjectId = blockReference.ObjectId;
 			}
 
 			return sprinklerBlockObjectId != ObjectId.Null;
 		}
 
 		static List<string> ceilingLayers;
+
 		static List<string> wallLayers;
 
 		private void GenerateCeilingGrid(Transaction transaction)
 		{
-			cachedCeilingLines.Clear();
-
 			ceilingLayers = LayerHelper.CollectLayersWithString(CeilingLayerSetting.Get(transaction)); // TODO: global settings for ceiling / wall layers
 			wallLayers = LayerHelper.CollectLayersWithString(WallLayerSetting.Get(transaction));
 
+			if (cachedCeilingLines.Count == 0)
+			{
+				FindCeilingsAndWalls(transaction, ref cachedCeilingLines, ref cachedWallLines);
+
+				Session.LogDebug("found {0} ceiling lines", cachedCeilingLines.Count.ToString());
+				Session.LogDebug("found {0} wall lines", cachedWallLines.Count.ToString());
+			}
+
+			ProcessCeilingLines(transaction);
+		}
+
+		void FindCeilingsAndWalls(Transaction transaction, ref List<Line> foundCeilings, ref List<Line> foundWalls)
+		{
 			Database database = Session.GetDatabase();
-			ModelSpaceHelper.xxx = 0;
-			ModelSpaceHelper.ERecurseFlags recurseFlags = ModelSpaceHelper.ERecurseFlags.RecurseXrefs | ModelSpaceHelper.ERecurseFlags.RecurseBlocks;
-			ModelSpaceHelper.IterateAllEntities(database, recurseFlags, TryCacheEntity);
+			
+			BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(database), OpenMode.ForRead) as BlockTableRecord;
 
-			Session.LogDebug("Found " + cachedWallLines.Count + " wall lines");
-			Session.LogDebug("Found " + cachedCeilingLines.Count + " ceiling lines");
-
-			ProcessCeilingLines();
-		}
-		
-		void TryCacheEntity(Entity entity)
-		{
-			if (!wallLayers.Contains(entity.Layer) && !ceilingLayers.Contains(entity.Layer)) { return; }
-
-			if (TryCacheLine(entity)) { return; }
-
-			if (TryCachePolyline(entity)) { return; }
-
-			if (TryCacheHatch(entity)) { return; }
-		}
-
-		bool TryCacheLine(Entity entity)
-		{
-			Line line = entity as Line;
-
-			if (line == null)
+			foreach (ObjectId objectId in modelSpaceBTR)
 			{
-				return false;
+				Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
+				Process(transaction, entity, ref foundCeilings, ref foundWalls);
 			}
+		}
 
-			Line lineCopy = new Line(line.StartPoint, line.EndPoint);
-
-			if (wallLayers.Contains(line.Layer))
+		void Process(Transaction transaction, Entity entity, ref List<Line> foundCeilings, ref List<Line> foundWalls)
+		{
+			if (entity is Line line)
 			{
-				if (line.Length > 300)
+				if (wallLayers.Contains(line.Layer) && line.Length > 12)
 				{
-					cachedWallLines.Add(lineCopy);
+					foundWalls.Add(line);
+					return;
 				}
-			}
-			else if (ceilingLayers.Contains(line.Layer))
-			{
-				if (line.Length > 1250)
+
+				if (ceilingLayers.Contains(line.Layer) && line.Length > 50)
 				{
-					cachedCeilingLines.Add(lineCopy);
+					foundCeilings.Add(line);
+					return;
 				}
 			}
 
-			return true;
+			if (entity is Polyline || entity is BlockReference || entity is Hatch)
+			{
+				if (entity is Hatch hatch)
+				{
+					if (hatch.NumberOfHatchLines == 0 || hatch.HatchObjectType != HatchObjectType.HatchObject)
+					return;
+				}
+
+				DBObjectCollection subEntities = new DBObjectCollection();
+
+				entity.Explode(subEntities);
+
+				foreach (Entity blockEntity in subEntities)
+				{
+					Process(transaction, blockEntity, ref foundCeilings, ref foundWalls);
+				}
+			}
+
+			// TODO process arcs and splines for ceiling edges
 		}
 
-		bool TryCachePolyline(Entity entity)
+		private void ProcessCeilingLines(Transaction transaction)
 		{
-			Polyline polyline = entity as Polyline;
+			double equalPointTolerance = Tolerance.Global.EqualPoint;
 
-			if (polyline == null)
+			switch (Session.GetPrimaryUnits())
 			{
-				return false;
+				case DrawingUnits.Metric:
+				{
+					equalPointTolerance = 5.0;
+					break;
+				}
+				case DrawingUnits.Imperial:
+				{
+					equalPointTolerance = 0.25;
+					break;
+				}
 			}
-
-			DBObjectCollection lineSegments = new DBObjectCollection();
-
-			polyline.Explode(lineSegments);
-
-			foreach (Entity lineSegment in lineSegments)
-			{
-				TryCacheEntity(lineSegment);
-			}
-
-			return true;
-		}
-
-		bool TryCacheHatch(Entity entity)
-		{
-			Hatch hatch = entity as Hatch;
-
-			if (hatch == null)
-			{
-				return false;
-			}
-
-			if (hatch.NumberOfHatchLines == 0 || hatch.HatchObjectType != HatchObjectType.HatchObject)
-			{
-				return true;
-			}
-
-			DBObjectCollection hatchObjects = new DBObjectCollection();
-
-			hatch.Explode(hatchObjects);
-
-			foreach (Entity hatchEntity in hatchObjects)
-			{
-				TryCacheEntity(hatchEntity);
-			}
-
-			return true;
-		}
-
-		private void ProcessCeilingLines()
-		{
-			// TODO imperial / metric
-			double equalPointTolerance = 2.0 * 2.0; // Tolerance.Global.EqualPoint * Tolerance.Global.EqualPoint;
 
 			foreach (Line ceilingLine in cachedCeilingLines)
 			{
@@ -268,9 +272,9 @@ namespace Ironwill
 
 				if (!bStartFound || !bEndFound)
 				{
-					// TODO imperial/metric
-					double extendAmount = 612.0;
-					ceilingLine.ExtendBy(bStartFound ? 0.0 : extendAmount, bEndFound ? 0.0 : extendAmount);
+					double extendAmount = TBarTileGrid.Get(transaction);
+					
+					//ceilingLine.ExtendBy(bStartFound ? 0.0 : extendAmount, bEndFound ? 0.0 : extendAmount);
 				}
 			}
 		}
@@ -278,6 +282,14 @@ namespace Ironwill
 
 	internal class AddSprinklerJig : DrawJig
 	{
+		// SETTINGS -------------------------------------
+		double debugCircleSize;
+
+		// STATE ----------------------------------------
+		AddSprinkler_OLD owningCommand;
+
+		Transaction transaction;
+		
 		Point3d cursorPos;
 
 		List<Vector3d> snapPoints = new List<Vector3d>();
@@ -294,27 +306,28 @@ namespace Ironwill
 
 		ObjectId sprinklerBlockObjectId;
 
-		public Point3d snapPos
-		{
-			get;
-			private set;
-		}
-
 		List<Line> cachedCeilingLines = new List<Line>();
 		List<Line> cachedWallLines = new List<Line>();
 
-		public AddSprinklerJig(List<Line> inCachedCeilingLines, List<Line> inCachedWallLines, ObjectId inSprinklerBlockObjectId)
+		public Point3d snapPos { get; private set; }
+
+		// CONSTRUCTOR ------------------------------------
+		public AddSprinklerJig(AddSprinkler_OLD inOwningCommand, Transaction inTransaction, List<Line> inCachedCeilingLines, List<Line> inCachedWallLines, ObjectId inSprinklerBlockObjectId)
 		{
+			owningCommand = inOwningCommand;
+			transaction = inTransaction;
+
 			cachedCeilingLines = inCachedCeilingLines;
 			cachedWallLines = inCachedWallLines;
 			sprinklerBlockObjectId = inSprinklerBlockObjectId;
 		}
 
+		// API --------------------------------------------
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Click to place...");
 
-			jigPromptPointOptions.Keywords.Add("teSt");
+			jigPromptPointOptions.Keywords.Add("Undo");
 
 			PromptPointResult promptResult = prompts.AcquirePoint(jigPromptPointOptions);
 
@@ -339,7 +352,9 @@ namespace Ironwill
 				Point3d nearPos = line.GetClosestPointTo(cursorPos, false);
 				Vector3d vectorToPos = nearPos - cursorPos;
 
-				if (vectorToPos.LengthSqrd > 1820 * 1820)
+				double distanceThreshold = owningCommand.TBarTileGrid.Get(transaction) * 3.0;
+				
+				if (vectorToPos.LengthSqrd > distanceThreshold * distanceThreshold)
 				{
 					continue;
 				}
@@ -377,11 +392,6 @@ namespace Ironwill
 				{
 					snapPoints.Add(vectorToPos);
 				}
-			}
-
-			if (snapPoints.Count != 4)
-			{
-				//return SamplerStatus.OK;
 			}
 
 			List<Line> tileLines = new List<Line>();
@@ -445,9 +455,8 @@ namespace Ironwill
 				double closestDistance = 0;
 
 				candidatePositions.Clear();
-
-				// TODO imperial
-				int increment = (SprinkMath.NearlyEqual(shortLine.Length, longLine.Length, 5.0)) ? 2 : 4;
+				
+				int increment = (SprinkMath.NearlyEqual(shortLine.Length, longLine.Length)) ? 2 : 4; // TODO: do I need looser tolerance?
 				for (int i = 1; i < increment; ++i)
 				{
 					Point3d p = longLine.StartPoint + 1.0 / increment * i * (longLine.Delta);
@@ -523,8 +532,25 @@ namespace Ironwill
 			{
 				Circle marker = new Circle();
 				marker.Center = debugPositions[i].Item1;
-				marker.Diameter = 10 + 5 * i;
-				marker.Color = Color.FromColorIndex(ColorMethod.ByAci, debugPositions[i].Item2);
+
+				double markerSizeFactor = 0;
+
+				switch (Session.GetPrimaryUnits())
+				{
+					case DrawingUnits.Metric:
+					{
+						markerSizeFactor = 10.0;
+						break;
+					}
+					case DrawingUnits.Imperial:
+					{
+						markerSizeFactor = 0.5;
+						break;
+					}
+				}
+
+				marker.Diameter = markerSizeFactor + 0.5 * markerSizeFactor * i;
+				marker.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.LightGreen);// debugPositions[i].Item2);
 
 				debugMarkers.Add(marker);
 			}
@@ -548,7 +574,24 @@ namespace Ironwill
 			{
 				Circle marker = new Circle();
 				marker.Center = cursorPos + snapPoints[i];
-				marker.Diameter = 25;
+
+				double markerDiameter = 0;
+
+				switch (Session.GetPrimaryUnits())
+				{
+					case DrawingUnits.Metric:
+					{
+						markerDiameter = 25;
+						break;
+					}
+					case DrawingUnits.Imperial:
+					{
+						markerDiameter = 1;
+						break;
+					}
+				}
+
+				marker.Diameter = markerDiameter;
 				marker.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.LightRed);
 
 				snapPointMarkers.Add(marker);
@@ -573,7 +616,24 @@ namespace Ironwill
 			{
 				Circle marker = new Circle();
 				marker.Center = candidatePositions[i];
-				marker.Diameter = 15;
+
+				double markerDiameter = 0;
+
+				switch (Session.GetPrimaryUnits())
+				{
+					case DrawingUnits.Metric:
+					{
+						markerDiameter = 15;
+						break;
+					}
+					case DrawingUnits.Imperial:
+					{
+						markerDiameter = 0.75;
+						break;
+					}
+				}
+
+				marker.Diameter = markerDiameter;
 				marker.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.Blue);
 
 				candidatePositionMarkers.Add(marker);
@@ -595,7 +655,26 @@ namespace Ironwill
 			if (placementCircle == null)
 			{
 				placementCircle = new Circle();
-				placementCircle.Diameter = 100; // TODO imperial
+
+				// TODO place the actual sprinkler block
+
+				double markerDiameter = 0;
+
+				switch (Session.GetPrimaryUnits())
+				{
+					case DrawingUnits.Metric:
+					{
+						markerDiameter = 100;
+						break;
+					}
+					case DrawingUnits.Imperial:
+					{
+						markerDiameter = 4;
+						break;
+					}
+				}
+
+				placementCircle.Diameter = markerDiameter;
 				placementCircle.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.Orange);
 			}
 
@@ -607,12 +686,20 @@ namespace Ironwill
 			if (coverageCircle == null)
 			{
 				coverageCircle = new Circle();
-				coverageCircle.Diameter = 4572; // TODO imperial
+
+				double markerDiameter = owningCommand.MaxPrimaryCoverageRadiusSetting.Get(transaction);
+
+				coverageCircle.Diameter = markerDiameter;
 				coverageCircle.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.DarkGrey);
 				coverageCircle.Linetype = Linetypes.Dashed; // TODO cleaner error handling in the event any types are not available
 			}
 
 			coverageCircle.Center = snapPos;
 		}
+	}
+
+	internal class SnapPointGenerator
+	{
+
 	}
 }

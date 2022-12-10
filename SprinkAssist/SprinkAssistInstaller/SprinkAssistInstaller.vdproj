@@ -254,7 +254,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:SprinkAssistApp, Version=1.0.8179.21719, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:SprinkAssistApp, Version=1.0.8211.26158, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
                     "_E8C4D75F5062415881697E422A00ED77"
@@ -382,15 +382,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:SprinkAssist for AutoCAD"
-        "ProductCode" = "8:{87C7FAB5-ECA9-4D36-8FCC-CF9129CDFC7F}"
-        "PackageCode" = "8:{7A6E732B-1EE1-4605-8C81-3F8454DF1F8B}"
+        "ProductCode" = "8:{F8025CB2-F7EC-41BE-A7CE-10D05E05B3E0}"
+        "PackageCode" = "8:{353490D0-01AF-4BDE-B25B-B75A00A308DD}"
         "UpgradeCode" = "8:{FFF67659-F978-4976-8823-4AEE6334B4F9}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.22.05241"
+        "ProductVersion" = "8:1.22.06251"
         "Manufacturer" = "8:Ironwill Fire Engineering Ltd."
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

@@ -1,4 +1,5 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,85 +18,78 @@ namespace Ironwill
 			RecurseBlocks = 2,
 		}
 
-		public static int xxx = 0;
-		/** Iterates all entities of a database */
-		public static void IterateAllEntities(Database database, ERecurseFlags recurseFlags, Action<Entity> processEntity)
+		/** Iterates all entities of a database and runs an action on them */
+		public static void IterateAllEntities(Transaction transaction, Database database, ERecurseFlags recurseFlags, Action<Entity, Matrix3d> processEntityAction)
 		{
-			List<Line> foundLines = new List<Line>();
+			BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(database), OpenMode.ForRead) as BlockTableRecord;
 
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(database), OpenMode.ForRead) as BlockTableRecord;
+			Session.LogDebug("Iterating model space BTR " + modelSpaceBTR.Id);
 
-				Session.LogDebug("Iterating model space BTR " + modelSpaceBTR.Id);
-
-				xxx++;
-
-				if (xxx > 10)
-				{
-					//xxx = 0;
-					return;
-				}
-
-				IterateAllEntities(modelSpaceBTR, recurseFlags, processEntity);
-				IterateEntitiesInXrefs(database, recurseFlags, processEntity);
-			}
+			// Gather all entities
+			IterateAllEntities(transaction, modelSpaceBTR, recurseFlags, processEntityAction, Matrix3d.Identity);
 		}
 
-		/** Given a block table record, iterate through and run the specified actions on each entity */
-		public static void IterateAllEntities(BlockTableRecord blockTableRecord, ERecurseFlags recurseFlags, Action<Entity> processEntity)
+		/** Iterates all entities of a block table record */
+		public static void IterateAllEntities(Transaction transaction, BlockTableRecord blockTableRecord, ERecurseFlags recurseFlags, Action<Entity, Matrix3d> processEntityAction, Matrix3d parentTransform)
 		{
-			using (Transaction transaction = Session.StartTransaction())
+			foreach (ObjectId objectId in blockTableRecord)
 			{
-				foreach (ObjectId objectId in blockTableRecord)
-				{
-					Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
+				Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
 
-					BlockReference blockReference = entity as BlockReference;
+				BlockReference blockReference = entity as BlockReference;
 					
-					if (blockReference != null && recurseFlags.HasFlag(ERecurseFlags.RecurseBlocks))
-					{
-						BlockTableRecord blockBtr = transaction.GetObject(blockReference.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
-
-						IterateAllEntities(blockBtr, recurseFlags, processEntity);
-					}
-					else
-					{
-						processEntity(entity);
-					}
-				}
-			}
-		}
-
-		/**  */
-		public static void IterateEntitiesInXrefs(Database database, ERecurseFlags recurseFlags, Action<Entity> processEntity)
-		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				Session.LogDebug("Iterating xrefs in database: " + database.CurrentSpaceId);
-				database.ResolveXrefs(true, false);
-
-				XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false);
-
-				GraphNode rootGraphNode = xrefGraph.RootNode;
-
-				List<Database> xrefs = new List<Database>();
-
-				for (int i = 0; i < rootGraphNode.NumOut; ++i)
+				if (blockReference != null && recurseFlags.HasFlag(ERecurseFlags.RecurseBlocks))
 				{
-					XrefGraphNode xrefGraphNode = rootGraphNode.Out(i) as XrefGraphNode;
+					Matrix3d blockTransform = blockReference.BlockTransform;
+					Matrix3d blockToWorld = parentTransform * blockTransform;
 
-					if (xrefGraphNode == null)
+					BlockTableRecord blockBtr = transaction.GetObject(blockReference.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+
+					if (blockBtr.IsFromExternalReference)
 					{
-						continue;
+						Session.Log("Found an XREF: {0}", blockBtr.Name);
 					}
 
-					BlockTableRecord xrefBlockTableRecord = transaction.GetObject(xrefGraphNode.BlockTableRecordId, OpenMode.ForRead) as BlockTableRecord;
-
-					Session.LogDebug("Iterating xref: " + xrefGraphNode.Name);
-					IterateAllEntities(xrefBlockTableRecord, recurseFlags, processEntity);
+					IterateAllEntities(transaction, blockBtr, recurseFlags, processEntityAction, blockToWorld);
+				}
+				else
+				{
+					processEntityAction(entity, parentTransform);
 				}
 			}
 		}
+
+
+
+		/*
+		public static void IterateEntitiesInXrefs(Transaction transaction, Database database, ERecurseFlags recurseFlags, Action<Entity, Matrix3d> processEntityAction)
+		{
+			Session.LogDebug("Iterating xrefs in database: " + database.CurrentSpaceId);
+			database.ResolveXrefs(true, false);
+
+			XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false);
+
+			GraphNode rootGraphNode = xrefGraph.RootNode;
+
+			List<Database> xrefs = new List<Database>();
+
+			for (int i = 0; i < rootGraphNode.NumOut; ++i)
+			{
+				XrefGraphNode xrefGraphNode = rootGraphNode.Out(i) as XrefGraphNode;
+
+				if (xrefGraphNode == null)
+				{
+					continue;
+				}
+
+				BlockTableRecord xrefBlockTableRecord = transaction.GetObject(xrefGraphNode.BlockTableRecordId, OpenMode.ForRead) as BlockTableRecord;
+				
+				Session.LogDebug("Iterating xref: " + xrefGraphNode.Name);
+				IterateAllEntities(transaction, xrefBlockTableRecord, recurseFlags, processEntityAction);
+
+					
+			}
+		}
+		*/
 	}
 }
