@@ -187,7 +187,7 @@ namespace Ironwill.Commands
 		{
 		}
 
-		[CommandMethod("SpkAssist_AddSprinkler")]
+		[CommandMethod("SpkAssist", "AddSprinkler", CommandFlags.NoBlockEditor & CommandFlags.NoPaperSpace)]
 		public void AddSprinkler_Cmd()
 		{
 			PromptResult promptResult = null;
@@ -199,12 +199,14 @@ namespace Ironwill.Commands
 					if (!ValidateSourceSprinkler(transaction))
 					{
 						Session.Log("Did not select a sprinkler to place");
+						transaction.Commit();
 						return;
 					}
 
 					if (!ValidateAnchor(anchor, transaction))
 					{
 						Session.Log("Did not specify valid tile");
+						transaction.Commit();
 						return;
 					}
 
@@ -231,7 +233,7 @@ namespace Ironwill.Commands
 						transaction.Commit();
 					}
 
-					Session.Log("");
+					//Session.Log("");
 				}
 			}
 		}
@@ -245,11 +247,6 @@ namespace Ironwill.Commands
 			}
 
 			SelectSourceSprinkler(transaction);
-
-			if (sourceSprinkler == null)
-			{
-				Session.Log("No valid sprinkler block selected!");
-			}
 
 			return sourceSprinkler != null;
 		}
@@ -313,6 +310,12 @@ namespace Ironwill.Commands
 		void SelectSourceSprinkler(Transaction transaction)
 		{
 			sourceSprinkler = BlockOps.PickSprinkler(transaction, "Pick a sprinkler block to copy");
+
+			if (sourceSprinkler == null)
+			{
+				return;
+			}
+
 			sourceSprinklerId = sourceSprinkler.ObjectId;
 		}
 
@@ -492,6 +495,7 @@ namespace Ironwill.Commands
 
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
+			Session.NewLine();
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Specify length of tile in perpendicular direction");
 			PromptPointResult pointResult = prompts.AcquirePoint(jigPromptPointOptions);
 
@@ -554,6 +558,7 @@ namespace Ironwill.Commands
 		// The sampler will be called whenever there is a mouse input of any sort
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
+			Session.NewLine();
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Click to place...");
 			jigPromptPointOptions.Keywords.Add("poSition");
 			jigPromptPointOptions.Keywords.Add("Reorient");
@@ -646,7 +651,7 @@ namespace Ironwill.Commands
 				longAxisLength = temp2;
 			}
 
-			if (longAxisLength > shortAxisLength * 1.5)
+			if (longAxisLength > Math.Abs(shortAxisLength * 1.25))
 			{
 				numLongInterval = 4;
 			}

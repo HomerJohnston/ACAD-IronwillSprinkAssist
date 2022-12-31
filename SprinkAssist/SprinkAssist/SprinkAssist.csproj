@@ -157,6 +157,9 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Data\Test.csv" />
+    <None Include="GenericParsing\GenericParsing.nuspec" />
+    <None Include="GenericParsing\Help\GenericParsing.chm" />
     <None Include="Ironwill.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
@@ -177,6 +180,12 @@
       <DependentUpon>PipesPalette.xaml</DependentUpon>
     </Compile>
     <Compile Include="Extensions\LineExtensions.cs" />
+    <Compile Include="GenericParsing\FieldType.cs" />
+    <Compile Include="GenericParsing\GenericParser.cs" />
+    <Compile Include="GenericParsing\GenericParserAdapter.cs" />
+    <Compile Include="GenericParsing\Legacy Support\StringArray.cs" />
+    <Compile Include="GenericParsing\ParserState.cs" />
+    <Compile Include="GenericParsing\ParsingException.cs" />
     <Compile Include="Helpers\CommandSettings.cs" />
     <Compile Include="Helpers\Definitions\Colors.cs" />
     <Compile Include="Helpers\Drawing\CeilingProcessor.cs" />
@@ -218,6 +227,7 @@
     <Compile Include="Helpers\Session.cs" />
     <Compile Include="Helpers\WorldUCS.cs" />
     <Compile Include="Settings\DrawingSettings.cs" />
+    <Compile Include="Template\GenerateSprinklerBlocks.cs" />
     <Compile Include="Types\PipeGroup.cs" />
     <Compile Include="SprinkAssist.cs" />
     <Compile Include="Dialogs\PipeLabelDialog.cs">

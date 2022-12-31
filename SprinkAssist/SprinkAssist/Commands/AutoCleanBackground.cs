@@ -259,15 +259,27 @@ namespace Ironwill.Commands
 						continue;
 					}
 
-					string name = layerTableRecord.Name;
+					string layerName = layerTableRecord.Name;
+
+					if (layerTableRecord.IsLocked)
+					{
+						Session.Log("Warning: layer " + layerName + " was locked, ignoring");
+						continue;
+					}
+
+					if (layerTableRecord.IsFrozen)
+					{
+						Session.Log("Warning: layer " + layerName + " was frozen, ignoring");
+						continue;
+					}
 
 					foreach (CleanupEntry cleanupEntry in layerCleanupEntries)
 					{
-						if (cleanupEntry.Matches(name))
+						if (cleanupEntry.Matches(layerName))
 						{
 							if (cleanupEntry.erase)
 							{
-								LayerHelper.Delete(name);
+								LayerHelper.Delete(layerName);
 								break;
 							}
 

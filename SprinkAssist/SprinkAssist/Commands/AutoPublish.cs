@@ -24,6 +24,7 @@ namespace Ironwill.Commands
 	{
 		string currentPdfFile;
 
+		// TODO remove hardcoded property strings somehow
 		[CommandMethod("SpkAssist_AutoPublish")]
 		public void AutoPublishCmd()
 		{
@@ -45,16 +46,21 @@ namespace Ironwill.Commands
 			string dwgDirectory = Path.GetDirectoryName(dwgName);
 			
 			string destinationPath = dwgDirectory;
+
+			string plotFileNameBase = "FP Dwgs";
+			
+			string projectName = Session.GetDatabase().GetCustomProperty("ProjectName_1");
 			
 			string issuedFor = Session.GetDatabase().GetCustomProperty("IssuedFor");
-			string date = DateTime.Now.ToString(@"yyyy-MM-dd");
-			string bareFileName = Path.GetFileNameWithoutExtension(dwgName);
+			string issuedForAbbrev = "IF" + new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();
 
-			string issuedForAbbrev = new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();
+			string dateAsString = "(" + DateTime.Now.ToString(@"yyyy-MM-dd") + ")";
 
-			string destinationFileName = bareFileName + " - IF" + issuedForAbbrev + " (" + date + ")";
-			
-			destinationFileName = Path.ChangeExtension(destinationFileName, "pdf");
+			string pdfFileName = plotFileNameBase;
+			pdfFileName = string.Join(" - ", projectName, issuedForAbbrev);
+			pdfFileName = string.Join(" ", pdfFileName, dateAsString);
+
+			pdfFileName = Path.ChangeExtension(pdfFileName, "pdf");
 
 			string destinationLogName = Path.GetFileName(dwgName);
 			destinationLogName = Path.ChangeExtension(destinationLogName, "log");
@@ -73,7 +79,6 @@ namespace Ironwill.Commands
 
 				entry.Layout = layoutName;
 				entry.DwgName = dwgName;
-				//entry.Nps = "Setup1";
 				entry.Title = layoutName; // TODO read the page title from the titleblock
 				dsdEntryCollection.Add(entry);
 			}
@@ -84,7 +89,7 @@ namespace Ironwill.Commands
 			dsdData.LogFilePath = Path.Combine(destinationPath, destinationLogName);
 			dsdData.SheetType = SheetType.MultiPdf;
 			dsdData.NoOfCopies = 1;
-			dsdData.DestinationName = Path.Combine(destinationPath, destinationFileName);
+			dsdData.DestinationName = Path.Combine(destinationPath, pdfFileName);
 			dsdData.PromptForDwfName = false;
 			//dsdData.SheetSetName = "PublisherSet"; // TODO what is this? 
 

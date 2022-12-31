@@ -254,7 +254,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:SprinkAssistApp, Version=1.0.8211.26158, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:SprinkAssistApp, Version=1.0.8378.39961, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
                     "_E8C4D75F5062415881697E422A00ED77"

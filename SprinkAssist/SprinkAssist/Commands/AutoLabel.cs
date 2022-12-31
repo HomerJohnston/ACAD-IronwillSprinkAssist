@@ -20,7 +20,7 @@ namespace Ironwill.Commands
 	{
 		/// ---------------------------------------------------------------------------------------
 		/**  */
-		[CommandMethod("SpkAssist_AutoLabel", CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist", "AutoLabel", CommandFlags.UsePickSet)]
 		public void AutoLabelCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

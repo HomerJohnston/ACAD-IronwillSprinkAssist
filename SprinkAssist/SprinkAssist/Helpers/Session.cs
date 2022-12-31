@@ -167,25 +167,30 @@ namespace Ironwill
 		}
 
 		[System.Diagnostics.Conditional("DEBUG")]
-		public static void LogDebug(string message)
+		public static void LogDebug(string formattedMessage, params string[] args)
 		{
-			GetEditor().WriteMessage(message + "\n");
+			Log(String.Format(formattedMessage, args));
 		}
 
 		[System.Diagnostics.Conditional("DEBUG")]
-		public static void LogDebug(string formattedMessage, params string[] args)
+		public static void LogDebug(string message)
 		{
-			LogDebug(String.Format(formattedMessage, args));
-		}
-
-		public static void Log(string message)
-		{
-			GetEditor().WriteMessage(message + "\n");
+			Log(message);
 		}
 
 		public static void Log(string formattedMessage, params string[] args)
 		{
 			Log(String.Format(formattedMessage, args));
+		}
+
+		public static void Log(string message)
+		{
+			GetEditor().WriteMessage("\n" + message);
+		}
+
+		public static void NewLine()
+		{
+			GetEditor().WriteMessage("\n");
 		}
 
 		public static void Command(params object[] parameters)

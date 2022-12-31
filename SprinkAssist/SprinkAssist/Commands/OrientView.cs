@@ -34,7 +34,7 @@ namespace Ironwill.Commands
 				
 				database.Orthomode = false;
 
-				PromptPointOptions promptPointOptions1 = new PromptPointOptions("\nPick first point (origin)");
+				PromptPointOptions promptPointOptions1 = new PromptPointOptions("\nDraw a new screen view right-vector by clicking two points");
 				PromptPointResult promptPointResult1 = editor.GetPoint(promptPointOptions1);
 
 				if (promptPointResult1.Status != PromptStatus.OK)
@@ -89,49 +89,12 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_ResetView")]
-		public void ResetViewCmd()
-		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				Editor editor = Session.GetEditor();
-
-				Database database = Session.GetDatabase();
-
-				bool initialOrthoMode = database.Orthomode;
-				
-				database.Orthomode = false;
-
-				ViewTableRecord view = editor.GetCurrentView();
-
-				Matrix3d initialDCStoWCS =
-					Matrix3d.Rotation(-view.ViewTwist, view.ViewDirection, view.Target) *
-					Matrix3d.Displacement(view.Target - Point3d.Origin) *
-					Matrix3d.PlaneToWorld(view.ViewDirection);
-
-				Point3d pp = new Point3d(view.CenterPoint.X, view.CenterPoint.Y, 0.0);
-				pp = pp.TransformBy(initialDCStoWCS);
-
-				view.CenterPoint = new Point2d(pp.X, pp.Y);
-				view.ViewTwist = 0;
-
-				editor.SetCurrentView(view);
-
-				database.Orthomode = initialOrthoMode;
-
-				// TODO restore at same viewpoint centre
-				Session.GetDocument().SendStringToExecute("ucs\n\n", false, false, true);
-
-				transaction.Commit();
-			}
-		}
-
 		private void SetUcsBy2Points(Point3d pt1, Point3d pt2)
 		{
 			Editor ed = Session.GetEditor();
 
 			CoordinateSystem3d ucs = ed.CurrentUserCoordinateSystem.CoordinateSystem3d;
-			
+
 			Vector3d xAxis = pt1.GetVectorTo(pt2).GetNormal();
 			Vector3d zAxis = Vector3d.ZAxis;
 			Vector3d yAxis;
@@ -165,15 +128,15 @@ namespace Ironwill.Commands
 			public OrientViewDrawJig(Point3d basePoint)
 			{
 				double ucsSize = 0.0;
-				
+
 				switch (Session.GetPrimaryUnits())
 				{
 					case DrawingUnits.Imperial:
-						ucsSize = 48.0;
-						break;
+					ucsSize = 48.0;
+					break;
 					case DrawingUnits.Metric:
-						ucsSize = 1220.0;
-						break;
+					ucsSize = 1220.0;
+					break;
 				}
 
 				basePoint = SprinkMath.ConvertFromUCStoWCS(basePoint);
@@ -204,7 +167,7 @@ namespace Ironwill.Commands
 
 				return SamplerStatus.OK;
 			}
-			
+
 			protected override bool WorldDraw(WorldDraw draw)
 			{
 				Vector3d basePointV = basePoint.GetAsVector();
@@ -226,6 +189,44 @@ namespace Ironwill.Commands
 				worldGeometry.PopModelTransform();
 
 				return true;
+			}
+		}
+
+		[CommandMethod("SpkAssist_ResetView")]
+		public void ResetViewCmd()
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				Editor editor = Session.GetEditor();
+
+				Database database = Session.GetDatabase();
+
+				bool initialOrthoMode = database.Orthomode;
+				
+				database.Orthomode = false;
+
+				ViewTableRecord view = editor.GetCurrentView();
+
+				Session.LogDebug(view.Target.ToString());
+
+				Matrix3d initialDCStoWCS =
+					Matrix3d.Rotation(-view.ViewTwist, view.ViewDirection, view.Target) *
+					Matrix3d.Displacement(view.Target - Point3d.Origin) *
+					Matrix3d.PlaneToWorld(view.ViewDirection);
+
+				Point3d pp = new Point3d(view.CenterPoint.X, view.CenterPoint.Y, 0.0);
+				//pp = pp.TransformBy(initialDCStoWCS.Inverse());
+
+				view.CenterPoint = new Point2d(pp.X, pp.Y);
+				view.ViewTwist = 0;
+
+				editor.SetCurrentView(view);
+
+				database.Orthomode = initialOrthoMode;
+
+				Session.GetDocument().SendStringToExecute("ucs\n\n", false, false, true);
+
+				transaction.Commit();
 			}
 		}
 	}

@@ -157,6 +157,11 @@ namespace Ironwill
 		// TODO see if there is a simpler existing picker in Editor I can use?
 		public static BlockReference PickSprinkler(Transaction transaction, string prompt)
 		{
+			if (!prompt.StartsWith(Environment.NewLine))
+			{
+				prompt = Environment.NewLine + prompt;
+			}
+
 			BlockReference selectedBlock = null;
 
 			while (selectedBlock == null)
