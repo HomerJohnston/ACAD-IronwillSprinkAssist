@@ -25,21 +25,28 @@ namespace Ironwill.Commands
 		string currentPdfFile;
 
 		// TODO remove hardcoded property strings somehow
-		[CommandMethod("SpkAssist_AutoPublish")]
+		[CommandMethod("SpkAssist", "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void AutoPublishCmd()
 		{
 			Session.Log("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
 
-			// Store the current tab, we'll need to return to it when we're done
-			var ctab = Application.GetSystemVariable("CTAB");
+			var CTAB = AcApplication.GetSystemVariable("CTAB");
 			
 			// Get all layout names
 			List<string> layouts = GetLayouts();
 
 			if (layouts.Count == 0)
 			{
-				Session.Log("No layouts found that start with FP!");
+				Session.Log("Warning: No layouts found that start with FP, aborting!");
 				return;
+			}
+
+			int PDFSHX = System.Convert.ToInt32(AcApplication.GetSystemVariable("PDFSHX"));
+
+			if (PDFSHX > 0)
+			{
+				Session.Log("Warning: PDFSHX was 1, setting to 0!");
+				AcApplication.SetSystemVariable("PDFSHX", 0);
 			}
 
 			string dwgName = Session.GetDocument().Name;
@@ -125,7 +132,7 @@ namespace Ironwill.Commands
 				System.Diagnostics.Process.Start(currentPdfFile);
 			}
 
-			AcApplication.SetSystemVariable("CTAB", ctab);
+			AcApplication.SetSystemVariable("CTAB", CTAB);
 		}
 
 		void EndPublishEventHandler(object sender, PublishEventArgs e)

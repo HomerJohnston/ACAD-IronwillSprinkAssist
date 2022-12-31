@@ -90,7 +90,7 @@ namespace Ironwill.Commands
 			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", Blocks.Sprinkler_Head_02.Get(), cmdSettings); // TODO - global settings for available sprinkler blocks
 		}
 
-		[CommandMethod("SpkAssist_AddSprinklerOLD")]
+		[CommandMethod("SpkAssist", "AddSprinklerOLD", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void AddSprinkler_OLDCmd()
 		{
 			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));

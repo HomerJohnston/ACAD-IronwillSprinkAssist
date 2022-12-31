@@ -20,7 +20,7 @@ namespace Ironwill.Commands
 	{
 		/// ---------------------------------------------------------------------------------------
 		/**  */
-		[CommandMethod("SpkAssist_AutoCouplings", CommandFlags.UsePickSet)]
+		[CommandMethod("SpkAssist", "AutoCouplings", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void AutoCouplingsCmd()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

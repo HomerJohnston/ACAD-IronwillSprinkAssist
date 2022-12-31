@@ -133,7 +133,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_AutoCleanBackground")]
+		[CommandMethod("SpkAssist", "AutoCleanBackground", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void AutoCleanBackgroundCmd()
 		{
 			// TODO: make this data driven instead of hard coded

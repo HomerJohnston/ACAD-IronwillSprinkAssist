@@ -22,7 +22,7 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist_OrientView")]
+		[CommandMethod("SpkAssist", "OrientView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void OrientViewCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -34,7 +34,7 @@ namespace Ironwill.Commands
 				
 				database.Orthomode = false;
 
-				PromptPointOptions promptPointOptions1 = new PromptPointOptions("\nDraw a new screen view right-vector by clicking two points");
+				PromptPointOptions promptPointOptions1 = new PromptPointOptions(Environment.NewLine + "Draw a new screen view right-vector by clicking two points");
 				PromptPointResult promptPointResult1 = editor.GetPoint(promptPointOptions1);
 
 				if (promptPointResult1.Status != PromptStatus.OK)
@@ -64,6 +64,9 @@ namespace Ironwill.Commands
 
 				ViewTableRecord view = editor.GetCurrentView();
 
+				Session.LogDebug("TARGET:" + view.Target.ToString());
+				Session.LogDebug("VIEW CENTRE:" + view.CenterPoint.ToString());
+
 				Matrix3d initialDCStoWCS =
 					Matrix3d.Rotation(-view.ViewTwist, view.ViewDirection, view.Target) *
 					Matrix3d.Displacement(view.Target - Point3d.Origin) *
@@ -78,8 +81,11 @@ namespace Ironwill.Commands
 				pp = pp.TransformBy(initialDCStoWCS);
 				pp = pp.TransformBy(endDCStoWCS.Inverse());
 
+				Session.LogDebug("PP:" + pp.ToString());
+				
 				view.CenterPoint = new Point2d(pp.X, pp.Y);
 				view.ViewTwist += angle;
+				view.Target = Point3d.Origin;
 				
 				editor.SetCurrentView(view);
 
@@ -192,7 +198,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_ResetView")]
+		[CommandMethod("SpkAssist", "ResetView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void ResetViewCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -207,7 +213,13 @@ namespace Ironwill.Commands
 
 				ViewTableRecord view = editor.GetCurrentView();
 
-				Session.LogDebug(view.Target.ToString());
+				Session.LogDebug("TARGET:" + view.Target.ToString());
+				Session.LogDebug("VIEW CENTRE:" + view.CenterPoint.ToString());
+
+				editor.CurrentUserCoordinateSystem = Matrix3d.Identity;
+
+				Session.LogDebug("TARGET:" + view.Target.ToString());
+				Session.LogDebug("VIEW CENTRE:" + view.CenterPoint.ToString());
 
 				Matrix3d initialDCStoWCS =
 					Matrix3d.Rotation(-view.ViewTwist, view.ViewDirection, view.Target) *
@@ -215,16 +227,17 @@ namespace Ironwill.Commands
 					Matrix3d.PlaneToWorld(view.ViewDirection);
 
 				Point3d pp = new Point3d(view.CenterPoint.X, view.CenterPoint.Y, 0.0);
-				//pp = pp.TransformBy(initialDCStoWCS.Inverse());
+				pp = pp.TransformBy(initialDCStoWCS);
 
 				view.CenterPoint = new Point2d(pp.X, pp.Y);
 				view.ViewTwist = 0;
+				view.Target = Point3d.Origin;
 
 				editor.SetCurrentView(view);
 
 				database.Orthomode = initialOrthoMode;
 
-				Session.GetDocument().SendStringToExecute("ucs\n\n", false, false, true);
+				//Session.GetDocument().SendStringToExecute("ucs\n\n", false, false, true);
 
 				transaction.Commit();
 			}

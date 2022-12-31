@@ -185,12 +185,7 @@ namespace Ironwill
 
 		public static void Log(string message)
 		{
-			GetEditor().WriteMessage("\n" + message);
-		}
-
-		public static void NewLine()
-		{
-			GetEditor().WriteMessage("\n");
+			GetEditor().WriteMessage(Environment.NewLine + message);
 		}
 
 		public static void Command(params object[] parameters)

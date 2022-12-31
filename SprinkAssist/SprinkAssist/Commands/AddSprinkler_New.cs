@@ -180,14 +180,14 @@ namespace Ironwill.Commands
 		// State --------------------------------------
 		TileAnchor anchor = new TileAnchor();
 
-		ObjectId sourceSprinklerId = ObjectId.Null;
-		BlockReference sourceSprinkler = null;
+		ObjectId templateSprinklerId = ObjectId.Null;
+		BlockReference templateSprinkler = null;
 
 		public AddSprinkler()
 		{
 		}
 
-		[CommandMethod("SpkAssist", "AddSprinkler", CommandFlags.NoBlockEditor & CommandFlags.NoPaperSpace)]
+		[CommandMethod("SpkAssist", "AddSprinkler", CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void AddSprinkler_Cmd()
 		{
 			PromptResult promptResult = null;
@@ -196,7 +196,7 @@ namespace Ironwill.Commands
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					if (!ValidateSourceSprinkler(transaction))
+					if (!ValidateTemplateSprinkler(transaction))
 					{
 						Session.Log("Did not select a sprinkler to place");
 						transaction.Commit();
@@ -210,7 +210,7 @@ namespace Ironwill.Commands
 						return;
 					}
 
-					AddSprinklerJigger jigger = new AddSprinklerJigger(transaction, sourceSprinkler, anchor);
+					AddSprinklerJigger jigger = new AddSprinklerJigger(transaction, templateSprinkler, anchor);
 
 					promptResult = Session.GetEditor().Drag(jigger);
 
@@ -218,9 +218,9 @@ namespace Ironwill.Commands
 					{
 						if (promptResult.StringResult == "Head")
 						{
-							sourceSprinkler = null;
-							sourceSprinklerId = ObjectId.Null;
-							ValidateSourceSprinkler(transaction);
+							templateSprinkler = null;
+							templateSprinklerId = ObjectId.Null;
+							ValidateTemplateSprinkler(transaction);
 						}
 
 						jigger.RemoveSprinkler();
@@ -238,17 +238,24 @@ namespace Ironwill.Commands
 			}
 		}
 
-		bool ValidateSourceSprinkler(Transaction transaction)
+		bool ValidateTemplateSprinkler(Transaction transaction)
 		{
-			if (sourceSprinklerId != ObjectId.Null)
+			if (templateSprinklerId.IsNull)
 			{
-				sourceSprinkler = transaction.GetObject(sourceSprinklerId, OpenMode.ForRead) as BlockReference;
+				SelectTemplateSprinkler(transaction);
+			}
+			else if (templateSprinklerId.IsErased || templateSprinklerId.IsEffectivelyErased)
+			{
+				Session.Log("Template sprinkler was erased - pick new template sprinkler");
+				SelectTemplateSprinkler(transaction);
+			}
+			else if (templateSprinklerId.IsValid && templateSprinklerId.IsWellBehaved)
+			{
+				templateSprinkler = transaction.GetObject(templateSprinklerId, OpenMode.ForRead) as BlockReference;
 				return true;
 			}
 
-			SelectSourceSprinkler(transaction);
-
-			return sourceSprinkler != null;
+			return templateSprinkler != null;
 		}
 
 		bool ValidateAnchor(TileAnchor anchor, Transaction transaction)
@@ -307,16 +314,16 @@ namespace Ironwill.Commands
 			return anchor.tileLength1Set && anchor.tileLength2Set;
 		}
 
-		void SelectSourceSprinkler(Transaction transaction)
+		void SelectTemplateSprinkler(Transaction transaction)
 		{
-			sourceSprinkler = BlockOps.PickSprinkler(transaction, "Pick a sprinkler block to copy");
+			templateSprinkler = BlockOps.PickSprinkler(transaction, "Pick a template sprinkler block");
 
-			if (sourceSprinkler == null)
+			if (templateSprinkler == null)
 			{
 				return;
 			}
 
-			sourceSprinklerId = sourceSprinkler.ObjectId;
+			templateSprinklerId = templateSprinkler.ObjectId;
 		}
 
 		void SelectAnchorPosition(TileAnchor inAnchor)
@@ -393,7 +400,7 @@ namespace Ironwill.Commands
 
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
-			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Select a tile intersection point");
+			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Select a tile intersection point");
 			PromptPointResult pointResult = prompts.AcquirePoint(jigPromptPointOptions);
 			
 			if (pointResult.Status != PromptStatus.OK)
@@ -426,7 +433,7 @@ namespace Ironwill.Commands
 
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
-			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Select new tile anchor rotation");
+			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Select new tile anchor rotation");
 			PromptPointResult pointResult = prompts.AcquirePoint(jigPromptPointOptions);
 
 			if (pointResult.Status != PromptStatus.OK)
@@ -461,7 +468,7 @@ namespace Ironwill.Commands
 
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
-			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Select an adjacent tile intersection");
+			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Select an adjacent tile intersection");
 			PromptPointResult pointResult = prompts.AcquirePoint(jigPromptPointOptions);
 
 			if (pointResult.Status != PromptStatus.OK)
@@ -495,8 +502,7 @@ namespace Ironwill.Commands
 
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
-			Session.NewLine();
-			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Specify length of tile in perpendicular direction");
+			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Specify length of tile in perpendicular direction");
 			PromptPointResult pointResult = prompts.AcquirePoint(jigPromptPointOptions);
 
 			if (pointResult.Status != PromptStatus.OK)
@@ -540,7 +546,7 @@ namespace Ironwill.Commands
 
 		TileAnchor tileAnchor;
 
-		public AddSprinklerJigger(Transaction inTransaction, BlockReference sourceSprinkler, TileAnchor inAnchor)
+		public AddSprinklerJigger(Transaction inTransaction, BlockReference templateSprinkler, TileAnchor inAnchor)
 		{
 			transaction = inTransaction;
 
@@ -548,18 +554,17 @@ namespace Ironwill.Commands
 
 			if (jigSprinkler == null)
 			{
-				jigSprinkler = BlockOps.InsertBlock(BlockOps.GetDynamicBlockName(sourceSprinkler));
+				jigSprinkler = BlockOps.InsertBlock(BlockOps.GetDynamicBlockName(templateSprinkler));
 
-				BlockOps.CopyCommonProperties(sourceSprinkler, jigSprinkler);
-				BlockOps.CopyDynamicBlockProperties(sourceSprinkler, jigSprinkler);
+				BlockOps.CopyCommonProperties(templateSprinkler, jigSprinkler);
+				BlockOps.CopyDynamicBlockProperties(templateSprinkler, jigSprinkler);
 			}
 		}
 
 		// The sampler will be called whenever there is a mouse input of any sort
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
-			Session.NewLine();
-			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions("Click to place...");
+			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Click to place...");
 			jigPromptPointOptions.Keywords.Add("poSition");
 			jigPromptPointOptions.Keywords.Add("Reorient");
 			jigPromptPointOptions.Keywords.Add("New");

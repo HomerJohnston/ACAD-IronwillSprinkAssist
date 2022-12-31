@@ -18,7 +18,7 @@ namespace Ironwill.Commands
 {
 	public class ReplaceHeads
 	{
-		[CommandMethod("SpkAssist_ReplaceHeads")]
+		[CommandMethod("SpkAssist", "ReplaceHeads", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void ReplaceHeadsCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -28,6 +28,7 @@ namespace Ironwill.Commands
 				if (headToReplace == null)
 				{
 					Session.Log("No head selected, aborting");
+					transaction.Commit();
 					return;
 				}
 
@@ -41,6 +42,7 @@ namespace Ironwill.Commands
 				if (headsToReplace == null || headsToReplace.Count == 0)
 				{
 					Session.Log("No objects selected, aborting");
+					transaction.Commit();
 					return;
 				}
 
@@ -49,6 +51,7 @@ namespace Ironwill.Commands
 				if (replacementHeadBlock == null)
 				{
 					Session.Log("No head selected, aborting");
+					transaction.Commit();
 					return;
 				}
 
@@ -60,6 +63,8 @@ namespace Ironwill.Commands
 
 					if (newHead == null)
 					{
+						Session.Log("An error occurred - failed to create new block!");
+						transaction.Abort();
 						return;
 					}
 
@@ -92,7 +97,7 @@ namespace Ironwill.Commands
 				new TypedValue((int)DxfCode.Operator, "or>"),
 			};
 
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions(prompt);
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions(Environment.NewLine + prompt);
 			PromptEntityResult promptEntityResult = Session.GetEditor().GetEntity(promptEntityOptions);
 
 			if (promptEntityResult.Status != PromptStatus.OK)

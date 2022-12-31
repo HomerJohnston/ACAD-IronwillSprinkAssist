@@ -18,7 +18,7 @@ namespace Ironwill.Commands
 {
 	public class CountHeads
 	{
-		[CommandMethod("SpkAssist_CountHeads")]
+		[CommandMethod("SpkAssist", "CountHeads", CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void CountHeadsCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())

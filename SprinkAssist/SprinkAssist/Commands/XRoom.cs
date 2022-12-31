@@ -48,7 +48,7 @@ namespace Ironwill.Commands
 
 		protected Point3d GetPoint(Transaction transaction, string prompt, out bool bStopCommand, out bool bAbortIteration)
 		{
-			PromptPointOptions promptPointOptions = new PromptPointOptions(prompt + " (" + roomTypeSetting.Get(transaction) + ")");
+			PromptPointOptions promptPointOptions = new PromptPointOptions(Environment.NewLine + prompt + " (" + roomTypeSetting.Get(transaction) + ")");
 			promptPointOptions.Message = "Check " + roomTypeSetting.Get(transaction);
 			promptPointOptions.AllowNone = true;
 			promptPointOptions.Keywords.Add("Closet");
@@ -68,7 +68,7 @@ namespace Ironwill.Commands
 			switch (promptPointResult.Status)
 			{
 				case PromptStatus.Keyword:
-					Session.Log("Keyword");
+					Session.LogDebug("Keyword");
 					roomTypeSetting.Set(transaction, promptPointResult.StringResult);
 					bStopCommand = false;
 					bAbortIteration = true;
@@ -78,24 +78,24 @@ namespace Ironwill.Commands
 					bAbortIteration = false;
 					return promptPointResult.Value.TransformBy(Session.GetEditor().CurrentUserCoordinateSystem);
 				case PromptStatus.Cancel:
-					Session.Log("Cancel");
+					Session.LogDebug("Cancel");
 					bStopCommand = true;
 					bAbortIteration = true;
 					return new Point3d();
 				case PromptStatus.None:
-					Session.Log("None");
+					Session.LogDebug("None");
 					bStopCommand = true;
 					bAbortIteration = true;
 					return new Point3d();
 				default:
-					Session.Log("Default");
+					Session.LogDebug("Default");
 					bStopCommand = false;
 					bAbortIteration = true;
 					return new Point3d();
 			}
 		}
 
-		[CommandMethod("SpkAssist_XRoom")]
+		[CommandMethod("SpkAssist", "XRoom", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void XRoomCmd()
 		{
 			bool bStopCommand = false;

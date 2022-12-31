@@ -47,7 +47,7 @@ namespace Ironwill
 				ObjectId btrId = bt.Has(blockName) ? bt[blockName] : ImportBlock(db, blockName, blockPath);
 				if (btrId.IsNull)
 				{
-					Session.Log($"\nBlock '{blockName}' not found.");
+					Session.Log(Environment.NewLine + $"Block '{blockName}' not found.");
 					tr.Abort();
 					return null;
 				}

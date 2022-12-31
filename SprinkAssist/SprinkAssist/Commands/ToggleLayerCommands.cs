@@ -23,7 +23,7 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist_ToggleDraftAid")]
+		[CommandMethod("SpkAssist", "ToggleDraftAid", CommandFlags.NoBlockEditor)]
 		public void ToggleDraftAidCmd()
 		{
 			LayerHelper.ToggleFrozen(Layer.DraftAid.Get());
@@ -32,7 +32,7 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist_ToggleXref")]
+		[CommandMethod("SpkAssist", "ToggleXref", CommandFlags.NoBlockEditor)]
 		public void ToggleXrefCmd()
 		{
 			LayerHelper.ToggleFrozen(Layer.XREF.Get());
@@ -41,7 +41,7 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist_ToggleCoverage")]
+		[CommandMethod("SpkAssist", "ToggleCoverage", CommandFlags.NoBlockEditor)]
 		public void ToggleCoverageCmd()
 		{
 			LayerHelper.ToggleFrozen(Layer.HeadCoverage.Get());
@@ -50,7 +50,7 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist_TogglePipeLabels")]
+		[CommandMethod("SpkAssist", "TogglePipeLabels", CommandFlags.NoBlockEditor)]
 		public void TogglePipeLabelsCmd()
 		{
 			LayerHelper.ToggleFrozen(Layer.PipeLabel.Get());
@@ -97,7 +97,7 @@ namespace Ironwill.Commands
 			}
 		}*/
 
-		[CommandMethod("SpkAssist_ToggleLineweightDisplay")]
+		[CommandMethod("SpkAssist", "ToggleLineweightDisplay", CommandFlags.NoBlockEditor)]
 		public void ToggleLineweightDisplayCmd()
 		{
 			bool lwdisplay = System.Convert.ToBoolean(AcApplication.GetSystemVariable("LWDISPLAY"));

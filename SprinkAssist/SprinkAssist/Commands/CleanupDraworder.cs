@@ -38,7 +38,7 @@ namespace Ironwill.Commands
 		static TypedValue modelSpace = new TypedValue((int)DxfCode.ViewportVisibility, 0);
 		static string anyLayer = string.Empty;
 
-		[CommandMethod("SpkAssist_CleanupDrawOrder")]
+		[CommandMethod("SpkAssist", "CleanupDrawOrder", CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void CleanupDrawOrderCmd()
 		{
 			List<SortData> allSortData = new List<SortData>()

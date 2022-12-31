@@ -34,7 +34,7 @@ namespace Ironwill.Commands
 			selectedFittingSetting = new CommandSetting<string>("SelectedFitting", elbowKeyword, cmdSettings);
 		}
 
-		[CommandMethod("SpkAssist_AddFitting")]
+		[CommandMethod("SpkAssist", "AddFitting", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void AddFittingCmd()
 		{
 			bool bStopCommand = false;
@@ -47,7 +47,7 @@ namespace Ironwill.Commands
 				transaction.Commit();
 			}
 
-			PromptEntityOptions promptEntityOptions = new PromptEntityOptions("Place " + selectedFittingInitialSetting);
+			PromptEntityOptions promptEntityOptions = new PromptEntityOptions(Environment.NewLine + "Place " + selectedFittingInitialSetting);
 
 			foreach (string key in Keywords)
 			{

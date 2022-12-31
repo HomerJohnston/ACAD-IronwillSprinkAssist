@@ -21,7 +21,7 @@ namespace Ironwill.Commands
 {
 	public class GenerateCalcBackground
 	{
-		[CommandMethod("SpkAssist_GenerateCalcBackground")]
+		[CommandMethod("SpkAssist", "GenerateCalcBackground", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void GenerateCalcBackgroundCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())

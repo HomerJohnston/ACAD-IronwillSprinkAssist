@@ -18,7 +18,7 @@ namespace Ironwill.Commands
 {
 	public class DrawPipe
 	{
-		[CommandMethod("SpkAssist_DrawDraftAid")]
+		[CommandMethod("SpkAssist", "DrawDraftAid", CommandFlags.Modal)]
 		public void DrawDraftAid()
 		{
 			if (SetLayer(Layer.DraftAid.Get()))
@@ -27,7 +27,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_DrawPipeMain")]
+		[CommandMethod("SpkAssist", "DrawPipeMain", CommandFlags.Modal)]
 		public void DrawPipeMain()
 		{
 			if (SetLayer(Layer.SystemPipe_Main.Get()))
@@ -36,7 +36,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_DrawPipeBranchline")]
+		[CommandMethod("SpkAssist", "DrawPipeBranchline", CommandFlags.Modal)]
 		public void DrawPipeBranchline()
 		{
 			if (SetLayer(Layer.SystemPipe_Branchline.Get()))
@@ -45,7 +45,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_DrawPipeArmover")]
+		[CommandMethod("SpkAssist", "DrawPipeArmover", CommandFlags.Modal)]
 		public void DrawPipeArmover()
 		{
 			if (SetLayer(Layer.SystemPipe_Armover.Get()))
@@ -54,7 +54,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist_DrawPipeDrain")]
+		[CommandMethod("SpkAssist", "DrawPipeDrain", CommandFlags.Modal)]
 		public void DrawPipeDrain()
 		{
 			if (SetLayer(Layer.SystemPipe_AuxDrain.Get()))

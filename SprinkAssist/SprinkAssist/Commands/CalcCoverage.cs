@@ -18,7 +18,7 @@ namespace Ironwill.Commands
 {
 	public class SprinklerArea
 	{
-		[CommandMethod("SpkAssist_CalcCoverage")]
+		[CommandMethod("SpkAssist", "CalcCoverage", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void CalcCoverageCmd()
 		{
 			Document document = AcApplication.DocumentManager.MdiActiveDocument;
@@ -35,9 +35,9 @@ namespace Ironwill.Commands
 
 			using (Transaction trans = database.TransactionManager.StartTransaction())
 			{
-				var centerPointPrompt = new PromptPointOptions("\nPick Centre");
-				var horizPointPrompt = new PromptPointOptions("Pick HORIZONTAL Point");
-				var vertPointPrompt = new PromptPointOptions("Pick VERTICAL Point");
+				var centerPointPrompt = new PromptPointOptions(Environment.NewLine + "Pick Centre");
+				var horizPointPrompt = new PromptPointOptions(Environment.NewLine + "Pick HORIZONTAL Point");
+				var vertPointPrompt = new PromptPointOptions(Environment.NewLine + "Pick VERTICAL Point");
 
 				PromptPointResult CtrPt = editor.GetPoint(centerPointPrompt);
 				if (CtrPt.Status != PromptStatus.OK)
