@@ -214,26 +214,33 @@ namespace Ironwill.Commands
 
 					promptResult = Session.GetEditor().Drag(jigger);
 
-					if (promptResult.Status == PromptStatus.Keyword)
+					switch (promptResult.Status)
 					{
-						if (promptResult.StringResult == "Head")
+						case PromptStatus.Keyword:
 						{
-							templateSprinkler = null;
-							templateSprinklerId = ObjectId.Null;
-							ValidateTemplateSprinkler(transaction);
+							if (promptResult.StringResult == "Head")
+							{
+								templateSprinkler = null;
+								templateSprinklerId = ObjectId.Null;
+								ValidateTemplateSprinkler(transaction);
+							}
+
+							jigger.RemoveSprinkler();
+							transaction.Commit();
+							continue;
 						}
-
-						jigger.RemoveSprinkler();
-
-						transaction.Commit();
+						case PromptStatus.OK:
+						{
+							transaction.Commit();
+							continue;
+						}
+						default:
+						{
+							jigger.RemoveSprinkler();
+							transaction.Commit();
+							continue;
+						}
 					}
-
-					if (promptResult.Status == PromptStatus.OK)
-					{
-						transaction.Commit();
-					}
-
-					//Session.Log("");
 				}
 			}
 		}
