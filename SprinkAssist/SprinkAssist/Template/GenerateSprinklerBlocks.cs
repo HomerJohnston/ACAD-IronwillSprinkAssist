@@ -87,8 +87,10 @@ namespace Ironwill.Generation
 					// SprinklerBase_Head_NN
 					foreach (string headBase in headBases)
 					{
-						string baseHeadName = headBase.Replace("SprinklerBase", "S"); // SprinklerBase_Head_NN --> S_Head_NN
 						Stack<string> components = new Stack<string>();
+
+						string baseHeadName = headBase.Replace("SprinklerBase", "S"); // SprinklerBase_Head_NN --> S_Head_NN
+						components.Push(headBase);
 
 						foreach (string headLabel in headLabels)
 						{
@@ -148,13 +150,8 @@ namespace Ironwill.Generation
 				{
 					const string templateSprinklerBlock = "S_Head_TEMPLATE";
 
-					// Clone the master template block.
-					Session.LogDebug("Building: " + sprinklerDefinition.baseBlockName);
+					ObjectId newBlockId = FuckFaceReplace(transaction, templateSprinklerBlock, sprinklerDefinition.baseBlockName);
 
-					// Edit the block.
-					ObjectId newBlockId = FuckFaceReplace(templateSprinklerBlock, sprinklerDefinition.baseBlockName);
-
-					/*
 					BlockTableRecord btr = transaction.GetObject(newBlockId, OpenMode.ForWrite, false, true) as BlockTableRecord;
 
 					foreach (ObjectId entityId in btr)
@@ -165,21 +162,77 @@ namespace Ironwill.Generation
 						{
 							if (!sprinklerDefinition.componentNames.Contains(ent.Name))
 							{
+								Session.Log("Erasing entity " + ent.Name + " from block " + sprinklerDefinition.baseBlockName);
 								DBObject obj = entityId.GetObject(OpenMode.ForWrite);
 
-								//obj.Erase();
+								obj.Erase();
 							}
 						}
 					}
-					*/
 				}
 
-
-				// Delete shit in the block I don't want to be in it.
+				transaction.Commit();
 			}
 		}
 
-		public ObjectId FuckFaceReplace(string sourceBlock, string destinationBlock)
+		public ObjectId FuckFaceReplace(Transaction transaction, string sourceBlock, string destinationBlock)
+		{
+			Database database = Session.GetDatabase();
+
+			BlockTable blockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+			BlockTableRecord sourceBlockBTR = transaction.GetObject(blockTable[sourceBlock], OpenMode.ForRead) as BlockTableRecord;
+
+			if (sourceBlockBTR == null)
+			{
+				Session.Log("Error! Source block " + sourceBlock + " was not found.");
+				return ObjectId.Null;
+			}
+
+			ObjectId copyId = ObjectId.Null;
+
+			using (Database cloneDatabase = database.Wblock(sourceBlockBTR.ObjectId))
+			{
+				copyId = database.Insert(destinationBlock, cloneDatabase, true);
+
+				if (copyId.IsValid)
+				{
+					BlockTable dwgBlockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForWrite, false, true) as BlockTable;
+
+					BlockTableRecord modelSpace = transaction.GetObject(dwgBlockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite, false, true) as BlockTableRecord;
+
+					List<ObjectId> foundDeadBlocks = new List<ObjectId>();
+
+					foreach (ObjectId modelSpaceObjectId in modelSpace)
+					{
+						if (modelSpaceObjectId.ObjectClass.DxfName == "INSERT")
+						{
+							BlockReference blockReference = transaction.GetObject(modelSpaceObjectId, OpenMode.ForWrite, false, true) as BlockReference;
+
+							if (blockReference != null && BlockOps.GetDynamicBlockName(blockReference) == destinationBlock)
+							{
+								foundDeadBlocks.Add(modelSpaceObjectId);
+							}
+						}
+					}
+
+					foreach (ObjectId objectId in foundDeadBlocks)
+					{
+						BlockOps.RecreateBlock(transaction, destinationBlock, objectId);
+					}
+				}
+			}
+
+			if (copyId == null)
+			{
+				Session.Log("Error! Failed to replace block");
+			}
+
+			return copyId;
+		}
+
+		[CommandMethod("CopyXC")]
+		public void testCopyBlockReference()
 		{
 			Database database = Session.GetDatabase();
 
@@ -187,17 +240,11 @@ namespace Ironwill.Generation
 			{
 				BlockTable blockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
-				BlockTableRecord sourceBlockBTR = transaction.GetObject(blockTable[sourceBlock], OpenMode.ForRead) as BlockTableRecord;
-
-				if (sourceBlockBTR == null)
-				{
-					Session.Log("Error! Source block " + sourceBlock + " was not found.");
-					return ObjectId.Null;
-				}
+				BlockTableRecord sourceBlockBTR = transaction.GetObject(blockTable["S_Head_TEMPLATE"], OpenMode.ForRead) as BlockTableRecord;
 
 				using (Database cloneDatabase = database.Wblock(sourceBlockBTR.ObjectId))
 				{
-					ObjectId copyId = database.Insert(destinationBlock, cloneDatabase, true);
+					ObjectId copyId = database.Insert("wtf", cloneDatabase, true);
 
 					if (copyId.IsValid)
 					{
@@ -213,8 +260,10 @@ namespace Ironwill.Generation
 							{
 								BlockReference blockReference = transaction.GetObject(modelSpaceObjectId, OpenMode.ForWrite, false, true) as BlockReference;
 
-								if (blockReference != null && BlockOps.GetDynamicBlockName(blockReference) == destinationBlock)
+								if (blockReference != null && BlockOps.GetDynamicBlockName(blockReference) == "wtf")
 								{
+									Session.Log(BlockOps.GetDynamicBlockName(blockReference) + ", " + blockReference.Name + ", " + blockReference.BlockName);
+
 									foundDeadBlocks.Add(modelSpaceObjectId);
 								}
 							}
@@ -222,19 +271,14 @@ namespace Ironwill.Generation
 
 						foreach (ObjectId objectId in foundDeadBlocks)
 						{
-							BlockOps.RecreateBlock(transaction, destinationBlock, objectId);
+							BlockOps.RecreateBlock(transaction, "wtf", objectId);
 						}
-
-						transaction.Commit();
-						return copyId;
 					}
 				}
 
-				Session.Log("Error! Failed to replace block");
-				return ObjectId.Null;
+				Session.Log("Committing transaction");
+				transaction.Commit();
 			}
 		}
-
-
 	}
 }
