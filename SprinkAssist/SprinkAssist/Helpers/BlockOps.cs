@@ -113,7 +113,7 @@ namespace Ironwill
 						// if the variable is not null (i.e. the block was found)
 						if (!id.IsNull)
 						{
-							// Copy the block deinition from source to destination database
+							// Copy the block definition from source to destination database
 							var blockIds = new ObjectIdCollection();
 							blockIds.Add(id);
 							var mapping = new IdMapping();
@@ -212,6 +212,30 @@ namespace Ironwill
 			CopyDynamicBlockProperties(sourceBlock, newBlock);
 
 			watch.Stop(); var elapsedMs = watch.ElapsedMilliseconds; Session.Log("CopyBlock took " + elapsedMs.ToString());
+		}
+
+		public static void RecreateBlock(Transaction transaction, string blockName, ObjectId blockIDToRecreate)
+		{
+			BlockReference newBlock = InsertBlock(blockName);
+
+			if (newBlock == null)
+			{
+				Session.Log("An error occurred - failed to create new block!");
+				transaction.Abort();
+				return;
+			}
+
+			BlockReference oldBlock = transaction.GetObject(blockIDToRecreate, OpenMode.ForWrite) as BlockReference;
+
+			// Must set scale etc. of new head BEFORE applying dynamic properties or size will be different
+			newBlock.Position = oldBlock.Position;
+			newBlock.Rotation = oldBlock.Rotation;
+			newBlock.ScaleFactors = oldBlock.ScaleFactors;
+			newBlock.Layer = oldBlock.Layer;
+
+			CopyDynamicBlockProperties(oldBlock, newBlock);
+
+			oldBlock.Erase();
 		}
 
 		public static string GetDynamicBlockName(BlockReference block)

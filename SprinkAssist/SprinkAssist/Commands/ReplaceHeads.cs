@@ -59,6 +59,7 @@ namespace Ironwill.Commands
 
 				for (int i = 0; i < headsToReplace.Count; i++)
 				{
+					// TODO replace code with BlockOps.RecreateBlock ???
 					BlockReference newHead = BlockOps.InsertBlock(newHeadName);
 
 					if (newHead == null)

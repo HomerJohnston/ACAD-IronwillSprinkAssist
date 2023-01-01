@@ -21,11 +21,6 @@ using Autodesk.AutoCAD.Colors;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AddSprinkler_OLD))]
 
-// Click to set anchor point
-// Click-click to set short tile length
-// Click-click to set long tile length
-// Click-click to set long tile orientation
-
 namespace Ironwill.Commands
 {
 	internal class AddSprinkler_OLD : SprinkAssistCommand

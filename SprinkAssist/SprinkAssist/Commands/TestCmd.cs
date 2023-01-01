@@ -9,9 +9,39 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.TestCmd))]
+[assembly: CommandClass(typeof(Ironwill.Commands.TestClone))]
 
 namespace Ironwill.Commands
 {
+	public class TestClone
+	{
+		[CommandMethod("TestClone")]
+		public static void TestCloneCommand()
+		{
+			Database currentDB = Session.GetDatabase();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				ObjectId blockTableId = currentDB.BlockTableId;
+				BlockTable blockTable = transaction.GetObject(blockTableId, OpenMode.ForWrite) as BlockTable;
+
+				foreach (ObjectId btrId in blockTable)
+				{
+					BlockTableRecord block = transaction.GetObject(btrId, OpenMode.ForRead) as BlockTableRecord;
+
+					//.//BlockTableRecord clonedBlock = block.Clone();
+				}
+
+
+				//ObjectId blockRefId = blockReference.ObjectId;
+
+				
+				
+				transaction.Commit();
+			}
+		}
+	}
+
 	public class TestCmd
 	{
 		[CommandMethod("EntArray")]
