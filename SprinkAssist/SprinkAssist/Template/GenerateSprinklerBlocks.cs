@@ -54,18 +54,18 @@ namespace Ironwill.Generation
 
 				Database database = Session.GetDatabase();
 
+				List<string> headBases = new List<string>();
+				List<string> headLabels = new List<string>();
+				List<string> headTemps = new List<string>();
+				List<string> headDecorators = new List<string>();
+
 				using (GenericParser parser = new GenericParser())
 				{
 					string Test = Path.Combine(resourcesFolder, "Test.csv");
 					parser.SetDataSource(Test);
 					parser.ColumnDelimiter = ',';
 					parser.SkipStartingDataRows = 1;
-
-					List<string> headBases = new List<string>();
-					List<string> headLabels = new List<string>();
-					List<string> headTemps = new List<string>();
-					List<string> headDecorators = new List<string>();
-
+					
 					while (parser.Read())
 					{
 						if (parser[0] != string.Empty)
@@ -88,10 +88,16 @@ namespace Ironwill.Generation
 					// SprinklerBase_Head_NN
 					foreach (string headBase in headBases)
 					{
+						string baseName = "S";
 						Stack<string> components = new Stack<string>();
 
-						string baseHeadName = headBase.Replace("SprinklerBase", "S"); // SprinklerBase_Head_NN --> S_Head_NN
-						components.Push(headBase);
+						string baseHeadName = baseName;
+
+						if (headBase != nil)
+						{
+							baseHeadName += headBase.Substring(headBase.LastIndexOf('_'));
+							components.Push(headBase);
+						}
 
 						foreach (string headLabel in headLabels)
 						{
@@ -123,9 +129,15 @@ namespace Ironwill.Generation
 										components.Push(decorator);
 									}
 
-									Session.LogDebug("Generating definition: " + decoratedTempdLabelledHeadName + " --- " + string.Join(", ", components.ToArray()));
 
+									List<string> nameArray = new List<string>(components);
+									nameArray.Prepend("S");
+
+									string finalHeadName = string.Join("_", components.ToArray());
+
+									Session.LogDebug("Generating definition: " + finalHeadName + " --- " + string.Join(", ", components.ToArray()));
 									sprinklerDefinitions.Add(new SprinklerDefinition(decoratedTempdLabelledHeadName, components.ToArray()));
+
 
 									if (decorator != nil)
 									{
@@ -149,11 +161,13 @@ namespace Ironwill.Generation
 
 				List<string> replacedBlocks = new List<string>();
 
+				Session.Log("======================= Starting replacement ===========================");
+
 				foreach (SprinklerDefinition sprinklerDefinition in sprinklerDefinitions)
 				{
 					const string templateSprinklerBlock = "S_Head_TEMPLATE";
 
-					ObjectId newBlockId = FuckFaceReplace(transaction, templateSprinklerBlock, sprinklerDefinition.baseBlockName);
+					ObjectId newBlockId = RedefineBlock(transaction, templateSprinklerBlock, sprinklerDefinition.baseBlockName);
 
 					if (!newBlockId.IsValid)
 					{
@@ -182,6 +196,8 @@ namespace Ironwill.Generation
 					}
 				}
 
+				Session.Log("======================= Starting foundDeadBlocks ===========================");
+
 				List<ObjectId> foundDeadBlocks = new List<ObjectId>();
 
 				foreach (string replacedBlock in replacedBlocks)
@@ -204,6 +220,8 @@ namespace Ironwill.Generation
 					}
 				}
 
+				Session.Log("======================= Starting replacement of dead blocks ===========================");
+
 				foreach (ObjectId objectId in foundDeadBlocks)
 				{
 					BlockReference blockReference = transaction.GetObject(objectId, OpenMode.ForWrite, false, true) as BlockReference;
@@ -211,11 +229,33 @@ namespace Ironwill.Generation
 					BlockOps.RecreateBlock(transaction, name, objectId);
 				}
 
+				Session.Log("======================= Spawning new blocks array ================================");
+
+				double posY = 0;
+				double posX = 0;
+				int count = 0;
+				foreach (SprinklerDefinition sprinklerDefinition in sprinklerDefinitions)
+				{
+					if (count % 24 == 0)
+					{
+						posY = 0;
+						posX += 1000;
+					}
+
+					BlockReference newBlock = BlockOps.InsertBlock(sprinklerDefinition.baseBlockName);
+
+					newBlock.Position = new Point3d(posX, posY, 0);
+					newBlock.ScaleFactors = new Scale3d(100, 100, 100);
+					
+					posY -= 1000;
+					count++;
+				}
+
 				transaction.Commit();
 			}
 		}
 
-		public ObjectId FuckFaceReplace(Transaction transaction, string sourceBlock, string destinationBlock)
+		public ObjectId RedefineBlock(Transaction transaction, string sourceBlock, string destinationBlock)
 		{
 			Database database = Session.GetDatabase();
 
@@ -234,7 +274,7 @@ namespace Ironwill.Generation
 			using (Database cloneDatabase = database.Wblock(sourceBlockBTR.ObjectId))
 			{
 				copyId = database.Insert(destinationBlock, cloneDatabase, true);
-/*
+
 				if (copyId.IsValid)
 				{
 					BlockTable dwgBlockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForWrite, false, true) as BlockTable;
@@ -258,9 +298,9 @@ namespace Ironwill.Generation
 
 					foreach (ObjectId objectId in foundDeadBlocks)
 					{
-						BlockOps.RecreateBlock(transaction, destinationBlock, objectId);
+						BlockOps.RecreateBlock(transaction, destinationBlock, objectId, false);
 					}
-				}*/
+				}
 			}
 
 			if (copyId == null)

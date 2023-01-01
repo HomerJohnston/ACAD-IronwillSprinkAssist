@@ -214,8 +214,10 @@ namespace Ironwill
 			watch.Stop(); var elapsedMs = watch.ElapsedMilliseconds; Session.Log("CopyBlock took " + elapsedMs.ToString());
 		}
 
-		public static void RecreateBlock(Transaction transaction, string blockName, ObjectId blockIDToRecreate)
+		public static void RecreateBlock(Transaction transaction, string blockName, ObjectId blockIDToRecreate, bool copyDynamicProperties = true)
 		{
+			Session.Log("Recreating block " + blockName);
+
 			BlockReference newBlock = InsertBlock(blockName);
 
 			if (newBlock == null)
@@ -225,7 +227,9 @@ namespace Ironwill
 				return;
 			}
 
-			BlockReference oldBlock = transaction.GetObject(blockIDToRecreate, OpenMode.ForWrite) as BlockReference;
+			BlockReference oldBlock = transaction.GetObject(blockIDToRecreate, OpenMode.ForWrite, false, true) as BlockReference;
+
+			Session.Log("Found old block " + oldBlock.Name);
 
 			// Must set scale etc. of new head BEFORE applying dynamic properties or size will be different
 			newBlock.Position = oldBlock.Position;
@@ -233,7 +237,10 @@ namespace Ironwill
 			newBlock.ScaleFactors = oldBlock.ScaleFactors;
 			newBlock.Layer = oldBlock.Layer;
 
-			CopyDynamicBlockProperties(oldBlock, newBlock);
+			if (copyDynamicProperties)
+			{
+				CopyDynamicBlockProperties(oldBlock, newBlock);
+			}
 
 			oldBlock.Erase();
 		}
@@ -269,7 +276,16 @@ namespace Ironwill
 							continue;
 						}
 
-						newProp.Value = oldProp.Value;
+						Session.Log("Copying " + oldProp.PropertyName + " to " + newProp.PropertyName);
+
+						try
+						{
+							newProp.Value = oldProp.Value;
+						}
+						catch
+						{
+							Session.Log("Warning: failed to copy dynamic block property " + newProp.PropertyName);
+						}
 					}
 				}
 			}
