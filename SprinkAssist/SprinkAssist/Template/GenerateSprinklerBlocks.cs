@@ -52,6 +52,7 @@ namespace Ironwill.Generation
 			{
 				List<SprinklerDefinition> sprinklerDefinitions = new List<SprinklerDefinition>();
 
+				Database database = Session.GetDatabase();
 
 				using (GenericParser parser = new GenericParser())
 				{
@@ -146,11 +147,21 @@ namespace Ironwill.Generation
 					}
 				}
 
+				List<string> replacedBlocks = new List<string>();
+
 				foreach (SprinklerDefinition sprinklerDefinition in sprinklerDefinitions)
 				{
 					const string templateSprinklerBlock = "S_Head_TEMPLATE";
 
 					ObjectId newBlockId = FuckFaceReplace(transaction, templateSprinklerBlock, sprinklerDefinition.baseBlockName);
+
+					if (!newBlockId.IsValid)
+					{
+						Session.Log("Error while replacing block!");
+						continue;
+					}
+
+					replacedBlocks.Add(sprinklerDefinition.baseBlockName);
 
 					BlockTableRecord btr = transaction.GetObject(newBlockId, OpenMode.ForWrite, false, true) as BlockTableRecord;
 
@@ -169,6 +180,35 @@ namespace Ironwill.Generation
 							}
 						}
 					}
+				}
+
+				List<ObjectId> foundDeadBlocks = new List<ObjectId>();
+
+				foreach (string replacedBlock in replacedBlocks)
+				{
+					BlockTable dwgBlockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForWrite, false, true) as BlockTable;
+
+					BlockTableRecord modelSpace = transaction.GetObject(dwgBlockTable[BlockTableRecord.ModelSpace], OpenMode.ForWrite, false, true) as BlockTableRecord;
+
+					foreach (ObjectId modelSpaceObjectId in modelSpace)
+					{
+						if (modelSpaceObjectId.ObjectClass.DxfName == "INSERT")
+						{
+							BlockReference blockReference = transaction.GetObject(modelSpaceObjectId, OpenMode.ForWrite, false, true) as BlockReference;
+
+							if (blockReference != null && BlockOps.GetDynamicBlockName(blockReference) == replacedBlock)
+							{
+								foundDeadBlocks.Add(modelSpaceObjectId);
+							}
+						}
+					}
+				}
+
+				foreach (ObjectId objectId in foundDeadBlocks)
+				{
+					BlockReference blockReference = transaction.GetObject(objectId, OpenMode.ForWrite, false, true) as BlockReference;
+					string name = BlockOps.GetDynamicBlockName(blockReference);
+					BlockOps.RecreateBlock(transaction, name, objectId);
 				}
 
 				transaction.Commit();
@@ -194,7 +234,7 @@ namespace Ironwill.Generation
 			using (Database cloneDatabase = database.Wblock(sourceBlockBTR.ObjectId))
 			{
 				copyId = database.Insert(destinationBlock, cloneDatabase, true);
-
+/*
 				if (copyId.IsValid)
 				{
 					BlockTable dwgBlockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForWrite, false, true) as BlockTable;
@@ -220,7 +260,7 @@ namespace Ironwill.Generation
 					{
 						BlockOps.RecreateBlock(transaction, destinationBlock, objectId);
 					}
-				}
+				}*/
 			}
 
 			if (copyId == null)
