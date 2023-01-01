@@ -39,6 +39,8 @@ namespace Ironwill.Generation
 
 	internal class GenerateSprinklerBlocks : SprinkAssistCommand
 	{
+		static int gcount = 0;
+
 		[CommandMethod("GenTest")]
 		public void RuntimeArgumentHandle()
 		{
@@ -54,6 +56,8 @@ namespace Ironwill.Generation
 
 				Database database = Session.GetDatabase();
 
+				List<List<string>> readComponents = new List<List<string>>();
+
 				List<string> headBases = new List<string>();
 				List<string> headLabels = new List<string>();
 				List<string> headTemps = new List<string>();
@@ -65,9 +69,30 @@ namespace Ironwill.Generation
 					parser.SetDataSource(Test);
 					parser.ColumnDelimiter = ',';
 					parser.SkipStartingDataRows = 1;
-					
+
+
 					while (parser.Read())
 					{
+						int columnCount = parser.ColumnCount;
+
+						for (int i = 0; i < columnCount; i++)
+						{
+							while (readComponents.Count <= i)
+							{
+								readComponents.Add(new List<string>());
+							}
+
+							List<string> column = readComponents[i];
+
+							string data = parser[i];
+
+							if (data != String.Empty)
+							{
+								Session.Log("Added " + data + " to column " + i);
+								column.Add(data);
+							}
+						}
+/*
 						if (parser[0] != string.Empty)
 							headBases.Add(parser[0]);
 
@@ -78,19 +103,36 @@ namespace Ironwill.Generation
 							headTemps.Add(parser[2]);
 
 						if (parser[3] != string.Empty)
-							headDecorators.Add(parser[3]);
+							headDecorators.Add(parser[3]);*/
 					}
 
+					int currentColumnX = 0;
+					int currentRowX = 0;
+					
+					string prefix = "S";
+					Stack<string> strings = new Stack<string>();
+
+					strings.Push(prefix);
+
+					gcount = 0;
+
+					RecurseTest(ref readComponents, currentColumnX, strings);
+
+					Session.Log("Total: " + gcount);
+
+					return;
+
+					#region dumb but it works
 					// Build up every single head combination. I have to generate every head name and the combination of components that compose it.
 
 					const string nil = "NONE";
 
+					string baseName = "S";
+					Stack<string> components = new Stack<string>();
+
 					// SprinklerBase_Head_NN
 					foreach (string headBase in headBases)
 					{
-						string baseName = "S";
-						Stack<string> components = new Stack<string>();
-
 						string baseHeadName = baseName;
 
 						if (headBase != nil)
@@ -129,7 +171,6 @@ namespace Ironwill.Generation
 										components.Push(decorator);
 									}
 
-
 									List<string> nameArray = new List<string>(components);
 									nameArray.Prepend("S");
 
@@ -156,9 +197,16 @@ namespace Ironwill.Generation
 								components.Pop();
 							}
 						}
+
+						if (headBase != nil)
+						{
+							components.Pop();
+						}
 					}
+					#endregion
 				}
 
+				#region temp
 				List<string> replacedBlocks = new List<string>();
 
 				Session.Log("======================= Starting replacement ===========================");
@@ -250,8 +298,70 @@ namespace Ironwill.Generation
 					posY -= 1000;
 					count++;
 				}
+				#endregion
 
 				transaction.Commit();
+
+
+			}
+		}
+
+		public void RecurseTest(ref List<List<string>> data, int currentColumn, Stack<string> namePieces)
+		{
+
+			//Session.Log("----- Starting " + currentColumn);
+
+			List<string> currentColumnData = data[currentColumn];
+
+			int columnCount = data.Count;
+
+			for (int row = 0; row < currentColumnData.Count; row++)
+			{
+				string rowString = currentColumnData[row];
+
+				const string nil = "NONE";
+
+				if (rowString != nil)
+				{
+					string substring = rowString.Substring(rowString.LastIndexOf('_'));
+					Session.Log("Appending: " + substring + " [" + currentColumn + ", " + row + "]");
+					namePieces.Push(substring);
+				}
+
+				for (int column = currentColumn + 1; column < columnCount; column++)
+				{
+					RecurseTest(ref data, column, namePieces);
+				}
+
+				if (currentColumn == columnCount - 1)
+				{
+					Session.Log("Finished [" + currentColumn + ", " + row + "]: " + string.Join("", namePieces.Reverse()));
+				}
+
+				if (rowString != nil)
+				{
+					Session.Log("Popping: " + namePieces.Pop());
+				}
+			}
+		}
+
+		public void RecurseColumn(ref List<List<string>> rawData, ref int currentColumn, int currentIndex, Stack<string> outComponents, string currentString)
+		{
+			if (currentColumn >= rawData.Count)
+			{
+				return;
+			}
+
+			string tempName = currentString;
+
+			List<string> columnData = rawData[currentColumn];
+
+			foreach (string row in columnData)
+			{
+				
+				//outComponents.Push(part);
+			
+				//tempName = tempName + part.Substring(part.LastIndexOf('_'));
 			}
 		}
 
