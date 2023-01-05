@@ -39,10 +39,15 @@ namespace Ironwill.Generation
 
 	internal class GenerateSprinklerBlocks : SprinkAssistCommand
 	{
-		static int gcount = 0;
-
 		[CommandMethod("GenTest")]
-		public void RuntimeArgumentHandle()
+		public void GenTest()
+		{
+			Run("NormalHeads.csv", "S_Head_TEMPLATE", 0.0);
+			Run("SidewallHeads.csv", "S_Sidewall_TEMPLATE", 50000.0);
+			Run("AtticHeads.csv", "S_Attic_TEMPLATE", 100000.0);
+		}
+
+		public void Run(string fileName, string templateBlock, double blockSpawnOffset)
 		{
 			string codeBase = Assembly.GetExecutingAssembly().CodeBase;
 			UriBuilder uri = new UriBuilder(codeBase);
@@ -58,18 +63,15 @@ namespace Ironwill.Generation
 
 				List<List<string>> readComponents = new List<List<string>>();
 
-				List<string> headBases = new List<string>();
-				List<string> headLabels = new List<string>();
-				List<string> headTemps = new List<string>();
-				List<string> headDecorators = new List<string>();
+				int sprinklerColumns = 1;
+				int totalSprinklers = 1;
 
 				using (GenericParser parser = new GenericParser())
 				{
-					string Test = Path.Combine(resourcesFolder, "Test.csv");
+					string Test = Path.Combine(resourcesFolder, fileName);
 					parser.SetDataSource(Test);
 					parser.ColumnDelimiter = ',';
 					parser.SkipStartingDataRows = 1;
-
 
 					while (parser.Read())
 					{
@@ -92,128 +94,30 @@ namespace Ironwill.Generation
 								column.Add(data);
 							}
 						}
-/*
-						if (parser[0] != string.Empty)
-							headBases.Add(parser[0]);
-
-						if (parser[1] != string.Empty)
-							headLabels.Add(parser[1]);
-
-						if (parser[2] != string.Empty)
-							headTemps.Add(parser[2]);
-
-						if (parser[3] != string.Empty)
-							headDecorators.Add(parser[3]);*/
 					}
 
-					int currentColumnX = 0;
-					int currentRowX = 0;
-					
-					string prefix = "S";
+					for (int i = 0; i < readComponents.Count; i++)
+					{
+						if (i == 0)
+						{
+							sprinklerColumns = readComponents[i].Count;
+						}
+
+						totalSprinklers *= readComponents[i].Count;
+					}
+
 					Stack<string> strings = new Stack<string>();
 
-					strings.Push(prefix);
-
-					gcount = 0;
-
-					RecurseTest(ref readComponents, currentColumnX, strings);
-
-					Session.Log("Total: " + gcount);
-
-					return;
-
-					#region dumb but it works
-					// Build up every single head combination. I have to generate every head name and the combination of components that compose it.
-
-					const string nil = "NONE";
-
-					string baseName = "S";
-					Stack<string> components = new Stack<string>();
-
-					// SprinklerBase_Head_NN
-					foreach (string headBase in headBases)
-					{
-						string baseHeadName = baseName;
-
-						if (headBase != nil)
-						{
-							baseHeadName += headBase.Substring(headBase.LastIndexOf('_'));
-							components.Push(headBase);
-						}
-
-						foreach (string headLabel in headLabels)
-						{
-							string labeledHeadName = baseHeadName;
-
-							if (headLabel != nil)
-							{
-								labeledHeadName += headLabel.Substring(headLabel.LastIndexOf('_'));
-								components.Push(headLabel);
-							}
-
-							foreach (string tempLabel in headTemps)
-							{
-								string tempLabelledHeadName = labeledHeadName;
-
-								if (tempLabel != nil)
-								{
-									tempLabelledHeadName += tempLabel.Substring(tempLabel.LastIndexOf('_'));
-									components.Push(tempLabel);
-								}
-
-								foreach (string decorator in headDecorators)
-								{
-									string decoratedTempdLabelledHeadName = tempLabelledHeadName;
-
-									if (decorator != nil)
-									{
-										decoratedTempdLabelledHeadName += decorator.Substring(decorator.LastIndexOf('_'));
-										components.Push(decorator);
-									}
-
-									List<string> nameArray = new List<string>(components);
-									nameArray.Prepend("S");
-
-									string finalHeadName = string.Join("_", components.ToArray());
-
-									Session.LogDebug("Generating definition: " + finalHeadName + " --- " + string.Join(", ", components.ToArray()));
-									sprinklerDefinitions.Add(new SprinklerDefinition(decoratedTempdLabelledHeadName, components.ToArray()));
-
-
-									if (decorator != nil)
-									{
-										components.Pop();
-									}
-								}
-
-								if (tempLabel != nil)
-								{
-									components.Pop();
-								}
-							}
-
-							if (headLabel != nil)
-							{
-								components.Pop();
-							}
-						}
-
-						if (headBase != nil)
-						{
-							components.Pop();
-						}
-					}
-					#endregion
+					RecurseTest(ref readComponents, 0, strings, ref sprinklerDefinitions);
 				}
 
-				#region temp
 				List<string> replacedBlocks = new List<string>();
 
 				Session.Log("======================= Starting replacement ===========================");
 
 				foreach (SprinklerDefinition sprinklerDefinition in sprinklerDefinitions)
 				{
-					const string templateSprinklerBlock = "S_Head_TEMPLATE";
+					string templateSprinklerBlock = templateBlock;
 
 					ObjectId newBlockId = RedefineBlock(transaction, templateSprinklerBlock, sprinklerDefinition.baseBlockName);
 
@@ -226,22 +130,53 @@ namespace Ironwill.Generation
 					replacedBlocks.Add(sprinklerDefinition.baseBlockName);
 
 					BlockTableRecord btr = transaction.GetObject(newBlockId, OpenMode.ForWrite, false, true) as BlockTableRecord;
+					
+					Session.Log("START");
+
+					
+
+					BlockReference br = transaction.GetObject(newBlockId, OpenMode.ForRead, false, true) as BlockReference;
+					
+					if (br != null)
+					{
+						br.RecordGraphicsModified(true);
+						DynamicBlockReferencePropertyCollection test = br.DynamicBlockReferencePropertyCollection;
+					}
 
 					foreach (ObjectId entityId in btr)
 					{
-						BlockReference ent = transaction.GetObject(entityId, OpenMode.ForWrite, false, true) as BlockReference;
+						Entity entity = transaction.GetObject(entityId, OpenMode.ForWrite, false, true) as Entity;
 
-						if (ent != null)
+						Session.Log(entity.ToString() + " -- " + entity.Handle.ToString() + " - " + entityId.ToString());
+
+						if (entity == null)
 						{
-							if (!sprinklerDefinition.componentNames.Contains(ent.Name))
-							{
-								Session.Log("Erasing entity " + ent.Name + " from block " + sprinklerDefinition.baseBlockName);
-								DBObject obj = entityId.GetObject(OpenMode.ForWrite);
+							continue;
+						}
 
+						BlockReference blockReference = entity as BlockReference;
+
+						if (blockReference != null)
+						{
+							if (!sprinklerDefinition.componentNames.Contains(blockReference.Name))
+							{
+								Session.Log("Erasing entity " + blockReference.Name + " from block " + sprinklerDefinition.baseBlockName);
+								DBObject obj = entityId.GetObject(OpenMode.ForWrite);
 								obj.Erase();
 							}
 						}
 					}
+
+					foreach (ObjectId entityId in btr)
+					{
+						Entity entity = transaction.GetObject(entityId, OpenMode.ForWrite, false, true) as Entity;
+
+						Session.Log(entity.ToString() + " -- " + entity.Handle.ToString() + " - " + entityId.ToString());
+
+						
+					}
+
+					Session.Log("END");
 				}
 
 				Session.Log("======================= Starting foundDeadBlocks ===========================");
@@ -280,11 +215,11 @@ namespace Ironwill.Generation
 				Session.Log("======================= Spawning new blocks array ================================");
 
 				double posY = 0;
-				double posX = 0;
+				double posX = blockSpawnOffset;
 				int count = 0;
 				foreach (SprinklerDefinition sprinklerDefinition in sprinklerDefinitions)
 				{
-					if (count % 24 == 0)
+					if (count % (totalSprinklers / sprinklerColumns) == 0)
 					{
 						posY = 0;
 						posX += 1000;
@@ -298,17 +233,13 @@ namespace Ironwill.Generation
 					posY -= 1000;
 					count++;
 				}
-				#endregion
 
 				transaction.Commit();
-
-
 			}
 		}
 
-		public void RecurseTest(ref List<List<string>> data, int currentColumn, Stack<string> namePieces)
+		public void RecurseTest(ref List<List<string>> data, int currentColumn, Stack<string> namePieces, ref List<SprinklerDefinition> sprinklerDefinitions)
 		{
-
 			//Session.Log("----- Starting " + currentColumn);
 
 			List<string> currentColumnData = data[currentColumn];
@@ -321,26 +252,61 @@ namespace Ironwill.Generation
 
 				const string nil = "NONE";
 
-				if (rowString != nil)
+				bool use = rowString != nil;
+
+				if (use)
 				{
-					string substring = rowString.Substring(rowString.LastIndexOf('_'));
-					Session.Log("Appending: " + substring + " [" + currentColumn + ", " + row + "]");
-					namePieces.Push(substring);
+					//Session.Log("Pushing: " + rowString + " [" + currentColumn + ", " + row + "]");
+					
+					namePieces.Push(rowString);
+
+					string debug = string.Join(", ", namePieces.Reverse().ToArray());
+					Session.Log(debug);
 				}
 
-				for (int column = currentColumn + 1; column < columnCount; column++)
+				//for (int column = currentColumn + 1; column < columnCount; column++)
+				if (currentColumn < columnCount - 1)
 				{
-					RecurseTest(ref data, column, namePieces);
+					RecurseTest(ref data, currentColumn + 1, namePieces, ref sprinklerDefinitions);
 				}
-
+							
 				if (currentColumn == columnCount - 1)
 				{
-					Session.Log("Finished [" + currentColumn + ", " + row + "]: " + string.Join("", namePieces.Reverse()));
+					List<string> components = namePieces.Reverse().ToList();
+
+					for (int i = 0; i < components.Count; i++)
+					{
+						string s = components[i];
+
+						int last_ = s.LastIndexOf('_');
+
+						if (last_ >= 0)
+						{
+							components[i] = s.Substring(last_ + 1);
+						}
+
+						if (components[i] == string.Empty)
+						{
+							components.RemoveAt(i--);
+						}
+					}
+
+					components.Insert(0, "S");
+
+					string blockName = string.Join("_", components);
+
+					Session.Log("Finished [" + currentColumn + ", " + row + "]: " + blockName);
+
+					SprinklerDefinition sprinklerDefinition = new SprinklerDefinition(blockName, namePieces.ToArray());
+					sprinklerDefinitions.Add(sprinklerDefinition);
 				}
 
-				if (rowString != nil)
+				if (use)
 				{
-					Session.Log("Popping: " + namePieces.Pop());
+					namePieces.Pop();
+
+					string debug = string.Join(", ", namePieces.Reverse().ToArray());
+					Session.Log(debug);
 				}
 			}
 		}
@@ -469,6 +435,56 @@ namespace Ironwill.Generation
 				Session.Log("Committing transaction");
 				transaction.Commit();
 			}
+		}
+
+		[CommandMethod("FixTest")]
+		public async void testResetBlock()
+		{
+			//using (Transaction transaction = Session.StartTransaction())
+			//{
+				/*BlockReference blockReference = BlockOps.PickSprinkler(transaction, "pick a sprinkler");
+
+				if (blockReference == null)
+				{
+					return;
+				}
+
+				List<ObjectId> selected = new List<ObjectId>();
+
+				selected.Add(blockReference.ObjectId);
+				*/
+
+				/*
+				var psr = Session.GetEditor().GetSelection();
+
+				if (psr.Status != PromptStatus.OK)
+				{
+					return;
+				}
+				*/
+
+				Session.Log("Start");
+				await Session.GetDocumentManager().ExecuteInCommandContextAsync(
+					async (obj) =>
+					{
+						await Session.GetEditor().CommandAsync(new object[]
+							{
+								".-bedit", "S_Head_TEMPLATE"
+							}
+						);
+					},
+					null
+				);
+				Session.Log("End");
+				//transaction.Commit();
+				//Session.GetEditor().SetImpliedSelection(selected.ToArray());
+				
+				//Session.Command("-bedit");
+				
+
+
+				//Session.Command("-bclose");
+			//}
 		}
 	}
 }

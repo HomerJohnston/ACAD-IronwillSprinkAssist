@@ -216,7 +216,7 @@ namespace Ironwill
 
 		public static void RecreateBlock(Transaction transaction, string blockName, ObjectId blockIDToRecreate, bool copyDynamicProperties = true)
 		{
-			Session.Log("Recreating block " + blockName);
+			//Session.Log("Recreating block " + blockName);
 
 			BlockReference newBlock = InsertBlock(blockName);
 
@@ -229,7 +229,7 @@ namespace Ironwill
 
 			BlockReference oldBlock = transaction.GetObject(blockIDToRecreate, OpenMode.ForWrite, false, true) as BlockReference;
 
-			Session.Log("Found old block " + oldBlock.Name);
+			//Session.Log("Found old block " + oldBlock.Name);
 
 			// Must set scale etc. of new head BEFORE applying dynamic properties or size will be different
 			newBlock.Position = oldBlock.Position;
@@ -276,7 +276,7 @@ namespace Ironwill
 							continue;
 						}
 
-						Session.Log("Copying " + oldProp.PropertyName + " to " + newProp.PropertyName);
+						//Session.Log("Copying " + oldProp.PropertyName + " to " + newProp.PropertyName);
 
 						try
 						{

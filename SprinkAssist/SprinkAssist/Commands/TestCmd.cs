@@ -7,9 +7,13 @@ using System.Collections.Generic;
 using Autodesk.AutoCAD.Geometry;
 
 using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.Windows;
+
+using Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.TestCmd))]
 [assembly: CommandClass(typeof(Ironwill.Commands.TestClone))]
+[assembly: CommandClass(typeof(ContextMenuApplication.Commands))]
 
 namespace Ironwill.Commands
 {
@@ -257,5 +261,170 @@ namespace Ironwill.Commands
 		}
 
 		#endregion
+	}
+}
+
+
+
+
+
+
+
+
+
+
+namespace ContextMenuApplication
+{
+	public class Commands : IExtensionApplication
+	{
+		[CommandMethod("ContextMenuExtTest")]
+		static public void ContextMenuExtTest()
+		{
+			ContextMenuExtension contectMenu = new ContextMenuExtension();
+			
+			MenuItem item0 = new MenuItem("Line context menu");
+			
+			contectMenu.MenuItems.Add(item0);
+
+			MenuItem Item1 = new MenuItem("Test1");
+
+			Item1.Click += new EventHandler(Test1_Click);
+
+			item0.MenuItems.Add(Item1);
+
+			MenuItem Item2 = new MenuItem("Test2");
+
+			Item2.Click += new EventHandler(Test2_Click);
+
+			item0.MenuItems.Add(Item2);
+
+			//for custom entity, replace the "Line" with .NET
+			//(managed) wrapper of custom entity
+
+			Application.AddObjectContextMenuExtension(Line.GetClass(typeof(Line)), contectMenu);
+		}
+
+		static void Test1_Click(object sender, EventArgs e)
+		{
+			Application.ShowAlertDialog("Test1 clicked\n");
+		}
+
+		static async void Test2_Click(object sender, EventArgs e)
+		{
+			// Application.ShowAlertDialog("Test2 clicked\n");
+			
+			var dm = Application.DocumentManager;
+			var doc = dm.MdiActiveDocument;
+			var ed = doc.Editor;
+
+			// Get the selected objects
+			var psr = ed.GetSelection();
+
+			if (psr.Status != PromptStatus.OK)
+				return;
+
+			try
+			{
+				// Ask AutoCAD to execute our command in the right context
+				await dm.ExecuteInCommandContextAsync(
+				  async (obj) =>
+				  {
+					  if (psr.Value.Count > 0);
+					  
+					  await Ironwill.Session.AsyncCommand(".-bedit", "S_Head01");
+					  //await System.Threading.Tasks.Task.Delay(4000);
+					  await Ironwill.Session.AsyncCommand("bsave");
+					  await Ironwill.Session.AsyncCommand("bclose");
+					  
+					  //await ed.CommandAsync(".-bedit", "S_Head_TEMPLATE");
+					  //await ed.CommandAsync(".-bclose");
+					  
+				  },
+				  null
+				);
+			}
+
+			catch (System.Exception ex)
+			{
+				ed.WriteMessage("\nException: {0}\n", ex.Message);
+			}
+		}
+
+
+
+
+
+
+		public void Initialize()
+		{
+			Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
+
+			ed.WriteMessage("Hello WOrld!!!");
+
+			Ironwill.Session.Log("Initialize!!!");
+			ScaleMenu.Attach();
+		}
+
+		public void Terminate()
+		{
+			Ironwill.Session.Log("TERMINATE!!");
+			ScaleMenu.Detach();
+		}
+	}
+
+	public class ScaleMenu
+	{
+		private static ContextMenuExtension cme;
+
+		public static void Attach()
+		{
+			if (cme == null)
+			{
+				cme = new ContextMenuExtension();
+				MenuItem mi = new MenuItem("Scale by 5");
+				mi.Click += new EventHandler(OnScale);
+				cme.MenuItems.Add(mi);
+			}
+
+			RXClass rxc = Entity.GetClass(typeof(Entity));
+			Application.AddObjectContextMenuExtension(Polyline.GetClass(typeof(Polyline)), cme);
+		}
+
+		public static void Detach()
+		{
+			RXClass rxc = Entity.GetClass(typeof(Entity));
+			Application.RemoveObjectContextMenuExtension(rxc, cme);
+		}
+
+		private static async void OnScale(Object o, EventArgs e)
+		{
+			var dm = Application.DocumentManager;
+			var doc = dm.MdiActiveDocument;
+			var ed = doc.Editor;
+
+			// Get the selected objects
+			var psr = ed.GetSelection();
+
+			if (psr.Status != PromptStatus.OK)
+				return;
+
+			try
+			{
+				// Ask AutoCAD to execute our command in the right context
+				await dm.ExecuteInCommandContextAsync(
+				  async (obj) =>
+				  {
+				  // Scale the selected objects by 5 relative to 0,0,0
+					  await ed.CommandAsync("._scale", psr.Value, "", Point3d.Origin, 5);
+				  },
+				  null
+				);
+			}
+
+			catch (System.Exception ex)
+			{
+				ed.WriteMessage("\nException: {0}\n", ex.Message);
+			}
+		}
 	}
 }

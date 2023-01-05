@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.Windows;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
@@ -12,14 +13,20 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using AcTransactionManager = Autodesk.AutoCAD.DatabaseServices.TransactionManager;
+using static Autodesk.AutoCAD.EditorInput.Editor;
 
 namespace Ironwill
 {
 	public static class Session
 	{
+		public static DocumentCollection GetDocumentManager()
+		{
+			return AcApplication.DocumentManager;
+		}
+
 		public static Document GetDocument()
 		{
-			return AcApplication.DocumentManager.MdiActiveDocument;
+			return GetDocumentManager().MdiActiveDocument;
 		}
 
 		public static DocumentLock LockDocument()
@@ -191,6 +198,11 @@ namespace Ironwill
 		public static void Command(params object[] parameters)
 		{
 			GetEditor().Command(parameters);
+		}
+
+		public static CommandResult AsyncCommand(params object[] parameters)
+		{
+			return GetEditor().CommandAsync(parameters);
 		}
 	}
 }
