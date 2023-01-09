@@ -137,7 +137,7 @@ namespace Ironwill.Commands
 			
 			using (Transaction transaction = database.TransactionManager.StartTransaction())
 			{
-				BlockTableRecord blockTableRecord = Session.GetBlockTableRecord(transaction);
+				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
 				foreach (ObjectId objectId in blockTableRecord)
 				{

@@ -229,6 +229,7 @@ namespace Ironwill.Commands
 				}
 			};
 
+			Document document = Session.GetDocument();
 			Database database = Session.GetDatabase();
 
 			using (Transaction transaction = Session.StartTransaction())
@@ -279,7 +280,7 @@ namespace Ironwill.Commands
 						{
 							if (cleanupEntry.erase)
 							{
-								LayerHelper.Delete(layerName);
+								LayerHelper.Delete(document, transaction, layerName);
 								break;
 							}
 

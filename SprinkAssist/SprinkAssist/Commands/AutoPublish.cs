@@ -64,7 +64,7 @@ namespace Ironwill.Commands
 			string dateAsString = "(" + DateTime.Now.ToString(@"yyyy-MM-dd") + ")";
 
 			string pdfFileName = plotFileNameBase;
-			pdfFileName = string.Join(" - ", projectName, issuedForAbbrev);
+			pdfFileName = string.Join(" - ", plotFileNameBase, projectName, issuedForAbbrev);
 			pdfFileName = string.Join(" ", pdfFileName, dateAsString);
 
 			pdfFileName = Path.ChangeExtension(pdfFileName, "pdf");

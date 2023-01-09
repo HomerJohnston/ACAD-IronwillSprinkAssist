@@ -162,7 +162,7 @@ namespace Ironwill.Commands
 
 			using (Transaction transaction = database.TransactionManager.StartTransaction())
 			{
-				BlockTableRecord blockTableRecord = Session.GetBlockTableRecord(transaction);
+				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
 				foreach (ObjectId objectId in blockTableRecord)
 				{
@@ -231,7 +231,7 @@ namespace Ironwill.Commands
 
 			using (Transaction transaction = database.TransactionManager.StartTransaction())
 			{
-				BlockTableRecord blockTableRecord = Session.GetBlockTableRecord(transaction);
+				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
 				//bool handled = false;
 
@@ -367,7 +367,7 @@ namespace Ironwill.Commands
 
 				using (Transaction transaction = database.TransactionManager.StartTransaction())
 				{
-					BlockTableRecord blockTableRecord = Session.GetBlockTableRecord(transaction);
+					BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
 					foreach (ObjectId objectId in blockTableRecord)
 					{

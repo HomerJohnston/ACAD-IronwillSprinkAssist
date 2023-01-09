@@ -59,14 +59,14 @@ namespace Ironwill
 			return transaction.GetObject(GetDatabase().LayerTableId, openMode) as LayerTable;
 		}
 
-		public static BlockTableRecord GetBlockTableRecord(Transaction transaction)
+		public static BlockTableRecord GetModelSpaceBlockTableRecord(Transaction transaction)
 		{
 			return transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(GetDatabase()), OpenMode.ForRead) as BlockTableRecord;
 		}
 
 		public static void AddNewObject(Transaction transaction, Entity newEntity)
 		{
-			BlockTableRecord blockTableRecord = GetBlockTableRecord(transaction);
+			BlockTableRecord blockTableRecord = GetModelSpaceBlockTableRecord(transaction);
 			
 			blockTableRecord.UpgradeOpen();
 			blockTableRecord.AppendEntity(newEntity);

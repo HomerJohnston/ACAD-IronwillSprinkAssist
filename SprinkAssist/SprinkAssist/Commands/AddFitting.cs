@@ -135,7 +135,7 @@ namespace Ironwill.Commands
 
 			bool foundFittingPoint = false;
 
-			BlockTableRecord blockTableRecord = Session.GetBlockTableRecord(transaction);
+			BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
 			Point3dCollection candidatePoints = new Point3dCollection() { pickedLine.StartPoint, pickedLine.EndPoint};
 

@@ -14,9 +14,9 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.EditorInput;
 
-[assembly: CommandClass(typeof(Ironwill.Generation.GenerateSprinklerBlocks))]
+[assembly: CommandClass(typeof(Ironwill.Template.GenerateSprinklerBlocks))]
 
-namespace Ironwill.Generation
+namespace Ironwill.Template
 {
 	internal class SprinklerDefinition
 	{

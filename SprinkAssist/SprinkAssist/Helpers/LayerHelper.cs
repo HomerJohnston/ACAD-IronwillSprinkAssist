@@ -169,55 +169,54 @@ namespace Ironwill
 			ltr.Color = Color.FromColorIndex(ColorMethod.ByAci, ColorIndex);
 		}
 
-		public static string Delete(string layerName)
+		public static string Delete(Document document, Transaction transaction, string layerName)
 		{
-			Database database = Session.GetDatabase();
+			Database database = document.Database;
 
 			if (layerName == "0")
 			{
 				return "Layer '0' cannot be deleted.";
 			}
 
-			using (Transaction tr = Session.StartTransaction())
-			{
-				LayerTable layerTable = (LayerTable)tr.GetObject(database.LayerTableId, OpenMode.ForRead);
+			LayerTable layerTable = (LayerTable)transaction.GetObject(database.LayerTableId, OpenMode.ForRead);
 
-				if (!layerTable.Has(layerName))
-				{
-					return "Layer '" + layerName + "' not found.";
-				}
-				try
-				{
-					ObjectId layerId = layerTable[layerName];
+			if (!layerTable.Has(layerName))
+			{
+				return "Layer '" + layerName + "' not found.";
+			}
+			try
+			{
+				ObjectId layerId = layerTable[layerName];
 					
-					if (database.Clayer == layerId)
+				if (database.Clayer == layerId)
+				{
+					return "Current layer cannot be deleted.";
+				}
+				
+				LayerTableRecord layer = (LayerTableRecord)transaction.GetObject(layerId, OpenMode.ForWrite);
+				layer.IsLocked = false;
+				BlockTable blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForRead);
+				foreach (ObjectId btrId in blockTable)
+				
+				{
+					BlockTableRecord block = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForRead);
+					foreach (var entId in block)
 					{
-						return "Current layer cannot be deleted.";
-					}
-					LayerTableRecord layer = (LayerTableRecord)tr.GetObject(layerId, OpenMode.ForWrite);
-					layer.IsLocked = false;
-					BlockTable blockTable = (BlockTable)tr.GetObject(database.BlockTableId, OpenMode.ForRead);
-					foreach (ObjectId btrId in blockTable)
-					{
-						BlockTableRecord block = (BlockTableRecord)tr.GetObject(btrId, OpenMode.ForRead);
-						foreach (var entId in block)
+						Entity ent = (Entity)transaction.GetObject(entId, OpenMode.ForRead);
+						if (ent.Layer == layerName)
 						{
-							Entity ent = (Entity)tr.GetObject(entId, OpenMode.ForRead);
-							if (ent.Layer == layerName)
-							{
-								ent.UpgradeOpen();
-								ent.Erase();
-							}
+							ent.UpgradeOpen();
+							ent.Erase();
 						}
 					}
-					layer.Erase();
-					tr.Commit();
-					return "Layer '" + layerName + "' have been deleted.";
 				}
-				catch (System.Exception e)
-				{
-					return "Error: " + e.Message;
-				}
+
+				layer.Erase();
+				return "Layer '" + layerName + "' has been deleted.";
+			}
+			catch (System.Exception e)
+			{
+				return "Error: " + e.Message;
 			}
 		}
 
