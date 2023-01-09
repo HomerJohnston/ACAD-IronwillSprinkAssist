@@ -14,6 +14,9 @@ namespace Ironwill
 	{
 		public static void GetObjectsWithinBoundaryCurvesOfLayerByExtents(Document document, Transaction transaction, ref List<Entity> foundEntities, string boundaryLayer, OpenMode openMode)
 		{
+			Session.LogDebug("GetObjectsWithinBoundary... " + boundaryLayer);
+			bool log = boundaryLayer == "TEMPLATE_BASE";
+
 			// Build up list of boundary entities
 			BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(document.Database), OpenMode.ForWrite) as BlockTableRecord;
 
@@ -31,9 +34,13 @@ namespace Ironwill
 
 				if (curve != null && curve.Layer == boundaryLayer)
 				{
+					Session.LogDebug("Adding boundary curve: " + curve.GeometricExtents.ToString());
 					boundaryCurves.Add(curve);
 				}
 			}
+
+			if (log)
+				Session.LogDebug("Found " + boundaryCurves.Count + " boundary curves");
 
 			// Construct REGIONS
 			List<Region> allBoundaryRegions = new List<Region>();
@@ -94,7 +101,7 @@ namespace Ironwill
 				Point3d min = extents.MinPoint;
 				Point3d max = extents.MaxPoint;
 
-				bool bFullyContained = true;
+				bool bFullyContained = false;
 
 				List<Point3d> testPoints = new List<Point3d>()
 				{
@@ -103,30 +110,36 @@ namespace Ironwill
 					new Point3d(max.X, max.Y, 0),
 					new Point3d(max.X, min.Y, 0),
 				};
-
-				//Session.LogDebug("Checking " + entity.GetType().ToString());
+				
+				//if (log)
+				//	Session.LogDebug("Checking " + entity.GetType().ToString());
 
 				foreach (Brep brep in allBoundaryBreps)
 				{
 					PointContainment result;
 
+					bool brepContainmentResult = true;
+
 					foreach (Point3d point in testPoints)
 					{
-						//Session.LogDebug("   " + point.ToString());
+						//if (log)
+						//	Session.LogDebug("   " + point.ToString());
 
 						using (BrepEntity brepEntity = brep.GetPointContainment(point, out result))
 						{
 							if (!(brepEntity is Autodesk.AutoCAD.BoundaryRepresentation.Face))
 							{
-								//Session.LogDebug("   Failed containment testing");
-								bFullyContained = false;
+								//if (log)
+								//	Session.LogDebug("   Failed containment testing");
+								brepContainmentResult = false;
 								break;
 							}
 						}
 					}
 
-					if (!bFullyContained)
+					if (brepContainmentResult)
 					{
+						bFullyContained = true;
 						break;
 					}
 				}

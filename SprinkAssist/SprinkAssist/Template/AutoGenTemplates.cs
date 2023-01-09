@@ -147,6 +147,7 @@ namespace Ironwill.Template
 		{
 			DocumentCollection documentCollection = Session.GetDocumentManager();
 
+			//Document document = documentCollection.Open(TemplatePath);
 			using (Document document = documentCollection.Open(TemplatePath))
 			{
 				Database database = document.Database;
@@ -204,6 +205,14 @@ namespace Ironwill.Template
 			SetTableStyle(transaction, DefaultMetricTableStyle);
 			SetMLeaderStyle(transaction, DefaultMetricMLeaderStyle);
 
+			// Set system variables
+			AcApplication.SetSystemVariable("UNITS", 2);
+			AcApplication.SetSystemVariable("LTSCALE", 100);
+			AcApplication.SetSystemVariable("MEASUREMENT", 1);
+			AcApplication.SetSystemVariable("PDSIZE", 50);
+
+			// Reload linetypes 
+
 			// Purge
 		}
 
@@ -233,9 +242,15 @@ namespace Ironwill.Template
 			SetTableStyle(transaction, DefaultImperialTableStyle);
 			SetMLeaderStyle(transaction, DefaultImperialMLeaderStyle);
 
-			// Scale down the modelspace borders
+			// Set system variables
+			AcApplication.SetSystemVariable("UNITS", 4);
+			AcApplication.SetSystemVariable("LTSCALE", 4);
+			AcApplication.SetSystemVariable("MEASUREMENT", 0);
+			AcApplication.SetSystemVariable("PDSIZE", 2);
 
-			// Set other system variables
+			// Reload linetypes 
+
+			// Move the template stuff up to middle
 
 			// Purge
 
