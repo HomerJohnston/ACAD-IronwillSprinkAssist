@@ -167,6 +167,7 @@
     <Compile Include="Commands\AddSprinkler_New.cs" />
     <Compile Include="Commands\AutoCleanBackground.cs" />
     <Compile Include="Commands\AutoCouplings.cs" />
+    <Compile Include="Extensions\Editor.cs" />
     <Compile Include="Template\AutoGenTemplates.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
     <Compile Include="Commands\AutoLabelNew.cs" />

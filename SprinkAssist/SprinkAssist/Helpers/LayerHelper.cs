@@ -169,7 +169,7 @@ namespace Ironwill
 			ltr.Color = Color.FromColorIndex(ColorMethod.ByAci, ColorIndex);
 		}
 
-		public static string Delete(Document document, Transaction transaction, string layerName)
+		public static string DeleteLayer(Document document, Transaction transaction, string layerName)
 		{
 			Database database = document.Database;
 

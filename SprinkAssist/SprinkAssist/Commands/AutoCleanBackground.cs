@@ -280,7 +280,7 @@ namespace Ironwill.Commands
 						{
 							if (cleanupEntry.erase)
 							{
-								LayerHelper.Delete(document, transaction, layerName);
+								LayerHelper.DeleteLayer(document, transaction, layerName);
 								break;
 							}
 

@@ -1,4 +1,5 @@
-﻿using Autodesk.AutoCAD.DatabaseServices;
+﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,6 +62,11 @@ namespace Ironwill
 			XRecordLibrary.WriteXRecord(transaction, dictionary, "UniqueID", ++nextId);
 
 			return nextId;
+		}
+
+		public static void Purge(this Database database)
+		{
+
 		}
 	}
 }

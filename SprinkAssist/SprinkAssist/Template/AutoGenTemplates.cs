@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using Autodesk.AutoCAD.Runtime;
 using Ironwill.Commands;
@@ -10,21 +11,83 @@ using System.Reflection;
 using System.IO;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.EditorInput;
+
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.EditorInput;
 
 [assembly: CommandClass(typeof(Ironwill.Template.AutoGenTemplates))]
 
 namespace Ironwill.Template
 {
+/*
+	void GenMetric(Document document, Transaction transaction)
+	{
+		// Delete imperial layouts
+
+		// Cleanly rename all layout tabs
+		CleanLayoutNames(document, transaction, "(Metric)");
+
+
+		// Delete imperial model space objects // TODO: my dynamic extinguisher blocks' extents are huge, why?
+		EraseObjectsWithin(document, transaction, "TEMPLATE_BASE");
+		EraseObjectsWithin(document, transaction, "TEMPLATE_IMPERIAL");
+
+
+		// Erase template layers
+		LayerHelper.Delete(document, transaction, "TEMPLATE_IMPERIAL");
+		LayerHelper.Delete(document, transaction, "TEMPLATE_METRIC");
+		LayerHelper.Delete(document, transaction, "TEMPLATE_BASE");
+
+
+		// Set current styles
+		SetTextStyle(transaction, DefaultMetricTextStyle);
+		SetDimStyle(document, transaction, DefaultMetricDimStyle);
+		SetTableStyle(transaction, DefaultMetricTableStyle);
+		SetMLeaderStyle(transaction, DefaultMetricMLeaderStyle);
+
+
+		// Set system variables
+		AcApplication.SetSystemVariable("LUNITS", 2);
+		AcApplication.SetSystemVariable("LTSCALE", 100);
+		AcApplication.SetSystemVariable("MEASUREMENT", 1);
+		AcApplication.SetSystemVariable("PDSIZE", 50);
+
+		// Reload linetypes 
+		// ReloadLinetypes(document, transaction); // TODO do I actually need to do this?
+
+		// Purge
+		//Session.Command("-pu", "all", "*", "n");
+		//Session.Command("-pu", "all", "*", "n");
+		//Session.Command("-pu", "all", "*", "n");
+	}*/
+
+	internal class GenerationData
+	{
+		public string outputFile;
+
+		public List<string> eraseLayoutsContaining = new List<string>();
+		public List<string> cleanLayoutsContaining = new List<string>();
+
+		public List<string> eraseEntitiesWithinLayers = new List<string>();
+		public List<string> templateLayersToErase = new List<string>();
+
+		public string defaultTextStyle;
+		public string defaultDimStyle;
+		public string defaultTableStyle;
+		public string defaultMLeaderStyle;
+		
+		public int LUNITS;
+		public int LTSCALE;
+		public int MEASUREMENT;
+		public int PDSIZE;
+
+		public Vector3d modelSpaceDisplacement;
+	}
+
 	internal class AutoGenTemplates
 	{
-		List<string> TemplateLayouts = new List<string>()
-		{
-			"---------------"
-		};
-
 		List<string> MetricLayouts = new List<string>()
 		{
 			"NOTES",
@@ -42,18 +105,26 @@ namespace Ironwill.Template
 
 		List<string> ImperialLayouts = new List<string>()
 		{
-			"NOTES (Imp)",
-			"ESFR (Imp)",
-			"DETAILS (Imp)",
-			"11x17 (Imp)",
-			"24x36 (Imp)",
-			"30x42 (Imp)",
-			"36x48 (Imp)",
-			"11x17 (H) (Imp)",
-			"24x36 (H) (Imp)",
-			"30x42 (H) (Imp)",
-			"36x48 (H) (Imp)"
+			"NOTES (MET)",
+			"ESFR (MET)",
+			"DETAILS (MET)",
+			"11x17 (MET)",
+			"24x36 (MET)",
+			"30x42 (MET)",
+			"36x48 (MET)",
+			"11x17 (H) (MET)",
+			"24x36 (H) (MET)",
+			"30x42 (H) (MET)",
+			"36x48 (H) (MET)"
 		};
+
+		string MetricLayoutMarker = "(MET)";
+		string ImperialLayoutMarker = "(IMP)";
+		string TempLayoutMarker = "(TEMP)";
+
+		string MetricTemplateLayer = "TEMPLATE_METRIC";
+		string ImperialTemplateLayer = "TEMPLATE_IMPERIAL";
+		string BaseTemplateLayer = "TEMPLATE_BASE";
 
 		List<string> MetricDimStyles = new List<string>()
 		{
@@ -139,16 +210,90 @@ namespace Ironwill.Template
 		
 		string DefaultMetricMLeaderStyle = "IFE - Metric (Anno)";
 		string DefaultImperialMLeaderStyle = "IFE - Imperial (Anno)";
+		
+		// Note: I need "session" context in order to close and open drawings. 
+		// Without this, I found that fucking autocad layout tabs bug out whenever I erase/rename them from C# and undo.
+		// Closing and freshly opening the drawing in between templates keeps a clean slate and works.
+		[CommandMethod("GenTemplates", CommandFlags.Session)] // TODO add group name
+		public void GenerateTemplates()
+		{
+			GenerateMetric();
+			GenerateImperial();
+		}
 
-		string TemplatePath = "C:/Users/KWilcox/Desktop/Test.dwg";
+		void GenerateMetric()
+		{
+			GenerationData metricData = new GenerationData();
 
-		[CommandMethod("GenTemplates", CommandFlags.Session)]
-		public void GenTemplates()
+			metricData.outputFile = "C:/Users/KWilcox/Desktop/Test_Metric.dwg";
+
+			metricData.eraseLayoutsContaining.Add(ImperialLayoutMarker);
+			metricData.eraseLayoutsContaining.Add(TempLayoutMarker);
+
+			metricData.cleanLayoutsContaining.Add(MetricLayoutMarker);
+
+			metricData.eraseEntitiesWithinLayers.Add(ImperialTemplateLayer);
+			metricData.eraseEntitiesWithinLayers.Add(BaseTemplateLayer);
+
+			metricData.templateLayersToErase.Add(ImperialTemplateLayer);
+			metricData.templateLayersToErase.Add(MetricTemplateLayer);
+			metricData.templateLayersToErase.Add(BaseTemplateLayer);
+
+			metricData.defaultTextStyle = DefaultMetricTextStyle;
+			metricData.defaultDimStyle = DefaultMetricDimStyle;
+			metricData.defaultTableStyle = DefaultMetricTableStyle;
+			metricData.defaultMLeaderStyle = DefaultMetricMLeaderStyle;
+
+			metricData.LUNITS = 2;
+			metricData.LTSCALE = 100;
+			metricData.MEASUREMENT = 1;
+			metricData.PDSIZE = 50;
+
+			metricData.modelSpaceDisplacement = new Vector3d(0, 0, 0);
+
+			GenerateTemplate(metricData);
+		}
+
+		void GenerateImperial()
+		{
+			GenerationData imperialData = new GenerationData();
+
+			imperialData.outputFile = "C:/Users/KWilcox/Desktop/Test_Imperial.dwg";
+
+			imperialData.eraseLayoutsContaining.Add(MetricLayoutMarker);
+			imperialData.eraseLayoutsContaining.Add(TempLayoutMarker);
+
+			imperialData.cleanLayoutsContaining.Add(ImperialLayoutMarker);
+
+			imperialData.eraseEntitiesWithinLayers.Add(MetricTemplateLayer);
+			imperialData.eraseEntitiesWithinLayers.Add(BaseTemplateLayer);
+
+			imperialData.templateLayersToErase.Add(ImperialTemplateLayer);
+			imperialData.templateLayersToErase.Add(MetricTemplateLayer);
+			imperialData.templateLayersToErase.Add(BaseTemplateLayer);
+
+			imperialData.defaultTextStyle = DefaultImperialTextStyle;
+			imperialData.defaultDimStyle = DefaultImperialDimStyle;
+			imperialData.defaultTableStyle = DefaultImperialTableStyle;
+			imperialData.defaultMLeaderStyle = DefaultImperialMLeaderStyle;
+
+			imperialData.LUNITS = 4;
+			imperialData.LTSCALE = 4;
+			imperialData.MEASUREMENT = 0;
+			imperialData.PDSIZE = 2;
+
+			imperialData.modelSpaceDisplacement = new Vector3d(0, 500000, 0);
+
+			GenerateTemplate(imperialData);
+		}
+
+		void GenerateTemplate(GenerationData data)
 		{
 			DocumentCollection documentCollection = Session.GetDocumentManager();
 
-			//Document document = documentCollection.Open(TemplatePath);
-			using (Document document = documentCollection.Open(TemplatePath))
+			string templatePath = Session.GetDatabase().Filename;
+
+			using (Document document = documentCollection.Open(templatePath))
 			{
 				Database database = document.Database;
 
@@ -156,107 +301,70 @@ namespace Ironwill.Template
 				{
 					using (Transaction transaction = Session.StartTransaction())
 					{
-						GenMetric(document, transaction);
-						database.SaveAs("C:/Users/KWilcox/Desktop/Test_Metric.dwg", DwgVersion.Current);
+						ProcessAndGenerateFile(document, transaction, data);
+
+						database.SaveAs(data.outputFile, DwgVersion.Current);
 					}
 				}
 
 				document.CloseAndDiscard();
 			}
+		}
 
-			using (Document document = documentCollection.Open(TemplatePath))
+		void ProcessAndGenerateFile(Document document, Transaction transaction, GenerationData data)
+		{
+			foreach (string s in data.eraseLayoutsContaining)
 			{
-				Database database = document.Database;
-
-				using (DocumentLock documentLock = document.LockDocument())
-				{
-					using (Transaction transaction = Session.StartTransaction())
-					{
-						GenImperial(document, transaction);
-						database.SaveAs("C:/Users/KWilcox/Desktop/Test_Imperial.dwg", DwgVersion.Current);
-					}
-				}
-
-				document.CloseAndDiscard();
+				EraseLayoutsWithSubstring(document, transaction, s);
 			}
-		}
 
-		void GenMetric(Document document, Transaction transaction)
-		{
-			// Delete imperial layouts
-			EraseLayouts(document, transaction, "Imperial");
-			EraseLayouts(document, transaction, "------");
+			foreach (string s in data.cleanLayoutsContaining)
+			{
+				CleanLayoutNames(document, transaction, s);
+			}
 
-			// Cleanly rename all layout tabs
-			CleanLayoutNames(document, transaction, "(Metric)");
+			foreach (string s in data.eraseEntitiesWithinLayers)
+			{
+				EraseObjectsWithin(document, transaction, s);
+			}
 
-			// Delete imperial model space objects // TODO: my dynamic extinguisher blocks' extents are huge, why?
-			EraseObjectsWithin(document, transaction, "TEMPLATE_BASE");
-			EraseObjectsWithin(document, transaction, "TEMPLATE_IMPERIAL");
-
-			// Erase template layers
-			LayerHelper.Delete(document, transaction, "TEMPLATE_IMPERIAL");
-			LayerHelper.Delete(document, transaction, "TEMPLATE_METRIC");
-			LayerHelper.Delete(document, transaction, "TEMPLATE_BASE");
+			foreach (string s in data.templateLayersToErase)
+			{
+				LayerHelper.DeleteLayer(document, transaction, s);
+			}
 
 			// Set current styles
-			SetTextStyle(transaction, DefaultMetricTextStyle);
-			SetDimStyle(document, transaction, DefaultMetricDimStyle);
-			SetTableStyle(transaction, DefaultMetricTableStyle);
-			SetMLeaderStyle(transaction, DefaultMetricMLeaderStyle);
+			SetTextStyle(transaction, data.defaultTextStyle);
+			SetDimStyle(document, transaction, data.defaultDimStyle);
+			SetTableStyle(transaction, data.defaultTableStyle);
+			SetMLeaderStyle(transaction, data.defaultMLeaderStyle);
 
 			// Set system variables
-			AcApplication.SetSystemVariable("UNITS", 2);
-			AcApplication.SetSystemVariable("LTSCALE", 100);
-			AcApplication.SetSystemVariable("MEASUREMENT", 1);
-			AcApplication.SetSystemVariable("PDSIZE", 50);
+			AcApplication.SetSystemVariable("LUNITS", data.LUNITS);
+			AcApplication.SetSystemVariable("LTSCALE", data.LTSCALE);
+			AcApplication.SetSystemVariable("MEASUREMENT", data.MEASUREMENT);
+			AcApplication.SetSystemVariable("PDSIZE", data.PDSIZE);
 
 			// Reload linetypes 
+			// ReloadLinetypes(document, transaction); // TODO do I actually need to do this?
 
-			// Purge
+			// Move the imperial template stuff up to middle
+			if (data.modelSpaceDisplacement.Length > 0)
+			{
+				ShiftAllDrawingElements(document, transaction, data.modelSpaceDisplacement);
+			}
+
+			// TODO Purge. Figure out how to purge. Do it manually? Editor extension?
+			// Can't run commands from session context.
+			// Can't run SendStringToExecute without making it an await in the session context (maybe I should?)
+			// Can't conveniently pass parameters to SendStringToExecute either
+			// I should only purge styles and metric/imperial specific blocks, if I have any?
+			//Session.Command("-purge", "all", "*", "n");
+
+			document.Editor.ZoomExtents();
 		}
 
-		void GenImperial(Document document, Transaction transaction)
-		{
-			Database database = document.Database;
-
-			// Delete imperial layouts
-			EraseLayouts(document, transaction, "Metric");
-			EraseLayouts(document, transaction, "------");
-
-			// Cleanly rename all layout tabs
-			CleanLayoutNames(document, transaction, "(Imperial)");
-
-			// Delete imperial model space objects // TODO: my dynamic extinguisher blocks' extents are huge, why?
-			EraseObjectsWithin(document, transaction, "TEMPLATE_BASE");
-			EraseObjectsWithin(document, transaction, "TEMPLATE_METRIC");
-
-			// Erase template layers
-			LayerHelper.Delete(document, transaction, "TEMPLATE_IMPERIAL");
-			LayerHelper.Delete(document, transaction, "TEMPLATE_METRIC");
-			LayerHelper.Delete(document, transaction, "TEMPLATE_BASE");
-
-			// Set current styles
-			SetTextStyle(transaction, DefaultImperialTextStyle);
-			SetDimStyle(document, transaction, DefaultImperialDimStyle);
-			SetTableStyle(transaction, DefaultImperialTableStyle);
-			SetMLeaderStyle(transaction, DefaultImperialMLeaderStyle);
-
-			// Set system variables
-			AcApplication.SetSystemVariable("UNITS", 4);
-			AcApplication.SetSystemVariable("LTSCALE", 4);
-			AcApplication.SetSystemVariable("MEASUREMENT", 0);
-			AcApplication.SetSystemVariable("PDSIZE", 2);
-
-			// Reload linetypes 
-
-			// Move the template stuff up to middle
-
-			// Purge
-
-		}
-
-		void EraseLayouts(Document document, Transaction transaction, string targetString)
+		void EraseLayoutsWithSubstring(Document document, Transaction transaction, string targetString)
 		{
 			ProcessLayouts(document, transaction, (layout) =>
 			{
@@ -368,6 +476,52 @@ namespace Ironwill.Template
 		void SetMLeaderStyle(Transaction transaction, string desiredMLeaderStyle)
 		{
 			AcApplication.SetSystemVariable("CMLEADERSTYLE", desiredMLeaderStyle);
+		}
+
+		void ReloadLinetypes(Document document, Transaction transaction)
+		{
+			Database database = document.Database;
+
+			SymbolTable symbolTable = (SymbolTable)transaction.GetObject(database.LinetypeTableId, OpenMode.ForWrite);
+
+			List<string> lineTypes = new List<string>();
+
+			foreach (ObjectId objectId in symbolTable)
+			{
+				LinetypeTableRecord symbol = (LinetypeTableRecord)transaction.GetObject(objectId, OpenMode.ForWrite);
+				
+				lineTypes.Add(symbol.Name);
+			}
+
+			using (Database tempDatabase = new Database(false, true))
+			{
+				LinetypeTable linetypeTable = (LinetypeTable)transaction.GetObject(tempDatabase.LinetypeTableId, OpenMode.ForRead);
+
+				ObjectIdCollection objectIdCollection = new ObjectIdCollection();
+
+				foreach (string lineType in lineTypes)
+				{
+					tempDatabase.LoadLineTypeFile(lineType, database.Filename);
+					ObjectId linetypeId = linetypeTable[lineType];
+					objectIdCollection.Add(linetypeId);
+				}
+
+				IdMapping idMapping = new IdMapping();
+
+				database.WblockCloneObjects(objectIdCollection, database.LinetypeTableId, idMapping, DuplicateRecordCloning.Replace, true);
+			}
+		}
+
+		void ShiftAllDrawingElements(Document document, Transaction transaction, Vector3d displacement)
+		{
+			Database database = document.Database;
+
+			ModelSpaceHelper.IterateAllEntities(transaction, database, ModelSpaceHelper.ERecurseFlags.None, (entity, parentMatrix) =>
+			{
+				entity.UpgradeOpen();
+
+				entity.TransformBy(Autodesk.AutoCAD.Geometry.Matrix3d.Displacement(displacement));
+			});
 		}
 	}
 }
