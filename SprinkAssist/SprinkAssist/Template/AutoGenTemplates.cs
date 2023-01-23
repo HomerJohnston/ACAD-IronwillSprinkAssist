@@ -21,48 +21,6 @@ using Autodesk.AutoCAD.EditorInput;
 
 namespace Ironwill.Template
 {
-/*
-	void GenMetric(Document document, Transaction transaction)
-	{
-		// Delete imperial layouts
-
-		// Cleanly rename all layout tabs
-		CleanLayoutNames(document, transaction, "(Metric)");
-
-
-		// Delete imperial model space objects // TODO: my dynamic extinguisher blocks' extents are huge, why?
-		EraseObjectsWithin(document, transaction, "TEMPLATE_BASE");
-		EraseObjectsWithin(document, transaction, "TEMPLATE_IMPERIAL");
-
-
-		// Erase template layers
-		LayerHelper.Delete(document, transaction, "TEMPLATE_IMPERIAL");
-		LayerHelper.Delete(document, transaction, "TEMPLATE_METRIC");
-		LayerHelper.Delete(document, transaction, "TEMPLATE_BASE");
-
-
-		// Set current styles
-		SetTextStyle(transaction, DefaultMetricTextStyle);
-		SetDimStyle(document, transaction, DefaultMetricDimStyle);
-		SetTableStyle(transaction, DefaultMetricTableStyle);
-		SetMLeaderStyle(transaction, DefaultMetricMLeaderStyle);
-
-
-		// Set system variables
-		AcApplication.SetSystemVariable("LUNITS", 2);
-		AcApplication.SetSystemVariable("LTSCALE", 100);
-		AcApplication.SetSystemVariable("MEASUREMENT", 1);
-		AcApplication.SetSystemVariable("PDSIZE", 50);
-
-		// Reload linetypes 
-		// ReloadLinetypes(document, transaction); // TODO do I actually need to do this?
-
-		// Purge
-		//Session.Command("-pu", "all", "*", "n");
-		//Session.Command("-pu", "all", "*", "n");
-		//Session.Command("-pu", "all", "*", "n");
-	}*/
-
 	internal class GenerationData
 	{
 		public string outputFile;
@@ -211,8 +169,8 @@ namespace Ironwill.Template
 			"IFE-Imp Note 1-096",
 		};
 
-		readonly string defaultMetricTextStyle = "IFE-Met Note 1-100";
-		readonly string defaultImperialTextStyle = "IFE-Imp Note 1-096";
+		readonly string defaultMetricTextStyle = "IFE-Met Note (Anno)";
+		readonly string defaultImperialTextStyle = "IFE-Imp Note (Anno)";
 
 		// -------------------------------------------------------
 
@@ -308,15 +266,31 @@ namespace Ironwill.Template
 		[CommandMethod("GenTemplates", CommandFlags.Session)] // TODO add group name
 		public void GenerateTemplates()
 		{
-			GenerateMetric();
-			GenerateImperial();
+			string docName = Session.GetDocument().Name;
+			string path = Path.GetDirectoryName(docName);
+
+			string baseFileName = "IFE SprinkAssist Template - ";
+
+			string date = DateTime.Now.ToString(@"yyyy-MM-dd");
+
+			string metricFileName = baseFileName + "Met" + " (" + date + ")";
+			string imperialFileName = baseFileName + "Imp" + " (" + date + ")";
+
+			string metricFilePath = Path.Combine(path, "..", metricFileName);
+			string imperialFilePath = Path.Combine(path, "..", imperialFileName);
+
+			metricFilePath = Path.ChangeExtension(metricFilePath, "dwg");
+			imperialFilePath = Path.ChangeExtension(imperialFilePath, "dwg");
+
+			GenerateMetric(metricFilePath);
+			GenerateImperial(imperialFilePath);
 		}
 
-		void GenerateMetric()
+		void GenerateMetric(string fileName)
 		{
 			GenerationData metricData = new GenerationData();
 
-			metricData.outputFile = "C:/Users/KWilcox/Desktop/Test_Metric.dwg";
+			metricData.outputFile = fileName;
 
 			metricData.eraseLayoutsContaining.Add(ImperialLayoutMarker);
 			metricData.eraseLayoutsContaining.Add(TempLayoutMarker);
@@ -361,11 +335,11 @@ namespace Ironwill.Template
 			GenerateTemplate(metricData);
 		}
 
-		void GenerateImperial()
+		void GenerateImperial(string fileName)
 		{
 			GenerationData imperialData = new GenerationData();
 
-			imperialData.outputFile = "C:/Users/KWilcox/Desktop/Test_Imperial.dwg";
+			imperialData.outputFile = fileName;
 
 			imperialData.eraseLayoutsContaining.Add(MetricLayoutMarker);
 			imperialData.eraseLayoutsContaining.Add(TempLayoutMarker);
@@ -436,7 +410,7 @@ namespace Ironwill.Template
 
 		void ProcessAndGenerateFile(Document document, Transaction transaction, GenerationData data)
 		{
-			AcApplication.ShowAlertDialog("Processing... " + data.outputFile);
+			//AcApplication.ShowAlertDialog("Processing... " + data.outputFile);
 
 			foreach (string s in data.eraseLayoutsContaining)
 			{
@@ -576,6 +550,7 @@ namespace Ironwill.Template
 			DBDictionary MLeaderStyles = transaction.GetObject(database.MLeaderStyleDictionaryId, OpenMode.ForWrite) as DBDictionary;
 
 			List<MLeaderStyle> recordsToErase = new List<MLeaderStyle>();
+			List<MLeaderStyle> recordsToRename = new List<MLeaderStyle>();
 
 			foreach (DBDictionaryEntry mLeaderEntry in MLeaderStyles)
 			{
@@ -583,25 +558,24 @@ namespace Ironwill.Template
 
 				if (!keepMLeaderStyles.Contains(mLeaderStyle.Name))
 				{
-					AcApplication.ShowAlertDialog("Marking: " + mLeaderStyle.Name + " for erase");
 					recordsToErase.Add(mLeaderStyle);
 				}
-				else
+				else if (mLeaderStyle.Name.Contains("IFE-Met") || mLeaderStyle.Name.Contains("IFE-Imp"))
 				{
-					if (mLeaderStyle.Name.Contains("IFE-Met") || mLeaderStyle.Name.Contains("IFE-Imp"))
-					{
-						AcApplication.ShowAlertDialog("Renaming: " + mLeaderStyle.Name + " to " + "IFE" + mLeaderStyle.Name.Substring(7));
-						mLeaderStyle.UpgradeOpen();
-						mLeaderStyle.Name = "IFE" + mLeaderStyle.Name.Substring(7);
-					}
+					recordsToRename.Add(mLeaderStyle);
 				}
 			}
 
 			foreach (MLeaderStyle recordToErase in recordsToErase)
 			{
-				AcApplication.ShowAlertDialog("Erasing: " + recordToErase.Name);
 				recordToErase.UpgradeOpen();
 				recordToErase.Erase();
+			}
+
+			foreach (MLeaderStyle recordToRename in recordsToRename)
+			{
+				recordToRename.UpgradeOpen();
+				recordToRename.Name = "IFE" + recordToRename.Name.Substring(7);
 			}
 		}
 
