@@ -160,8 +160,8 @@ namespace Ironwill.Template
 			"IFE-Imp Dim 1-096",
 		};
 
-		readonly string defaultMetricDimStyle = "IFE-Met (Anno)";
-		readonly string defaultImperialDimStyle = "IFE-Imp (Anno)";
+		readonly string defaultMetricDimStyle = "IFE-Met Dim (Anno)";
+		readonly string defaultImperialDimStyle = "IFE-Imp Dim (Anno)";
 
 		// -------------------------------------------------------
 
@@ -261,8 +261,8 @@ namespace Ironwill.Template
 			"IFE-Imp Ldr 1-096",
 		};
 
-		readonly string defaultMetricMLeaderStyle = "IFE-Met (Anno)";
-		readonly string defaultImperialMLeaderStyle = "IFE-Imp (Anno)";
+		readonly string defaultMetricMLeaderStyle = "IFE-Met Ldr (Anno)";
+		readonly string defaultImperialMLeaderStyle = "IFE-Imp Ldr (Anno)";
 
 		// -------------------------------------------------------
 
@@ -436,6 +436,8 @@ namespace Ironwill.Template
 
 		void ProcessAndGenerateFile(Document document, Transaction transaction, GenerationData data)
 		{
+			AcApplication.ShowAlertDialog("Processing... " + data.outputFile);
+
 			foreach (string s in data.eraseLayoutsContaining)
 			{
 				EraseLayoutsWithSubstring(document, transaction, s);
@@ -535,23 +537,30 @@ namespace Ironwill.Template
 
 			DimStyleTable dimStyleTable = transaction.GetObject(database.DimStyleTableId, OpenMode.ForWrite) as DimStyleTable;
 
+			List<DimStyleTableRecord> recordsToErase = new List<DimStyleTableRecord>();
+
 			foreach (ObjectId objectId in dimStyleTable)
 			{
 				DimStyleTableRecord dimStyleTableRecord = transaction.GetObject(objectId, OpenMode.ForRead) as DimStyleTableRecord;
 
 				if (!keepDimensionStyles.Contains(dimStyleTableRecord.Name))
 				{
-					dimStyleTableRecord.UpgradeOpen();
-					dimStyleTableRecord.Erase();
+					recordsToErase.Add(dimStyleTableRecord);
 				}
 				else
 				{
 					if (dimStyleTableRecord.Name.Contains("IFE-Met") || dimStyleTableRecord.Name.Contains("IFE-Imp"))
 					{
-						//dimStyleTableRecord.UpgradeOpen();
-						//dimStyleTableRecord.Name = "IFE" + dimStyleTableRecord.Name.Substring(7);
+						dimStyleTableRecord.UpgradeOpen();
+						dimStyleTableRecord.Name = "IFE" + dimStyleTableRecord.Name.Substring(7);
 					}
 				}
+			}
+
+			foreach (DimStyleTableRecord recordToErase in recordsToErase)
+			{
+				recordToErase.UpgradeOpen();
+				recordToErase.Erase();
 			}
 		}
 
@@ -566,23 +575,33 @@ namespace Ironwill.Template
 
 			DBDictionary MLeaderStyles = transaction.GetObject(database.MLeaderStyleDictionaryId, OpenMode.ForWrite) as DBDictionary;
 
+			List<MLeaderStyle> recordsToErase = new List<MLeaderStyle>();
+
 			foreach (DBDictionaryEntry mLeaderEntry in MLeaderStyles)
 			{
 				MLeaderStyle mLeaderStyle = transaction.GetObject(mLeaderEntry.Value, OpenMode.ForRead) as MLeaderStyle;
 
 				if (!keepMLeaderStyles.Contains(mLeaderStyle.Name))
 				{
-					mLeaderStyle.UpgradeOpen();
-					mLeaderStyle.Erase();
+					AcApplication.ShowAlertDialog("Marking: " + mLeaderStyle.Name + " for erase");
+					recordsToErase.Add(mLeaderStyle);
 				}
 				else
 				{
 					if (mLeaderStyle.Name.Contains("IFE-Met") || mLeaderStyle.Name.Contains("IFE-Imp"))
 					{
+						AcApplication.ShowAlertDialog("Renaming: " + mLeaderStyle.Name + " to " + "IFE" + mLeaderStyle.Name.Substring(7));
 						mLeaderStyle.UpgradeOpen();
 						mLeaderStyle.Name = "IFE" + mLeaderStyle.Name.Substring(7);
 					}
 				}
+			}
+
+			foreach (MLeaderStyle recordToErase in recordsToErase)
+			{
+				AcApplication.ShowAlertDialog("Erasing: " + recordToErase.Name);
+				recordToErase.UpgradeOpen();
+				recordToErase.Erase();
 			}
 		}
 
@@ -597,15 +616,22 @@ namespace Ironwill.Template
 
 			DBDictionary tableStyles = transaction.GetObject(database.TableStyleDictionaryId, OpenMode.ForWrite) as DBDictionary;
 
+			List<TableStyle> tableStylesToErase = new List<TableStyle>();
+
 			foreach (DBDictionaryEntry tableEntry in tableStyles)
 			{
 				TableStyle tableStyle = transaction.GetObject(tableEntry.Value, OpenMode.ForRead) as TableStyle;
 
 				if (!keepTableStyles.Contains(tableStyle.Name))
 				{
-					tableStyle.UpgradeOpen();
-					tableStyle.Erase();
+					tableStylesToErase.Add(tableStyle);
 				}
+			}
+
+			foreach (TableStyle tableStyle in tableStylesToErase)
+			{
+				tableStyle.UpgradeOpen();
+				tableStyle.Erase();
 			}
 		}
 
@@ -619,15 +645,16 @@ namespace Ironwill.Template
 			Database database = document.Database;
 
 			SymbolTable textStyles = transaction.GetObject(database.TextStyleTableId, OpenMode.ForWrite) as SymbolTable;
-			
+
+			List<TextStyleTableRecord> stylesToErase = new List<TextStyleTableRecord>();
+
 			foreach (ObjectId textEntry in textStyles)
 			{
 				TextStyleTableRecord textStyle = transaction.GetObject(textEntry, OpenMode.ForRead) as TextStyleTableRecord;
 
 				if (!keepTextStyles.Contains(textStyle.Name))
 				{
-					textStyle.UpgradeOpen();
-					textStyle.Erase();
+					stylesToErase.Add(textStyle);
 				}
 				else
 				{
@@ -637,6 +664,12 @@ namespace Ironwill.Template
 						textStyle.Name = "IFE" + textStyle.Name.Substring(7);
 					}
 				}
+			}
+
+			foreach (TextStyleTableRecord textStyle in stylesToErase)
+			{
+				textStyle.UpgradeOpen();
+				textStyle.Erase();
 			}
 		}
 
