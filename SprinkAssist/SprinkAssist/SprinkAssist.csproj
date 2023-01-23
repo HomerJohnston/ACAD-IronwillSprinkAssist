@@ -230,6 +230,7 @@
     <Compile Include="Helpers\WorldUCS.cs" />
     <Compile Include="Settings\DrawingSettings.cs" />
     <Compile Include="Template\GenerateSprinklerBlocks.cs" />
+    <Compile Include="Testing\TestOSnapOverrule.cs" />
     <Compile Include="Types\PipeGroup.cs" />
     <Compile Include="SprinkAssist.cs" />
     <Compile Include="Dialogs\PipeLabelDialog.cs">
