@@ -82,7 +82,7 @@ namespace Ironwill.Commands
 			CeilingLayerSetting = new CommandSetting<string>("CeilingLayer", "CLNG", cmdSettings); // TODO - global settings for sensing layers names
 			WallLayerSetting = new CommandSetting<string>("WallLayer", "WALL", cmdSettings);
 
-			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", Blocks.Sprinkler_Head_02.Get(), cmdSettings); // TODO - global settings for available sprinkler blocks
+			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", "", cmdSettings); // TODO - global settings for available sprinkler blocks
 		}
 
 		[CommandMethod("SpkAssist", "AddSprinklerOLD", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]

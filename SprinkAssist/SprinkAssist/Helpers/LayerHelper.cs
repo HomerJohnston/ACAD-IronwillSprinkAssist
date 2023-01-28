@@ -15,6 +15,17 @@ using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace Ironwill
 {
+	[Flags]
+	public enum LayerStatus
+	{
+		None = 0,
+		Visible = 1,
+		Frozen = 2,
+		ViewportVisibilityDefault = 4,
+		Locked = 8,
+		Plots = 16
+	}
+
 	public class LayerHelper
 	{
 		public static LayerTableRecord FindLayer(Transaction transaction, string layerName, OpenMode openMode)
@@ -38,65 +49,92 @@ namespace Ironwill
 			return null;
 		}
 
-		public static void ToggleVisibility(string layerName)
+		public static void ToggleVisibility(Transaction transaction, string layerName)
 		{
-			using (Transaction transaction = Session.StartTransaction())
+			LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
+
+			if (layerTableRecord == null)
 			{
-				LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
-
-				if (layerTableRecord == null)
-				{
-					return;
-				}
-
-				bool wasOff = layerTableRecord.IsOff;
-				layerTableRecord.IsOff = !wasOff;
-
-				Session.GetEditor().ApplyCurDwgLayerTableChanges();
-				//Session.GetEditor().Regen();
-				Session.GetEditor().Command("REGENALL");
-
-				transaction.Commit();
+				return;
 			}
+
+			bool wasOff = layerTableRecord.IsOff;
+			layerTableRecord.IsOff = !wasOff;
+
+			Session.GetEditor().ApplyCurDwgLayerTableChanges();
+			//Session.GetEditor().Regen();
+			Session.GetEditor().Command("REGENALL");
 		}
 
-		public static void ToggleFrozen(string layerName)
+		// TODO all of these helpers should take in a parent transaction
+		public static void ToggleFrozen(Transaction transaction, string layerName)
 		{
-			using (Transaction transaction = Session.StartTransaction())
+			LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
+
+			if (layerTableRecord == null)
 			{
-				LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
-
-				if (layerTableRecord == null)
-				{
-					return;
-				}
-
-				if (Session.GetDatabase().Clayer == layerTableRecord.ObjectId)
-				{
-					string defaultLayerName = "0";
-					LayerTable layerTable = Session.GetLayerTable(transaction, OpenMode.ForWrite);
-					Database database = Session.GetDatabase();
-
-					if (layerTable.Has(defaultLayerName))
-					{
-						Session.Log("Setting current layer to " + defaultLayerName);
-						database.Clayer = layerTable[defaultLayerName];
-					}
-					else
-					{
-						Session.Log("Failed - cannot freeze current layer");
-					}
-				}
-
-				bool wasFrozen = layerTableRecord.IsFrozen;
-				layerTableRecord.IsFrozen = !wasFrozen;
-
-				Session.GetEditor().ApplyCurDwgLayerTableChanges();
-				//Session.GetEditor().Regen();
-				Session.GetEditor().Command("REGENALL");
-
-				transaction.Commit();
+				return;
 			}
+
+			if (Session.GetDatabase().Clayer == layerTableRecord.ObjectId)
+			{
+				string defaultLayerName = "0";
+				LayerTable layerTable = Session.GetLayerTable(transaction, OpenMode.ForWrite);
+				Database database = Session.GetDatabase();
+
+				if (layerTable.Has(defaultLayerName))
+				{
+					Session.Log("Setting current layer to " + defaultLayerName);
+					database.Clayer = layerTable[defaultLayerName];
+				}
+				else
+				{
+					Session.Log("Failed - cannot freeze current layer");
+				}
+			}
+
+			bool wasFrozen = layerTableRecord.IsFrozen;
+			layerTableRecord.IsFrozen = !wasFrozen;
+
+			Session.GetEditor().ApplyCurDwgLayerTableChanges();
+			Session.GetEditor().Command("REGENALL");
+		}
+
+		public static bool GetLayerState(Transaction transaction, string layerName, ref LayerStatus layerStatus)
+		{
+			LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);
+
+			if (layerTableRecord == null)
+			{
+				return false;
+			}
+
+			if (!layerTableRecord.IsHidden)
+			{
+				layerStatus |= LayerStatus.Visible;
+			}
+
+			if (layerTableRecord.IsFrozen)
+			{
+				layerStatus |= LayerStatus.Frozen;
+			}
+
+			if (layerTableRecord.ViewportVisibilityDefault)
+			{
+				layerStatus |= LayerStatus.ViewportVisibilityDefault;
+			}
+
+			if (layerTableRecord.IsLocked)
+			{
+				layerStatus |= LayerStatus.Locked;
+			}
+
+			if (layerTableRecord.IsPlottable)
+			{
+				layerStatus |= LayerStatus.Plots;
+			}
+
+			return true;
 		}
 
 		public static void SetLinetype(Transaction transaction, LayerTableRecord ltr, string name, bool forceLoad = false)

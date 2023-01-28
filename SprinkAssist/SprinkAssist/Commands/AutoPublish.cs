@@ -31,7 +31,9 @@ namespace Ironwill.Commands
 			Session.Log("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
 
 			var CTAB = AcApplication.GetSystemVariable("CTAB");
-			
+			var BACKGROUNDPLOT = AcApplication.GetSystemVariable("BACKGROUNDPLOT");
+			AcApplication.SetSystemVariable("BACKGROUNDPLOT", 0);
+
 			// Get all layout names
 			List<string> layouts = GetLayouts();
 
@@ -50,6 +52,7 @@ namespace Ironwill.Commands
 			}
 
 			string dwgName = Session.GetDocument().Name;
+
 			string dwgDirectory = Path.GetDirectoryName(dwgName);
 			
 			string destinationPath = dwgDirectory;
@@ -57,7 +60,8 @@ namespace Ironwill.Commands
 			string plotFileNameBase = "FP Dwgs";
 			
 			string projectName = Session.GetDatabase().GetCustomProperty("ProjectName_1");
-			
+			projectName = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(projectName.ToLower());
+
 			string issuedFor = Session.GetDatabase().GetCustomProperty("IssuedFor");
 			string issuedForAbbrev = "IF" + new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();
 
@@ -67,9 +71,16 @@ namespace Ironwill.Commands
 			pdfFileName = string.Join(" - ", plotFileNameBase, projectName, issuedForAbbrev);
 			pdfFileName = string.Join(" ", pdfFileName, dateAsString);
 
+			foreach (char c in System.IO.Path.GetInvalidFileNameChars())
+			{
+				pdfFileName = pdfFileName.Replace(c.ToString(), string.Empty);
+			}
+			pdfFileName = pdfFileName.Replace(".", string.Empty);
+
 			pdfFileName = Path.ChangeExtension(pdfFileName, "pdf");
 
 			string destinationLogName = Path.GetFileName(dwgName);
+
 			destinationLogName = Path.ChangeExtension(destinationLogName, "log");
 			
 			// TODO fix hardcoding of folder names
@@ -129,10 +140,13 @@ namespace Ironwill.Commands
 				Session.Log("Starting publish...");
 				publisher.PublishExecute(dsdData, PlotConfigManager.CurrentConfig);
 				Session.Log("Publish ending... Opening file");
+
+				// Opens PDF file
 				System.Diagnostics.Process.Start(currentPdfFile);
 			}
 
 			AcApplication.SetSystemVariable("CTAB", CTAB);
+			AcApplication.SetSystemVariable("BACKGROUNDPLOT", BACKGROUNDPLOT);
 		}
 
 		void EndPublishEventHandler(object sender, PublishEventArgs e)

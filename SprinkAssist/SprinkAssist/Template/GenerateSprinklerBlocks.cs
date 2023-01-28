@@ -42,6 +42,8 @@ namespace Ironwill.Template
 		[CommandMethod("GenTest")]
 		public void GenTest()
 		{
+			System.Windows.Forms.MessageBox.Show("Warning: running this more than once will cause DWG file corruption (AutoCAD bug). Close and reopen the drawing before running again.");
+
 			Run("NormalHeads.csv", "S_Head_TEMPLATE", 0.0);
 			Run("SidewallHeads.csv", "S_Sidewall_TEMPLATE", 50000.0);
 			Run("AtticHeads.csv", "S_Attic_TEMPLATE", 100000.0);

@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace Ironwill
 {
+	// TODO move this to file data
 	public class Layer
 	{
 		public const string Pfix = "Spk_";
 		// --------------------------------------------------------------------	Name ------------------------------	Color -----------------	Plot --	Deprecated Names
-		public static LayerStruct Default					= new LayerStruct(	"0",								Colors.White,			true);
+		public static LayerStruct Default					= new LayerStruct(	"0",								Colors.White,			true	);
 		
 		public static LayerStruct Area_CalcBackground		= new LayerStruct(	Pfix + "Area_CalcBackground",		Colors.White,			true,	"SpkCalc");
 		public static LayerStruct Calculation				= new LayerStruct(	Pfix + "Calculation",				Colors.White,			true,	"SpkCalc", "Spk_Calculations");
@@ -21,17 +22,18 @@ namespace Ironwill
 		public static LayerStruct DraftAid					= new LayerStruct(	Pfix + "DraftAid",					Colors.DarkPurple,		false,	"SpkDraftAid");
 		public static LayerStruct Extinguisher				= new LayerStruct(	Pfix + "Extinguisher",				Colors.White,			true,	"SpkExtinguishers");
 		public static LayerStruct HeadCoverage				= new LayerStruct(	Pfix + "HeadCoverage",				Colors.Turqoise,		false,	"SpkSystem_Head_Coverage");
-		public static LayerStruct HeadLegend				= new LayerStruct(	Pfix + "HeadLegend",				Colors.White,			true);
+		public static LayerStruct HeadCoverage_Fill			= new LayerStruct(	Pfix + "HeadCoverage_Fill",			Colors.Turqoise,		false	);
+		public static LayerStruct HeadLegend				= new LayerStruct(	Pfix + "HeadLegend",				Colors.White,			true	);
 		public static LayerStruct Note						= new LayerStruct(	Pfix + "Note",						Colors.White,			true,	"SpkNote");
-		public static LayerStruct PersonalNote				= new LayerStruct(	Pfix + "PersonalNote",				Colors.LightGreen,		true);
+		public static LayerStruct PersonalNote				= new LayerStruct(	Pfix + "PersonalNote",				Colors.LightGreen,		true	);
 
 		public static LayerStruct PipeLabel					= new LayerStruct(	Pfix + "PipeLabel",					Colors.White,			true,	"SpkPipeLabel");
 		public static LayerStruct PipeLabel_Dia				= new LayerStruct(	Pfix + "PipeLabel_Diamater",		Colors.White,			true,	"SpkPipeLabel_Dia");
 		public static LayerStruct PipeLabel_Group			= new LayerStruct(	Pfix + "PipeLabel_Group",			Colors.White,			true,	"SpkPipeLabel_Group");
 		public static LayerStruct PipeLabel_Length			= new LayerStruct(	Pfix + "PipeLabel_Length",			Colors.White,			true,	"SpkPipeLabel_Lgth");
-		public static LayerStruct PipeLabel_Slope			= new LayerStruct(	Pfix + "PipeLabel_Slope",			Colors.White,			true);
+		public static LayerStruct PipeLabel_Slope			= new LayerStruct(	Pfix + "PipeLabel_Slope",			Colors.White,			true	);
 
-		public static LayerStruct Rev						= new LayerStruct(	Pfix + "Rev",						Colors.DarkOrange,		true);
+		public static LayerStruct Rev						= new LayerStruct(	Pfix + "Rev",						Colors.DarkOrange,		true	);
 
 		public static LayerStruct SystemDevice				= new LayerStruct(	Pfix + "System_Device",				Colors.DarkGrey,		true,	"SpkSystem_Device");
 		public static LayerStruct SystemFitting				= new LayerStruct(	Pfix + "System_Fitting",			Colors.Orange,			true,	"SpkSystem_Fitting");
@@ -46,7 +48,7 @@ namespace Ironwill
 		public static LayerStruct Viewport					= new LayerStruct(	Pfix + "Viewport",					Colors.White,			true,	"SpkViewport");
 		public static LayerStruct Viewport_Hidden			= new LayerStruct(	Pfix + "Viewport_Hidden",			Colors.DarkTurqoise,	true,	"SpkViewport_NoPlot");
 
-		public static LayerStruct Wipeout					= new LayerStruct(	Pfix + "Wipeout",					Colors.ByLayer,			true);
+		public static LayerStruct Wipeout					= new LayerStruct(	Pfix + "Wipeout",					Colors.ByLayer,			true	);
 
 		public static LayerStruct XREF						= new LayerStruct(	Pfix + "XREF",						Colors.LightTurqoise,	false,	"SpkXREF");
 	}

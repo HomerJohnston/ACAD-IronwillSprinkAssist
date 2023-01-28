@@ -26,7 +26,11 @@ namespace Ironwill.Commands
 		[CommandMethod("SpkAssist", "ToggleDraftAid", CommandFlags.NoBlockEditor)]
 		public void ToggleDraftAidCmd()
 		{
-			LayerHelper.ToggleFrozen(Layer.DraftAid.Get());
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				LayerHelper.ToggleFrozen(transaction, Layer.DraftAid.Get());
+				transaction.Commit();
+			}
 		}
 
 		/// <summary>
@@ -35,7 +39,11 @@ namespace Ironwill.Commands
 		[CommandMethod("SpkAssist", "ToggleXref", CommandFlags.NoBlockEditor)]
 		public void ToggleXrefCmd()
 		{
-			LayerHelper.ToggleFrozen(Layer.XREF.Get());
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				LayerHelper.ToggleFrozen(transaction, Layer.XREF.Get());
+				transaction.Commit();
+			}
 		}
 
 		/// <summary>
@@ -43,8 +51,40 @@ namespace Ironwill.Commands
 		/// </summary>
 		[CommandMethod("SpkAssist", "ToggleCoverage", CommandFlags.NoBlockEditor)]
 		public void ToggleCoverageCmd()
-		{
-			LayerHelper.ToggleFrozen(Layer.HeadCoverage.Get());
+        {
+			LayerStatus headCoverageLayerStatus = new LayerStatus();
+			LayerStatus headCoverageFillLayerStatus = new LayerStatus();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				if (!LayerHelper.GetLayerState(transaction, Layer.HeadCoverage.Get(), ref headCoverageLayerStatus))
+				{
+					Session.Log("Failed to access layer " + Layer.HeadCoverage.Get());
+					return;
+				}
+
+				if (!LayerHelper.GetLayerState(transaction, Layer.HeadCoverage_Fill.Get(), ref headCoverageFillLayerStatus))
+				{
+					Session.Log("Failed to access layer " + Layer.HeadCoverage_Fill.Get());
+					return;
+				}
+
+				if (!headCoverageLayerStatus.HasFlag(LayerStatus.Frozen) && !headCoverageFillLayerStatus.HasFlag(LayerStatus.Frozen))
+				{
+					LayerHelper.ToggleFrozen(transaction, Layer.HeadCoverage_Fill.Get());
+				}
+				else if (!headCoverageLayerStatus.HasFlag(LayerStatus.Frozen) && headCoverageFillLayerStatus.HasFlag(LayerStatus.Frozen))
+				{
+					LayerHelper.ToggleFrozen(transaction, Layer.HeadCoverage.Get());
+				}
+				else
+				{
+					LayerHelper.ToggleFrozen(transaction, Layer.HeadCoverage.Get());
+					LayerHelper.ToggleFrozen(transaction, Layer.HeadCoverage_Fill.Get());
+				}
+
+				transaction.Commit();
+			}
 		}
 
 		/// <summary>
@@ -53,50 +93,16 @@ namespace Ironwill.Commands
 		[CommandMethod("SpkAssist", "TogglePipeLabels", CommandFlags.NoBlockEditor)]
 		public void TogglePipeLabelsCmd()
 		{
-			LayerHelper.ToggleFrozen(Layer.PipeLabel.Get());
-		}
-/*
-		[CommandMethod("ToggleLineSmoothing")]
-		public void ToggleLineSmoothingCmd()
-		{
-			Editor editor = Session.GetEditor();
-
-			Autodesk.AutoCAD.GraphicsSystem.Manager gfxManager = Session.GetDocument().GraphicsManager;
-			
-			using (Autodesk.AutoCAD.GraphicsSystem.Configuration gfxConfig = new Autodesk.AutoCAD.GraphicsSystem.Configuration())
+			using (Transaction transaction = Session.StartTransaction())
 			{
-				if (!gfxConfig.IsHardwareAccelerationAvailable())
-				{
-					AcApplication.ShowAlertDialog("Hardware acceleration not available");
-					return;
-				}
-
-				if (!gfxConfig.IsHardwareAccelerationEnabled())
-				{
-					gfxConfig.setHardwareAcceleration(true);
-				}
-
-				UniqueString lineSmoothing = UniqueString.Intern("ACAD_LineSmoothing");
-
-				if (gfxConfig.IsFeatureAvailable(lineSmoothing))
-				{
-					bool status = gfxConfig.IsFeatureEnabled(lineSmoothing);
-
-					if (status)
-					{
-						Session.GetDocument().SendStringToExecute("LINESMOOTHING\n0\n", false, false, false);
-					}
-					else
-					{
-						Session.GetDocument().SendStringToExecute("LINESMOOTHING\n1\n", false, false, false);
-					}
-
-					// Can't seem to get this to work.
-					// gfxConfig.SetFeatureEnabled(lineSmoothing, !status);
-				}
+				LayerHelper.ToggleFrozen(transaction, Layer.PipeLabel.Get());
+				transaction.Commit();
 			}
-		}*/
+		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		[CommandMethod("SpkAssist", "ToggleLineweightDisplay", CommandFlags.NoBlockEditor)]
 		public void ToggleLineweightDisplayCmd()
 		{

@@ -37,6 +37,7 @@ namespace Ironwill
 		public static BlockStruct Fitting_ConcentricReducer =			new BlockStruct(	"F_ConcentricReducer",			Layer.SystemFitting.Get()	);
 		public static BlockStruct Fitting_EccentricReducer =			new BlockStruct(	"F_EccentricReducer",			Layer.SystemFitting.Get()	);
 
+		/*
 		// Sprinklers
 		public static BlockStruct Sprinkler_Head_01 = 					new BlockStruct(	"S_Head_01",					Layer.SystemHead.Get()		);
 		public static BlockStruct Sprinkler_Head_01_Slash =				new BlockStruct(	"S_Head_01_Slash",				Layer.SystemHead.Get()		);
@@ -127,6 +128,7 @@ namespace Ironwill
 		public static BlockStruct Sprinkler_SW_04_EC = 					new BlockStruct(	"S_Sidewall_04_EC",				Layer.SystemHead.Get()		);
 		public static BlockStruct Sprinkler_SW_04_Dry = 				new BlockStruct(	"S_Sidewall_04_Dry",			Layer.SystemHead.Get()		);
 		public static BlockStruct Sprinkler_SW_04_Vert = 				new BlockStruct(	"S_Sidewall_04_Vert",			Layer.SystemHead.Get()		);
+		*/
 	}
 
 	public class BlockStruct
