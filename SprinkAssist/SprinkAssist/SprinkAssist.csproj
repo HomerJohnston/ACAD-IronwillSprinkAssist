@@ -164,9 +164,16 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\AddSprinkler_New.cs" />
+    <Compile Include="Commands\AddSprinkler\AddSprinkler.cs" />
+    <Compile Include="Commands\AddSprinkler\AddSprinklerJigger.cs" />
+    <Compile Include="Commands\AddSprinkler\AnchorPositionJigger.cs" />
+    <Compile Include="Commands\AddSprinkler\AnchorRotationJigger.cs" />
+    <Compile Include="Commands\AddSprinkler\AnchorTileLength2Jigger.cs" />
+    <Compile Include="Commands\AddSprinkler\AnchorTileVectorJigger.cs" />
+    <Compile Include="Commands\AddSprinkler\TileAnchor.cs" />
     <Compile Include="Commands\AutoCleanBackground.cs" />
     <Compile Include="Commands\AutoCouplings.cs" />
+    <Compile Include="Extensions\Entity.cs" />
     <Compile Include="Extensions\Editor.cs" />
     <Compile Include="Template\AutoGenTemplates.cs" />
     <Compile Include="Commands\AutoLabel.cs" />
@@ -194,7 +201,7 @@
     <Compile Include="Helpers\XRecordLIbrary.cs" />
     <Compile Include="Helpers\Drawing.cs" />
     <Compile Include="Helpers\LayerHelper.cs" />
-    <Compile Include="Commands\AddSprinkler.cs" />
+    <Compile Include="Commands\AddSprinkler_Old.cs" />
     <Compile Include="Commands\ReplaceHeads.cs" />
     <Compile Include="Commands\ToggleLayerCommands.cs" />
     <Compile Include="Commands\XRoom.cs" />
@@ -231,6 +238,7 @@
     <Compile Include="Settings\DrawingSettings.cs" />
     <Compile Include="Template\GenerateSprinklerBlocks.cs" />
     <Compile Include="Testing\TestOSnapOverrule.cs" />
+    <Compile Include="Testing\TestSelectionOverride.cs" />
     <Compile Include="Types\PipeGroup.cs" />
     <Compile Include="SprinkAssist.cs" />
     <Compile Include="Dialogs\PipeLabelDialog.cs">
@@ -281,6 +289,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Commands\Core\" />
     <Folder Include="Objects\" />
   </ItemGroup>
   <ItemGroup>

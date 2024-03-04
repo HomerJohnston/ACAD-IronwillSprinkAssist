@@ -66,7 +66,6 @@ namespace Ironwill
 			Session.GetEditor().Command("REGENALL");
 		}
 
-		// TODO all of these helpers should take in a parent transaction
 		public static void ToggleFrozen(Transaction transaction, string layerName)
 		{
 			LayerTableRecord layerTableRecord = FindLayer(transaction, layerName, OpenMode.ForWrite);

@@ -93,6 +93,7 @@ namespace Ironwill
 			{
 				LayerTable layerTable = Session.GetLayerTable(transaction);
 
+				// TODO this isn't robust. I should throw errors if multiple layers exist. I should also have a layer fixer upper that merges old layers to new.
 				if (layerTable.Has(Name))
 				{
 					transaction.Commit();
@@ -126,5 +127,37 @@ namespace Ironwill
 				}
 			}
 		}
+
+		static public bool operator !=(string other, LayerStruct layerStruct)
+		{
+			return layerStruct != other;
+		}
+
+		static public bool operator ==(string other, LayerStruct layerStruct)
+		{
+			return layerStruct == other;
+		}
+
+		static public bool operator !=(LayerStruct layerStruct, string other)
+		{
+			return !(layerStruct == other);
+		}
+
+		static public bool operator ==(LayerStruct layerStruct, string other)
+		{
+			if (other == layerStruct.Name)
+			{
+				return true;
+			}
+
+			if (layerStruct.DeprecatedNames.Contains(other))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		// TODO Equals and GetHashCode
 	}
 }

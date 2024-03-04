@@ -4,73 +4,86 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using System;
+using System.Collections.Generic;
+using System.Windows.Documents;
 
-[assembly: CommandClass(typeof(ObjectSnapping.Commands))]
+[assembly: CommandClass(typeof(Ironwill.Commands.DisableObjectSnaps.Commands))]
 
-namespace ObjectSnapping
+namespace Ironwill.Commands
 {
-	public class Commands
+	internal class DisableObjectSnaps : SprinkAssistCommand
 	{
-		const string regAppName = "TTIF_SNAP";
+		private const string insertionSnapOnly = "IFE_OsnapOverrule_Insertion";
+		private const string noSnaps = "IFE_OsnapOverrule_None";
 
-		private static OSOverrule _osOverrule = null;
-
-		// Object Snap Overrule to prevent snapping to objects
-		// with certain XData attached
-
-		public class OSOverrule : OsnapOverrule
+		public class IFEOsnapOverruleBase : OsnapOverrule
 		{
-			public OSOverrule()
-			{
-				// Tell AutoCAD to filter on our application name
-				// (this should mean our overrule only gets called
-				// on objects possessing XData with this name)
+			private bool active = false;
 
-				SetXDataFilter(regAppName);
-			}
+			protected string name = string.Empty;
 
-			public override void GetObjectSnapPoints(
-			  Entity ent,
-			  ObjectSnapModes mode,
-			  IntPtr gsm,
-			  Point3d pick,
-			  Point3d last,
-			  Matrix3d view,
-			  Point3dCollection snaps,
-			  IntegerCollection geomIds
-			)
+			public void SetEnabled(bool newState)
 			{
-				if (mode == ObjectSnapModes.ModeCenter)
+				if (newState)
 				{
-					BlockReference blockReference = ent as BlockReference;
-
-					if (blockReference != null)
+					if (name != string.Empty)
 					{
-						snaps.Add(blockReference.Position);
+						Session.Log($"Enabling snap overrule: {name}");
 					}
+
+					AddOverrule(RXObject.GetClass(typeof(Entity)), this, false);
+					Overruling = true;
+					active = true;
+				}
+				else
+				{
+					if (name != string.Empty)
+					{
+						Session.Log($"Disabling snap overrule: {name}");
+					}
+
+					RemoveOverrule(RXObject.GetClass(typeof(Entity)), this);
+					active = false;
 				}
 			}
 
-			public override void GetObjectSnapPoints(
-			  Entity ent,
-			  ObjectSnapModes mode,
-			  IntPtr gsm,
-			  Point3d pick,
-			  Point3d last,
-			  Matrix3d view,
-			  Point3dCollection snaps,
-			  IntegerCollection geomIds,
-			  Matrix3d insertion
-			)
+			public void ToggleEnabled()
 			{
-				if (mode == ObjectSnapModes.ModeCenter)
+				if (active)
 				{
-					BlockReference blockReference = ent as BlockReference;
+					SetEnabled(false);
+				}
+				else
+				{
+					SetEnabled(true);
+				}
+			}
+		}
 
-					if (blockReference != null)
-					{
-						snaps.Add(blockReference.Position);
-					}
+		internal class SprinklerSnapOverrule : IFEOsnapOverruleBase
+		{
+			List<ObjectSnapModes> snapModes = new List<ObjectSnapModes>() { ObjectSnapModes.ModeIns, ObjectSnapModes.ModeNode };
+
+			public SprinklerSnapOverrule()
+			{
+				name = "Sprinkler Head Layer - Insertion Point Only";
+			
+				SetCustomFilter();
+			}
+
+			public override void GetObjectSnapPoints(Entity entity, ObjectSnapModes mode, IntPtr gsm, Point3d pick, Point3d last, Matrix3d view, Point3dCollection snaps, IntegerCollection geomIds)
+			{
+				if (snapModes.Contains(mode))
+				{
+					base.GetObjectSnapPoints(entity, mode, gsm, pick, last, view, snaps, geomIds);
+				}
+			}
+
+			public override void GetObjectSnapPoints(Entity entity, ObjectSnapModes mode, IntPtr gsm, Point3d pick, Point3d last, Matrix3d view, Point3dCollection snaps, IntegerCollection geomIds, Matrix3d insertion)
+			{
+				if (snapModes.Contains(mode))
+				{
+					base.GetObjectSnapPoints(entity, mode, gsm, pick, last, view, snaps, geomIds, insertion);
 				}
 			}
 
@@ -78,163 +91,78 @@ namespace ObjectSnapping
 			{
 				return false;
 			}
-		}
 
-		private static void ToggleOverruling(bool on)
-		{
-			if (on)
+			public override bool IsApplicable(RXObject overruledSubject)
 			{
-				if (_osOverrule == null)
-				{
-					_osOverrule = new OSOverrule();
+				BlockReference blockReference = overruledSubject as BlockReference;
 
-					ObjectOverrule.AddOverrule(
-					  RXObject.GetClass(typeof(Entity)),
-					  _osOverrule,
-					  false
-					);
+				if (blockReference != null && blockReference.Layer == Layer.SystemHead)
+				{
+					return true;
 				}
 
-				ObjectOverrule.Overruling = true;
-			}
-			else
-			{
-				if (_osOverrule != null)
-				{
-					ObjectOverrule.RemoveOverrule(
-					  RXObject.GetClass(typeof(Entity)),
-					  _osOverrule
-					);
-
-					_osOverrule.Dispose();
-					_osOverrule = null;
-				}
-
-				// I don't like doing this and so have commented it out:
-				// there's too much risk of stomping on other overrules...
-
-				// ObjectOverrule.Overruling = false;
+				return false;
 			}
 		}
 
-		[CommandMethod("DISNAP")]
-		public static void DisableSnapping()
+		internal class XrefSnapOverrule : IFEOsnapOverruleBase
 		{
-			var doc = Application.DocumentManager.MdiActiveDocument;
-			var db = doc.Database;
-			var ed = doc.Editor;
-
-			// Start by getting the entities to disable snapping for.
-			// If none selected, turn off the overrule
-
-			var psr = ed.GetSelection();
-
-			if (psr.Status != PromptStatus.OK)
-				return;
-
-			ToggleOverruling(true);
-
-			// Start a transaction to modify the entities' XData
-
-			using (var tr = doc.TransactionManager.StartTransaction())
+			public XrefSnapOverrule()
 			{
-				// Make sure our RegAppID is in the table
+				name = "XRef Layer - No Snaps";
 
-				var rat =
-				  (RegAppTable)tr.GetObject(
-					db.RegAppTableId,
-					OpenMode.ForRead
-				  );
+				SetCustomFilter();
+			}
 
-				if (!rat.Has(regAppName))
+			public override void GetObjectSnapPoints(Entity entity, ObjectSnapModes mode, IntPtr gsm, Point3d pick, Point3d last, Matrix3d view, Point3dCollection snaps, IntegerCollection geomIds)
+			{
+				//base.GetObjectSnapPoints(entity, mode, gsm, pick, last, view, snaps, geomIds);
+			}
+
+			public override void GetObjectSnapPoints(Entity entity, ObjectSnapModes mode, IntPtr gsm, Point3d pick, Point3d last, Matrix3d view, Point3dCollection snaps, IntegerCollection geomIds, Matrix3d insertion)
+			{
+				//base.GetObjectSnapPoints(entity, mode, gsm, pick, last, view, snaps, geomIds, insertion);
+			}
+
+			public override bool IsContentSnappable(Entity entity)
+			{
+				return false;
+			}
+
+			public override bool IsApplicable(RXObject overruledSubject)
+			{
+				Entity entity = overruledSubject as Entity;
+				
+				if (entity == null)
 				{
-					rat.UpgradeOpen();
-					var ratr = new RegAppTableRecord();
-					ratr.Name = regAppName;
-					rat.Add(ratr);
-					tr.AddNewlyCreatedDBObject(ratr, true);
+					return false;
 				}
 
-				// Create the XData and set it on the object
-
-				using (
-				  var rb =
-					new ResultBuffer(
-					  new TypedValue(
-						(int)DxfCode.ExtendedDataRegAppName, regAppName
-					  ),
-					  new TypedValue(
-						(int)DxfCode.ExtendedDataInteger16, 1
-					  )
-					)
-				)
-				{
-					foreach (SelectedObject so in psr.Value)
-					{
-						var ent =
-						  tr.GetObject(so.ObjectId, OpenMode.ForWrite) as Entity;
-						if (ent != null)
-						{
-							ent.XData = rb;
-						}
-					}
-				};
-
-				tr.Commit();
+				return entity.Layer == Layer.XREF;
 			}
 		}
 
-		[CommandMethod("ENSNAP")]
-		public static void EnableSnapping()
+		internal class Commands
 		{
-			var doc = Application.DocumentManager.MdiActiveDocument;
-			var db = doc.Database;
-			var ed = doc.Editor;
+			private static SprinklerSnapOverrule sprinklerSnapOverrule = new SprinklerSnapOverrule();
 
-			// Start by getting the entities to enable snapping for
+			private static XrefSnapOverrule xrefSnapOverrule = new XrefSnapOverrule();
 
-			var pso = new PromptSelectionOptions();
-			pso.MessageForAdding =
-			  "Select objects (none to remove overrule)";
-			var psr = ed.GetSelection(pso);
-
-			if (psr.Status == PromptStatus.Error)
+			public static void EnableHeadSnapping()
 			{
-				ToggleOverruling(false);
-				ed.WriteMessage("\nOverruling turned off.");
-				return;
+				sprinklerSnapOverrule.SetEnabled(true);
 			}
-			else if (psr.Status != PromptStatus.OK)
-				return;
 
-			// Start a transaction to modify the entities' XData
-
-			using (var tr = doc.TransactionManager.StartTransaction())
+			[CommandMethod("SpkAssist", "HeadSnap", CommandFlags.NoBlockEditor)]
+			public static void ToggleHeadSnapping()
 			{
-				// Create a ResultBuffer and use it to remove the XData
-				// from the object
+				sprinklerSnapOverrule.ToggleEnabled();
+			}
 
-				using (
-				  var rb =
-					new ResultBuffer(
-					  new TypedValue(
-						(int)DxfCode.ExtendedDataRegAppName, regAppName
-					  )
-					)
-				)
-				{
-					foreach (SelectedObject so in psr.Value)
-					{
-						var ent =
-						  tr.GetObject(so.ObjectId, OpenMode.ForWrite) as Entity;
-						if (ent != null)
-						{
-							ent.XData = rb;
-						}
-					}
-				};
-
-				tr.Commit();
+			[CommandMethod("SpkAssist", "XrefSnap", CommandFlags.NoBlockEditor)]
+			public static void ToggleXrefSnapping()
+			{
+				xrefSnapOverrule.ToggleEnabled();
 			}
 		}
 	}

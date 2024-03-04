@@ -452,7 +452,12 @@ namespace Ironwill.Template
 			//Session.Command("-purge", "all", "*", "n");
 
 			SetDimStyle(document, transaction, data.defaultDimStyle);
-			CleanDimStyles(document, transaction, data.keepDimensionStyles);
+
+			if (!CleanDimStyles(document, transaction, data.keepDimensionStyles))
+			{
+				Session.LogDebug("Error - CleanDimStyles failed");
+				return;
+			}
 			
 			SetMLeaderStyle(transaction, data.defaultMLeaderStyle);
 			CleanMLeaderStyles(document, transaction, data.keepMLeaderStyles);
@@ -505,7 +510,7 @@ namespace Ironwill.Template
 			}
 		}
 
-		private void CleanDimStyles(Document document, Transaction transaction, List<string> keepDimensionStyles)
+		private bool CleanDimStyles(Document document, Transaction transaction, List<string> keepDimensionStyles)
 		{
 			Database database = document.Database;
 
@@ -523,9 +528,11 @@ namespace Ironwill.Template
 				}
 				else
 				{
+					// TODO: check for this condition earlier and throw warnings
 					if (dimStyleTableRecord.Name.Contains("IFE-Met") || dimStyleTableRecord.Name.Contains("IFE-Imp"))
 					{
 						dimStyleTableRecord.UpgradeOpen();
+
 						dimStyleTableRecord.Name = "IFE" + dimStyleTableRecord.Name.Substring(7);
 					}
 				}
@@ -536,6 +543,8 @@ namespace Ironwill.Template
 				recordToErase.UpgradeOpen();
 				recordToErase.Erase();
 			}
+
+			return true;
 		}
 
 		void SetMLeaderStyle(Transaction transaction, string desiredMLeaderStyle)
@@ -798,7 +807,6 @@ namespace Ironwill.Template
 			{
 				Session.Log("Failed to find ObjectContextCollection " + annoScalesCollectionName);
 			}
-
 		}
 	}
 }

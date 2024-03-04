@@ -23,7 +23,47 @@ namespace Ironwill.Commands
 	{
 		[CommandMethod("SpkAssist", "GenerateCalcBackground", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void GenerateCalcBackgroundCmd()
-		{
+		{/*
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				// Bind all XREFs
+				Document document = Session.GetDocument();
+				Database database = Session.GetDatabase();
+
+				ObjectIdCollection xrefCollection = new ObjectIdCollection();
+
+				using (XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false))
+				{
+					int numNodes = xrefGraph.NumNodes;
+
+					for (int i = 0; i < numNodes; i++)
+					{
+						XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
+
+						if (xrefGraphNode.Database.Filename.Equals(database.Filename))
+						{
+							continue;
+						}
+
+						if (xrefGraphNode.XrefStatus != XrefStatus.Resolved)
+						{
+							continue;
+						}
+
+						xrefCollection.Add(xrefGraphNode.BlockTableRecordId);
+					}
+				}
+
+				if (xrefCollection.Count > 0)
+				{
+					database.BindXrefs(xrefCollection, true);
+				}
+
+				Session.Log("Bound " + xrefCollection.Count.ToString() + " xrefs");
+
+				transaction.Commit();
+			}
+*/
 			using (Transaction transaction = Session.StartTransaction())
 			{
 				List<Curve> boundaryCurves = new List<Curve>();
@@ -73,6 +113,7 @@ namespace Ironwill.Commands
 				Session.GetDatabase().Clayer = layerTable[Layer.Default.Get()];
 
 				Session.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
+				Session.Command("-laydel", "N", Layer.HeadCoverage_Fill.Get(), "", "Y");
 				Session.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
 
 				ObjectIdCollection objectIds = new ObjectIdCollection();
@@ -199,6 +240,8 @@ namespace Ironwill.Commands
 					Session.Log("Saving: " + fullPath);
 					tempDb.SaveAs(fullPath, false, DwgVersion.Newest, tempDb.SecurityParameters);
 				}
+
+				transaction.Abort();
 			}
 		}
 
@@ -223,6 +266,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		// TODO use modelspacehelper variants?
 		void GetBoundaryCurvesAndCandidateObjects(ref List<Curve> foundCurves, ref List<Entity> candidateObjects)
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -233,6 +277,19 @@ namespace Ironwill.Commands
 				{
 					return;
 				}
+
+				List<string> suitableLayers = new List<string>
+				{
+					Layer.Calculation.Get(),
+					Layer.SystemDevice.Get(),
+					Layer.SystemFitting.Get(),
+					Layer.SystemHead.Get(),
+					Layer.SystemPipe_Armover.Get(),
+					Layer.SystemPipe_AuxDrain.Get(),
+					Layer.SystemPipe_Branchline.Get(),
+					Layer.SystemPipe_Main.Get(),
+					//Layer.XREF.Get() // TODO iterate the entities of the xref
+				};
 
 				foreach (ObjectId objectId in modelSpaceBTR)
 				{
@@ -248,17 +305,7 @@ namespace Ironwill.Commands
 					}
 					else
 					{
-						List<string> suitableLayers = new List<string>
-						{
-							Layer.Calculation.Get(),
-							Layer.SystemDevice.Get(),
-							Layer.SystemFitting.Get(),
-							Layer.SystemHead.Get(),
-							Layer.SystemPipe_Armover.Get(),
-							Layer.SystemPipe_AuxDrain.Get(),
-							Layer.SystemPipe_Branchline.Get(),
-							Layer.SystemPipe_Main.Get()
-						};
+						BlockReference blockReference = entity as BlockReference;
 
 						if (suitableLayers.Contains(entity.Layer))
 						{
