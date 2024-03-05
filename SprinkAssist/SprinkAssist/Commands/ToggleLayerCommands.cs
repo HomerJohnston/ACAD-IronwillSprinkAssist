@@ -23,8 +23,8 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleDraftAid", CommandFlags.NoBlockEditor)]
-		public void ToggleDraftAidCmd()
+		[CommandMethod("SpkAssist", "ToggleDraftAidFrozen", CommandFlags.NoBlockEditor)]
+		public void ToggleDraftAidFrozenCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
 			{
@@ -36,8 +36,8 @@ namespace Ironwill.Commands
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleXref", CommandFlags.NoBlockEditor)]
-		public void ToggleXrefCmd()
+		[CommandMethod("SpkAssist", "ToggleXrefFrozen", CommandFlags.NoBlockEditor)]
+		public void ToggleXrefFrozenCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
 			{

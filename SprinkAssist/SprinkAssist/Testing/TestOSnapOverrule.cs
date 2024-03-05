@@ -13,9 +13,6 @@ namespace Ironwill.Commands
 {
 	internal class DisableObjectSnaps : SprinkAssistCommand
 	{
-		private const string insertionSnapOnly = "IFE_OsnapOverrule_Insertion";
-		private const string noSnaps = "IFE_OsnapOverrule_None";
-
 		public class IFEOsnapOverruleBase : OsnapOverrule
 		{
 			private bool active = false;
@@ -153,13 +150,13 @@ namespace Ironwill.Commands
 				sprinklerSnapOverrule.SetEnabled(true);
 			}
 
-			[CommandMethod("SpkAssist", "HeadSnap", CommandFlags.NoBlockEditor)]
+			[CommandMethod("SpkAssist", "ToggleHeadSnapOverrule", CommandFlags.NoBlockEditor)]
 			public static void ToggleHeadSnapping()
 			{
 				sprinklerSnapOverrule.ToggleEnabled();
 			}
 
-			[CommandMethod("SpkAssist", "XrefSnap", CommandFlags.NoBlockEditor)]
+			[CommandMethod("SpkAssist", "ToggleXrefSnapDisable", CommandFlags.NoBlockEditor)]
 			public static void ToggleXrefSnapping()
 			{
 				xrefSnapOverrule.ToggleEnabled();

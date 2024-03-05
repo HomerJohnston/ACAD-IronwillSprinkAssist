@@ -43,7 +43,8 @@ namespace Ironwill
 			// Initialize your plug-in application here
 			//Autodesk.AutoCAD.ApplicationServices.Application.ShowAlertDialog("Initializing SprinkAssist");
 			DisplayVersion(null, null);
-			AcApplication.DocumentManager.DocumentCreated += DisplayVersion;
+			
+			Session.GetDocumentManager().DocumentCreated += DisplayVersion;
 
 			Ironwill.Commands.DisableObjectSnaps.Commands.EnableHeadSnapping();
 		}

@@ -162,7 +162,8 @@ copy /Y "$(TargetPath)" "C:\Development\AutoCAD Plugins\SprinkAssist.DLL"</Comma
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Resources\SprinkAssist.dll"</Command>
+      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Resources\SprinkAssist.dll"
+copy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Resources\SprinkAssist.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

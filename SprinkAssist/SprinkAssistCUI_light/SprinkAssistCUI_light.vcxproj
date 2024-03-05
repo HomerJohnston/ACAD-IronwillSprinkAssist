@@ -148,7 +148,8 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Resources\SprinkAssist_light.dll"</Command>
+      <Command>copy /Y "$(TargetPath)" "$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Resources\SprinkAssist_light.dll"
+copy /Y "$(TargetPath)" "C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Resources\SprinkAssist_light.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
