@@ -43,12 +43,12 @@ namespace Ironwill.Commands
 
 		public static DBDictionary GetPipeGroupsDictionary(Transaction transaction)
 		{
-			return XRecordLibrary.GetNamedDictionary(transaction, "PipeGroups");
+			return XRecordLibrary.GetDrawingDictionary(transaction, "PipeGroups");
 		}
 
 		public static DBDictionary GetPipeGroupAssignmentsDictionary(Transaction transaction)
 		{
-			return XRecordLibrary.GetNamedDictionary(transaction, "PipeGroupAssignments");
+			return XRecordLibrary.GetDrawingDictionary(transaction, "PipeGroupAssignments");
 		}
 
 		public static List<string> GetPipeLayers()

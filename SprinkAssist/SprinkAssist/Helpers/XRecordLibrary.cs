@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace Ironwill
 {
+    /**
+     * The plugin has a dictionary structure like this:
+     * Drawing's NamedObjectDictionary
+     *  -
+     */
 	internal class XRecordLibrary
 	{
 		protected const string sprinkAssistDictionaryName = "SprinkAssist";
@@ -14,82 +19,116 @@ namespace Ironwill
 		// ==============================================================================================
 		// DICTIONARY MANAGEMENT
 		// ==============================================================================================
-		public static DBDictionary GetNamedDictionary(Transaction transaction, string dictionaryName, DBDictionary parent = null)
-		{
-			if (parent == null)
-			{
-				parent = GetGlobalDictionary(transaction);
-			}
+        
+        /** Master dictionary - very top level */
+        private static DBDictionary GetSprinkAssistMasterDictionary(Transaction transaction)
+        {
+            ObjectId masterDictionaryId = Session.GetDatabase().NamedObjectsDictionaryId;
+            DBDictionary masterDictionary = transaction.GetObject(masterDictionaryId, OpenMode.ForRead) as DBDictionary;
 
-			try
-			{
-				return transaction.GetObject(parent.GetAt(dictionaryName), OpenMode.ForRead) as DBDictionary;
-			}
-			catch
-			{
-				DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
-
-				DBDictionary namedDictionary = new DBDictionary();
-
-				parentMutable.SetAt(dictionaryName, namedDictionary);
-				transaction.AddNewlyCreatedDBObject(namedDictionary, true);
-
-				return namedDictionary;
-			}
-		}
-
-		public static DBDictionary GetGlobalDictionary(Transaction transaction)
-		{
-			ObjectId masterDictionaryId = Session.GetDatabase().NamedObjectsDictionaryId;
-			DBDictionary masterDictionary = transaction.GetObject(masterDictionaryId, OpenMode.ForRead) as DBDictionary;
-
-			try
-			{
-				ObjectId PluginDictionaryId = masterDictionary.GetAt(sprinkAssistDictionaryName);
-				return transaction.GetObject(PluginDictionaryId, OpenMode.ForRead) as DBDictionary;
-			}
-			catch
-			{
-				DBDictionary pluginDictionary = new DBDictionary();
+            try
+            {
+                ObjectId PluginDictionaryId = masterDictionary.GetAt(sprinkAssistDictionaryName);
+                return transaction.GetObject(PluginDictionaryId, OpenMode.ForRead) as DBDictionary;
+            }
+            catch
+            {
+                DBDictionary pluginDictionary = new DBDictionary();
 					
-				masterDictionary.UpgradeOpen();
-				masterDictionary.SetAt(sprinkAssistDictionaryName, pluginDictionary);
-				transaction.AddNewlyCreatedDBObject(pluginDictionary, true);
-				masterDictionary.DowngradeOpen();
+                masterDictionary.UpgradeOpen();
+                masterDictionary.SetAt(sprinkAssistDictionaryName, pluginDictionary);
+                transaction.AddNewlyCreatedDBObject(pluginDictionary, true);
+                masterDictionary.DowngradeOpen();
 
-				return pluginDictionary;
-			}
-		}
+                return pluginDictionary;
+            }
+        }
+        
+        /** General dictionaries - these will reside under the Master dictionary and are intended to hold things like global drawing settings */
+        public static DBDictionary GetDrawingDictionary(Transaction transaction, string dictionaryName)
+        {
+            DBDictionary parent = GetSprinkAssistMasterDictionary(transaction);
 
-		public static DBDictionary GetCommandSettingsDictionary(Transaction transaction)
+            try
+            {
+                return transaction.GetObject(parent.GetAt(dictionaryName), OpenMode.ForRead) as DBDictionary;
+            }
+            catch
+            {
+                DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
+                DBDictionary namedDictionary = new DBDictionary();
+
+                parentMutable.SetAt(dictionaryName, namedDictionary);
+                transaction.AddNewlyCreatedDBObject(namedDictionary, true);
+
+                return namedDictionary;
+            }
+        }
+        
+        /** Commands dictionary - this resides under Master and is intended to hold sub-dictionaries for each command */
+        private static DBDictionary GetCommandsDictionary(Transaction transaction)
+        {
+            return GetSubDictionary(transaction, "IFE_SA_Command", GetSprinkAssistMasterDictionary(transaction));
+        }
+        
+        /** Dictionary for an individual command, intended to hold settings directly and/or subdictionaries */
+		public static DBDictionary GetCommandDictionary(Transaction transaction, Type command)
 		{
-			return GetNamedDictionary(transaction, "CommandSettings");
-		}
-
-		public static DBDictionary GetCommandDictionaryForClass(Transaction transaction, Type command)
-		{
-			DBDictionary commandSettingsDictionary = GetCommandSettingsDictionary(transaction);
+			DBDictionary commandSettingsDictionary = GetCommandsDictionary(transaction);
 
 			string commandName = command.Name;
 
-			return GetNamedDictionary(transaction, commandName, commandSettingsDictionary);
+			return GetSubDictionary(transaction, commandName, commandSettingsDictionary);
 		}
 
-		public static bool DestroyNamedDictionary(Transaction transaction, string dictionaryName, DBDictionary parent = null)
-		{
-			if (parent == null)
-			{
-				parent = GetGlobalDictionary(transaction);
-			}
+        /** Generic helper to dig to any subdictionary */
+        public static DBDictionary GetSubDictionary(Transaction transaction, string dictionaryName, DBDictionary parent)
+        {
+            if (parent == null)
+            {
+                Session.Log("Tried to get child dictionary but parent was not specified!");
+                return null;
+            }
 
-			if (parent.Remove(dictionaryName) != ObjectId.Null)
-			{
-				return true;
-			}
+            if (dictionaryName == string.Empty)
+            {
+                Session.Log("Tried to get child dictionary but dictionaryName was not specified!");
+                return null;
+            }
 
-			return false;
+            try
+            {
+                return transaction.GetObject(parent.GetAt(dictionaryName), OpenMode.ForRead) as DBDictionary;
+            }
+            catch
+            {
+                DBDictionary parentMutable = transaction.GetObject(parent.ObjectId, OpenMode.ForWrite) as DBDictionary;
+
+                DBDictionary namedDictionary = new DBDictionary();
+
+                parentMutable.SetAt(dictionaryName, namedDictionary);
+                transaction.AddNewlyCreatedDBObject(namedDictionary, true);
+
+                return namedDictionary;
+            }
+        }
+        
+		public static void DestroyDictionary(Transaction transaction, DBDictionary dictionaryToDestroy, DBDictionary parent)
+        {
+            parent.Remove(dictionaryToDestroy.ObjectId);
 		}
+        
+        public static bool DestroyDictionary(Transaction transaction, string dictionaryName, DBDictionary parent)
+        {
+            if (parent.Remove(dictionaryName) != ObjectId.Null)
+            {
+                return true;
+            }
 
+            return false;
+        }
+        
 		// ==============================================================================================
 		// GETTING DATA
 		// ==============================================================================================
@@ -135,7 +174,7 @@ namespace Ironwill
 
 				Xrecord xrecord = GetXRecord(transaction, dictionaryMutable, xrecordName);
 
-				if (xrecord == null)
+                if (xrecord == null)
 				{
 					xrecord = CreateXRecord(transaction, dictionaryMutable, xrecordName);
 				}
@@ -168,6 +207,7 @@ namespace Ironwill
 					}
 					default:
 					{
+                        Session.Log("Unhandled data type! Nothing written.");
 						return false;
 					}
 				}

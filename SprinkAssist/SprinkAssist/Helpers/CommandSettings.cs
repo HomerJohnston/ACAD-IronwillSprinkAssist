@@ -31,7 +31,7 @@ namespace Ironwill
 			if (lookupDictionary == null)
 			{
 				Session.LogDebug("Warning: CommandSetting {0} has no owning dictionary, using global store");
-				lookupDictionary = XRecordLibrary.GetGlobalDictionary(transaction);
+				lookupDictionary = XRecordLibrary.GetSprinkAssistMasterDictionary(transaction);
 			}
 
 			T val = (T)defaultValue;

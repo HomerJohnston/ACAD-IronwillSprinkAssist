@@ -53,7 +53,7 @@ namespace Ironwill
 
 		public static int GenerateUniqueID(Transaction transaction)
 		{
-			DBDictionary dictionary = XRecordLibrary.GetGlobalDictionary(transaction);
+			DBDictionary dictionary = XRecordLibrary.GetSprinkAssistMasterDictionary(transaction);
 
 			int nextId = 0;
 

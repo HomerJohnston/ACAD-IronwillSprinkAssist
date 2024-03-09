@@ -198,7 +198,7 @@
     <Compile Include="Helpers\CommandSettings.cs" />
     <Compile Include="Helpers\Definitions\Colors.cs" />
     <Compile Include="Helpers\Drawing\CeilingProcessor.cs" />
-    <Compile Include="Helpers\XRecordLIbrary.cs" />
+    <Compile Include="Helpers\XRecordLibrary.cs" />
     <Compile Include="Helpers\Drawing.cs" />
     <Compile Include="Helpers\LayerHelper.cs" />
     <Compile Include="Commands\AddSprinkler_Old.cs" />

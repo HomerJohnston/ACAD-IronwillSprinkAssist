@@ -106,7 +106,7 @@ namespace Ironwill
 					{
 						int groupId = Drawing.GenerateUniqueID(transaction);
 
-						pipeGroupDictionary = XRecordLibrary.GetNamedDictionary(transaction, groupId.ToString(), pipeGroupsDictionary);
+						pipeGroupDictionary = XRecordLibrary.GetSubDictionary(transaction, groupId.ToString(), pipeGroupsDictionary);
 
 						XRecordLibrary.WriteXRecord(transaction, pipeGroupDictionary, GroupName, groupName);
 						

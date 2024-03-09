@@ -114,7 +114,7 @@ namespace Ironwill.Commands
 			// This ensures that the command settings are created and/or updated
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				cmdSettings = XRecordLibrary.GetCommandDictionaryForClass(transaction, GetType());
+				cmdSettings = XRecordLibrary.GetCommandDictionary(transaction, GetType());
 				transaction.Commit();
 			}
 		}
