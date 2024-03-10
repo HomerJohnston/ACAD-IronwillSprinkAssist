@@ -46,7 +46,8 @@ namespace Ironwill
 			
 			Session.GetDocumentManager().DocumentCreated += DisplayVersion;
 
-			Ironwill.Commands.DisableObjectSnaps.Commands.EnableHeadSnapping();
+			Commands.SnapOverrule.SprinklerSnapOverruleCmd.Initialize();
+			Commands.ToggleXrefLock.ToggleXrefLockCmd.Initialize();
 		}
 
 		void IExtensionApplication.Terminate()
@@ -70,117 +71,4 @@ namespace Ironwill
 				"-------------------", Environment.NewLine, assemblyName);
 		}
 	}
-}
-
-namespace LoadedAssemblies
-{
-
-	public class Commands
-
-	{
-
-		[LispFunction("GetAssemblies")]
-
-		public ResultBuffer GetLoadedAssemblies(ResultBuffer rb)
-
-		{
-
-			// Get the list of loaded assemblies
-
-
-
-			Assembly[] assems = AppDomain.CurrentDomain.GetAssemblies();
-
-
-
-			// A ResultBuffer to populate and return
-
-
-
-			ResultBuffer res = new ResultBuffer();
-
-
-
-			// List the assemblies in the current application domain.
-
-
-
-			const string start = "Version=";
-
-
-
-			foreach (Assembly assem in assems)
-
-			{
-
-				// We want the name and version of each assembly
-
-
-
-				string dllname = assem.ManifestModule.Name;
-
-
-
-				string version = assem.FullName;
-
-
-
-				// If our assembly name includes version info...
-
-
-
-				if (version.Contains(start))
-
-				{
-
-					// Get the string starting with the version number
-
-
-
-					version =
-
-					  version.Substring(
-
-						version.IndexOf(start) + start.Length
-
-					  );
-
-
-
-					// Strip off anything after (and including) the comma
-
-
-
-					version =
-
-					  version.Remove(version.IndexOf(','));
-
-				}
-
-				else
-
-					version = "";
-
-
-
-				// Add a dotted pair of the name with the version
-
-
-
-				res.Add(new TypedValue((int)LispDataType.ListBegin));
-
-				res.Add(new TypedValue((int)LispDataType.Text, dllname));
-
-				res.Add(new TypedValue((int)LispDataType.Text, version));
-
-				res.Add(new TypedValue((int)LispDataType.DottedPair));
-
-			}
-
-			return res;
-
-		}
-
-	}
-
 }

@@ -24,22 +24,17 @@ namespace Ironwill
 			owningDictionary = inOwningDictionary;
 		}
 
-		public T Get(Transaction transaction)
-		{
-			DBDictionary lookupDictionary = owningDictionary;
-
-			if (lookupDictionary == null)
-			{
-				Session.LogDebug("Warning: CommandSetting {0} has no owning dictionary, using global store");
-				lookupDictionary = XRecordLibrary.GetSprinkAssistMasterDictionary(transaction);
-			}
-
+        public T Get(Transaction transaction)
+        {
 			T val = (T)defaultValue;
 
-			XRecordLibrary.ReadXRecord<T>(transaction, owningDictionary, settingName, ref val);
+			if (!XRecordLibrary.ReadXRecord<T>(transaction, owningDictionary, settingName, ref val))
+			{
+				Session.LogDebug($"Value {settingName} not found; using default");
+			}
 
 			return val;
-		}
+        }
 
 		public void Set(Transaction transaction, T newValue)
 		{

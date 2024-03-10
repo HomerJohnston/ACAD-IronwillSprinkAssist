@@ -30,27 +30,27 @@ namespace Ironwill
 		public OBSOLETEStringSetting drainLabel;
 
 		// Generation properties
-		public BoolSetting showLength;
+		public OBSOLETEBoolSetting showLength;
 
-		public BoolSetting omitLengthFromShort;
+		public OBSOLETEBoolSetting omitLengthFromShort;
 
-		public DoubleSetting omitLengthFromShortThreshold;
+		public OBSOLETEDoubleSetting omitLengthFromShortThreshold;
 
-		public BoolSetting breakAtLineEnds;
+		public OBSOLETEBoolSetting breakAtLineEnds;
 
-		public BoolSetting breakAtLineIntersections;
+		public OBSOLETEBoolSetting breakAtLineIntersections;
 
-		public BoolSetting breakAtFittings;
+		public OBSOLETEBoolSetting breakAtFittings;
 
-		public BoolSetting breakAtSprinklers;
+		public OBSOLETEBoolSetting breakAtSprinklers;
 
-		public BoolSetting connectAcrossBreaks;
+		public OBSOLETEBoolSetting connectAcrossBreaks;
 
-		public DoubleSetting connectAcrossBreaksThreshold;
+		public OBSOLETEDoubleSetting connectAcrossBreaksThreshold;
 
-		public BoolSetting ignoreShortLines;
+		public OBSOLETEBoolSetting ignoreShortLines;
 
-		public DoubleSetting ignoreShortLinesThreshold;
+		public OBSOLETEDoubleSetting ignoreShortLinesThreshold;
 
 		public static PipeGroup Get(string name)
 		{
@@ -66,19 +66,19 @@ namespace Ironwill
 			mainLabel = new OBSOLETEStringSetting(path, "MainLabel", "");
 			drainLabel = new OBSOLETEStringSetting(path, "DrainLabel", "");
 
-			showLength = new BoolSetting(path, "ShowLength", true);
-			omitLengthFromShort = new BoolSetting(path, "OmitLengthFromShort", true);
-			omitLengthFromShortThreshold = new DoubleSetting(path, "OmitLengthFromShortThreshold", 0.0);
+			showLength = new OBSOLETEBoolSetting(path, "ShowLength", true);
+			omitLengthFromShort = new OBSOLETEBoolSetting(path, "OmitLengthFromShort", true);
+			omitLengthFromShortThreshold = new OBSOLETEDoubleSetting(path, "OmitLengthFromShortThreshold", 0.0);
 
-			breakAtLineEnds = new BoolSetting(path, "BreakAtLineEnds", true);
-			breakAtLineIntersections = new BoolSetting(path, "BreakAtLineIntersections", false);
-			breakAtFittings = new BoolSetting(path, "BreakAtFittings", true);
-			breakAtSprinklers = new BoolSetting(path, "BreakAtSprinklers", true);
+			breakAtLineEnds = new OBSOLETEBoolSetting(path, "BreakAtLineEnds", true);
+			breakAtLineIntersections = new OBSOLETEBoolSetting(path, "BreakAtLineIntersections", false);
+			breakAtFittings = new OBSOLETEBoolSetting(path, "BreakAtFittings", true);
+			breakAtSprinklers = new OBSOLETEBoolSetting(path, "BreakAtSprinklers", true);
 
-			connectAcrossBreaks = new BoolSetting(path, "ConnectAcrossBreaks", true);
-			connectAcrossBreaksThreshold = new DoubleSetting(path, "ConnectAcrossBreaksThreshold", 0.0);
-			ignoreShortLines = new BoolSetting(path, "IgnoreShortLines", true);
-			ignoreShortLinesThreshold = new DoubleSetting(path, "IgnoreShortLinesThreshold", 0.0);
+			connectAcrossBreaks = new OBSOLETEBoolSetting(path, "ConnectAcrossBreaks", true);
+			connectAcrossBreaksThreshold = new OBSOLETEDoubleSetting(path, "ConnectAcrossBreaksThreshold", 0.0);
+			ignoreShortLines = new OBSOLETEBoolSetting(path, "IgnoreShortLines", true);
+			ignoreShortLinesThreshold = new OBSOLETEDoubleSetting(path, "IgnoreShortLinesThreshold", 0.0);
 		}
 	}
 }

@@ -45,8 +45,6 @@ namespace Ironwill
 			);
 		}
 
-
-
 		public string MainsLabel
 		{
 			get { return TextBox_Mains.Text; }
@@ -78,7 +76,7 @@ namespace Ironwill
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
+					DBDictionary pipeGroupsDictionary = Commands.AutoLabel.AutoLabelCmd.GetPipeGroupsDictionary(transaction);
 
 					DBDictionary pipeGroupDictionary = null;
 

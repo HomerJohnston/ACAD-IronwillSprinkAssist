@@ -57,9 +57,9 @@ namespace Ironwill
 
 			int nextId = 0;
 
-			XRecordLibrary.ReadXRecord<int>(transaction, dictionary, "UniqueID", ref nextId);
+			XRecordLibrary.ReadXRecord<int>(transaction, dictionary, "GUID", ref nextId);
 
-			XRecordLibrary.WriteXRecord(transaction, dictionary, "UniqueID", ++nextId);
+			XRecordLibrary.WriteXRecord(transaction, dictionary, "GUID", ++nextId);
 
 			return nextId;
 		}

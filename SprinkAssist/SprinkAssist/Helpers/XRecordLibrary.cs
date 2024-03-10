@@ -21,7 +21,7 @@ namespace Ironwill
 		// ==============================================================================================
         
         /** Master dictionary - very top level */
-        private static DBDictionary GetSprinkAssistMasterDictionary(Transaction transaction)
+        public static DBDictionary GetSprinkAssistMasterDictionary(Transaction transaction)
         {
             ObjectId masterDictionaryId = Session.GetDatabase().NamedObjectsDictionaryId;
             DBDictionary masterDictionary = transaction.GetObject(masterDictionaryId, OpenMode.ForRead) as DBDictionary;
@@ -144,7 +144,35 @@ namespace Ironwill
 				}
 
 				TypedValue typedValue = xrecord.Data.AsArray()[0];
-				recordValue = (T)typedValue.Value;
+
+				switch (recordValue)
+				{
+					case string s:
+					{
+						recordValue = (T)typedValue.Value;
+						break;
+					}
+					case int i:
+					{
+						recordValue = (T)typedValue.Value;
+						break;
+					}
+					case double d:
+					{
+						recordValue = (T)typedValue.Value;
+						break;
+					}
+					case bool b:
+					{
+						recordValue = (T)Convert.ChangeType(typedValue.Value, typeof(T));
+						break;
+					}
+					default:
+					{
+						Session.Log("Unhandled data type! Nothing written.");
+						return false;
+					}
+				}
 
 				return true;
 			}

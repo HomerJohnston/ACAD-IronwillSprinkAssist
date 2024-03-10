@@ -158,6 +158,25 @@ namespace Ironwill
 			return false;
 		}
 
-		// TODO Equals and GetHashCode
+		static public bool Equals(LayerStruct layerStruct1, LayerStruct layerStruct2)
+		{
+			return layerStruct1.Get() == layerStruct2.Get();
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is LayerStruct @struct &&
+				   Get() == @struct.Get();
+		}
+
+		public override int GetHashCode()
+		{
+			return 539060726 + EqualityComparer<string>.Default.GetHashCode(Get());
+		}
+
+		public static implicit operator string(LayerStruct layerStruct)
+		{
+			return layerStruct.Get();
+		}
 	}
 }

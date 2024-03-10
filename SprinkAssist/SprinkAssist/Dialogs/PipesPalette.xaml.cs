@@ -54,6 +54,7 @@ namespace Ironwill.Dialogs
 
 					pipeFamiliesList.Add(pipeFamily1);
 
+					/* TODO
 					DBDictionary pipeFamiliesDictionary = XRecordLibrary.GetSubDictionary(transaction, "PipeFamilies");
 
 					DBDictionary pipeFamilyDictionary = XRecordLibrary.GetSubDictionary(transaction, familyID.ToString(), pipeFamiliesDictionary);
@@ -61,6 +62,7 @@ namespace Ironwill.Dialogs
 					XRecordLibrary.WriteXRecord(transaction, pipeFamilyDictionary, "FamilyName", "NewFamily");
 
 					UpdateLists(transaction);
+					*/
 
 					transaction.Commit();
 				}
@@ -81,9 +83,12 @@ namespace Ironwill.Dialogs
 
 		private void UpdateLists(Transaction transaction)
 		{
+			/* TODO
 			DBDictionary pipeFamiliesDictionary = XRecordLibrary.GetSubDictionary(transaction, "PipeFamilies");
 
 			UpdatePipeFamiliesListBox(transaction, pipeFamiliesDictionary);
+			*/
+
 		}
 
 		private void UpdatePipeFamiliesListBox(Transaction transaction, DBDictionary pipeFamiliesDictionary)

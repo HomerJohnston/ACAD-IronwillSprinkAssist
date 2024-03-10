@@ -44,7 +44,7 @@ namespace Ironwill
 
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
+				DBDictionary pipeGroupsDictionary = Commands.AutoLabel.AutoLabelCmd.GetPipeGroupsDictionary(transaction);
 
 				if (pipeGroupsDictionary == null)
 				{
@@ -127,7 +127,7 @@ namespace Ironwill
 			{
 				using (Transaction transaction = Session.StartTransaction())
 				{
-					DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
+					DBDictionary pipeGroupsDictionary = Commands.AutoLabel.AutoLabelCmd.GetPipeGroupsDictionary(transaction);
 
 					DBDictionary dictionaryMutable = transaction.GetObject(pipeGroupsDictionary.ObjectId, OpenMode.ForWrite) as DBDictionary;
 
@@ -165,11 +165,11 @@ namespace Ironwill
 
 				SelectionSet currentSelection = editor.SelectImplied().Value;
 
-				List<string> PipeLayers = Commands.AutoLabelNew.GetPipeLayers();
+				List<string> PipeLayers = Commands.AutoLabel.AutoLabelCmd.GetPipeLayers();
 
-				List<string> PipeBlocks = Commands.AutoLabelNew.GetPipeBlocks();
+				List<string> PipeBlocks = Commands.AutoLabel.AutoLabelCmd.GetPipeBlocks();
 
-				DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupAssignmentsDictionary(transaction);
+				DBDictionary pipeGroupsDictionary = Commands.AutoLabel.AutoLabelCmd.GetPipeGroupAssignmentsDictionary(transaction);
 
 				foreach (ObjectId objectId in currentSelection)
 				{
@@ -193,7 +193,7 @@ namespace Ironwill
 
 		private void DetermineGroupId(Transaction transaction, string groupName)
 		{
-			DBDictionary pipeGroupsDictionary = Commands.AutoLabelNew.GetPipeGroupsDictionary(transaction);
+			DBDictionary pipeGroupsDictionary = Commands.AutoLabel.AutoLabelCmd.GetPipeGroupsDictionary(transaction);
 
 
 		}
