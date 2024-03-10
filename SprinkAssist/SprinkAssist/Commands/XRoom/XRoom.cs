@@ -95,7 +95,7 @@ namespace Ironwill.Commands
 			}
 		}
 
-		[CommandMethod("SpkAssist", "XRoom", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "XRoom", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void XRoomCmd()
 		{
 			bool bStopCommand = false;

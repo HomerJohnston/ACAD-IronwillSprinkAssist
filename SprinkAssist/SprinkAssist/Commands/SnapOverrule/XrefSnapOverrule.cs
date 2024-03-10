@@ -52,7 +52,7 @@ namespace Ironwill.Commands.SnapOverrule
 	{
 		private static XrefSnapOverrule xrefSnapOverrule = new XrefSnapOverrule();
 
-		[CommandMethod("SpkAssist", "ToggleXrefSnapDisable", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefSnapDisable", CommandFlags.NoBlockEditor)]
 		public static void ToggleXrefSnapping()
 		{
 			xrefSnapOverrule.ToggleEnabled();

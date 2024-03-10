@@ -28,7 +28,7 @@ namespace Ironwill.Commands.ToggleLayer
             coverageShowFill = new CommandSetting<bool>("CoverageShowFill", true, cmdSettings);
         }
 
-		[CommandMethod("SpkAssist", "ToggleHeadCoverageFill", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleHeadCoverageFill", CommandFlags.NoBlockEditor)]
 		public void ToggleHeadCoverageFillCmd()
         {
             using (Transaction transaction = Session.StartTransaction())
@@ -50,7 +50,7 @@ namespace Ironwill.Commands.ToggleLayer
 			}
 		}
 
-		[CommandMethod("SpkAssist", "SetHeadCoverageTransparency", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "SetHeadCoverageTransparency", CommandFlags.NoBlockEditor)]
 		public void SetHeadCoverageTransparency()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -91,7 +91,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleDraftAidFrozen", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleDraftAidFrozen", CommandFlags.NoBlockEditor)]
 		public void ToggleDraftAidFrozenCmd()
 		{
             using (Transaction transaction = Session.StartTransaction())
@@ -104,7 +104,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleXrefFrozen", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefFrozen", CommandFlags.NoBlockEditor)]
 		public void ToggleXrefFrozenCmd()
 		{
             using (Transaction transaction = Session.StartTransaction())
@@ -118,7 +118,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleCoverage", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleCoverage", CommandFlags.NoBlockEditor)]
 		public void ToggleCoverageCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -143,7 +143,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "TogglePipeLabels", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "TogglePipeLabels", CommandFlags.NoBlockEditor)]
 		public void TogglePipeLabelsCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -156,7 +156,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "ToggleLineweightDisplay", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleLineweightDisplay", CommandFlags.NoBlockEditor)]
 		public void ToggleLineweightDisplayCmd()
 		{
 			bool lwdisplay = Convert.ToBoolean(AcApplication.GetSystemVariable("LWDISPLAY"));

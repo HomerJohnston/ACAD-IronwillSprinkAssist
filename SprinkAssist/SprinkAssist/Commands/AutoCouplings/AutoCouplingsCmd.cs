@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoCouplingsCmd))]
 
@@ -20,7 +21,8 @@ namespace Ironwill.Commands
 	{
 		/// ---------------------------------------------------------------------------------------
 		/**  */
-		[CommandMethod("SpkAssist", "AutoCouplings", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+		[CommandDescription("Attempts to place simple coupling symbols along the pipe.", "This should be used AFTER labelling is complete and BEFORE you trim pipe lines around other pipes.", "This does not currently take fitting take-outs into account; it is a simple system to help fitters list material only.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoCouplings", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

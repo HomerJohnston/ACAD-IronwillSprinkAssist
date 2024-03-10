@@ -65,7 +65,7 @@ namespace Ironwill.Commands.SnapOverrule
 			sprinklerSnapOverrule.SetEnabled(true);
 		}
 
-		[CommandMethod("SpkAssist", "ToggleHeadSnapOverrule", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleHeadSnapOverrule", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{
 			sprinklerSnapOverrule.ToggleEnabled();

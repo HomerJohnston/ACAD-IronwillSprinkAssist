@@ -174,7 +174,7 @@
     <Compile Include="Commands\AddSprinkler\TileAnchor.cs" />
     <Compile Include="Commands\AutoCleanBackground\AutoCleanBackgroundCmd.cs" />
     <Compile Include="Commands\AutoCouplings\AutoCouplingsCmd.cs" />
-    <Compile Include="Commands\Help\CommandMethodDescription.cs" />
+    <Compile Include="Commands\Help\CommandDescription.cs" />
     <Compile Include="Commands\Help\HelpCmd.cs" />
     <Compile Include="Commands\ListXData\ListXDataCmd.cs" />
     <Compile Include="Commands\PipeGroup\PipeGroupCmd.cs" />
@@ -183,6 +183,7 @@
     <Compile Include="Commands\SnapOverrule\XrefSnapOverrule.cs" />
     <Compile Include="Extensions\Entity.cs" />
     <Compile Include="Extensions\Editor.cs" />
+    <Compile Include="Helpers\GetSetEnv.cs" />
     <Compile Include="Template\AutoGenTemplates.cs" />
     <Compile Include="Commands\_Obsolete\OBSOLETEAutoLabelCmd.cs" />
     <Compile Include="Commands\AutoLabel\AutoLabelCmd.cs" />
@@ -192,7 +193,7 @@
     <Compile Include="Commands\CountHeads\CountHeadsCmd.cs" />
     <Compile Include="Commands\DrawPipe\DrawPipeCmd.cs" />
     <Compile Include="Commands\GenerateCalcBackground\GenerateCalcBackgroundCmd.cs" />
-    <Compile Include="Commands\TestCmd\TestCmd.cs" />
+    <Compile Include="Commands\_Obsolete\TestCmd.cs" />
     <Compile Include="Dialogs\PipesPalette.xaml.cs">
       <DependentUpon>PipesPalette.xaml</DependentUpon>
     </Compile>
@@ -244,7 +245,6 @@
     <Compile Include="Helpers\WorldUCS.cs" />
     <Compile Include="Settings\Settings_OBSOLETE.cs" />
     <Compile Include="Template\GenerateSprinklerBlocks.cs" />
-    <Compile Include="Commands\SnapOverrule\TestOSnapOverrule.cs" />
     <Compile Include="Commands\ToggleXrefLock\ToggleXrefLockCmd.cs" />
     <Compile Include="Types\PipeGroup.cs" />
     <Compile Include="SprinkAssist.cs" />

@@ -11,7 +11,7 @@ namespace Ironwill.Commands.PipeGroup
 {
 	internal class PipeGroupCmd
 	{
-		[CommandMethod("SpkAssist", "PipeGroup", CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "PipeGroup", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{
 		}

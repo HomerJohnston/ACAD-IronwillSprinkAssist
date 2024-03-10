@@ -21,6 +21,8 @@ namespace Ironwill
 	// then you should remove this class.
 	public partial class SprinkAssist : IExtensionApplication
 	{
+		public const string CommandMethodPrefix = "SpkAssist";
+
 		void IExtensionApplication.Initialize()
 		{
 			// Add one time initialization here

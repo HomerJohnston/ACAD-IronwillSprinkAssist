@@ -136,7 +136,7 @@ namespace Ironwill.Commands.AddSprinkler
 			double longAxisLength = tileAnchor.tileLength1;
 			double shortAxisLength = tileAnchor.tileLength2;
 
-			if (shortAxisLength > longAxisLength)
+			if (Math.Abs(shortAxisLength) > Math.Abs(longAxisLength))
 			{
 				Vector3d temp = shortAxis;
 				shortAxis = longAxis;
@@ -147,7 +147,7 @@ namespace Ironwill.Commands.AddSprinkler
 				longAxisLength = temp2;
 			}
 
-			if (longAxisLength > Math.Abs(shortAxisLength * 1.25))
+			if (Math.Abs(longAxisLength) > Math.Abs(shortAxisLength * 1.25))
 			{
 				numLongInterval = 4;
 			}

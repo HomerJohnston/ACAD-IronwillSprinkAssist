@@ -18,6 +18,7 @@ using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Autodesk.AutoCAD.GraphicsInterface;
 using System.Collections.ObjectModel;
 using Autodesk.AutoCAD.Colors;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AddSprinkler.AddSprinklerCmd))]
 
@@ -239,7 +240,8 @@ namespace Ironwill.Commands.AddSprinkler
 			});
 		}
 
-		[CommandMethod("SpkAssist", "AddSprinkler", CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
+		[CommandDescription("Places sprinkler heads.", "Intended to be used for T-Bar ceilings.", "Select a template source sprinklers and place a 'Tile Anchor' down onto the grids of a T-Bar ceiling to use.", "Displays simple circles showing min/max light hazard standard spray spacing.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AddSprinkler", CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void Main()
 		{
 			PromptResult promptResult = null;

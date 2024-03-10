@@ -14,6 +14,7 @@ using Autodesk.AutoCAD.PlottingServices;
 using Autodesk.AutoCAD.Publishing;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoPublish.AutoPublishCmd))]
@@ -25,7 +26,8 @@ namespace Ironwill.Commands.AutoPublish
 		string currentPdfFile;
 
 		// TODO remove hardcoded property strings somehow
-		[CommandMethod("SpkAssist", "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
+		[CommandDescription("Quick-publish PDF of drawings.", "Publishes all layouts starting with 'FP' to a PDF file named according to the ProjectName_1 file property.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
 		{
 			Session.Log("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
@@ -60,7 +62,7 @@ namespace Ironwill.Commands.AutoPublish
 			string plotFileNameBase = "FP Dwgs";
 			
 			string projectName = Session.GetDatabase().GetCustomProperty("ProjectName_1");
-			projectName = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(projectName.ToLower());
+			//projectName = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(projectName.ToLower());
 
 			string issuedFor = Session.GetDatabase().GetCustomProperty("IssuedFor");
 			string issuedForAbbrev = "IF" + new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();

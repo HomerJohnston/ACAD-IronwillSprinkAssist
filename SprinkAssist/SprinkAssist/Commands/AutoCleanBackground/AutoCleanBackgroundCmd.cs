@@ -12,6 +12,7 @@ using Autodesk.AutoCAD.EditorInput;
 
 using Autodesk.AutoCAD.Colors;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoCleanBackground.AutoCleanBackgroundCmd))]
 
@@ -133,10 +134,12 @@ namespace Ironwill.Commands.AutoCleanBackground
 			}
 		}
 
-		[CommandMethod("SpkAssist", "AutoCleanBackground", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
+		[CommandDescription("Attempts to use a predefined ruleset to clean floor/ceiling plan files.", "Works best when files contain standardized drafting layer names (A-WALL, etc.).")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoCleanBackground", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void Main()
 		{
 			// TODO: make this data driven instead of hard coded
+			// TODO: make this dialog driven so it will work with different standards
 			// Start with the important ones, work towards less important ones near the end. Helps make it easier to ensure we don't erase anything important.
 			List<CleanupEntry> layerCleanupEntries = new List<CleanupEntry>
 			{
@@ -164,7 +167,7 @@ namespace Ironwill.Commands.AutoCleanBackground
 					color = Colors.White,
 				},
 				new CleanupEntry() {
-					matchAny = { "CLNG", "CLG" },
+					matchAny = { "CLNG", "CLG", "CEILING" },
 					color = Colors.DarkGrey
 				},
 				new CleanupEntry() {

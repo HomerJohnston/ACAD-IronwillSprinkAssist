@@ -11,16 +11,18 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands._Obsolete.OBSOLETEAutoLabelCmd))]
 
+// This isn't fully obsolete yet. New system in progress.
 namespace Ironwill.Commands._Obsolete
 {
 	public class OBSOLETEAutoLabelCmd
 	{
 		/// ---------------------------------------------------------------------------------------
-		/**  */
-		[CommandMethod("SpkAssist", "AutoLabel", CommandFlags.UsePickSet)]
+		[CommandDescription("Labels pipe.", "Basic labelling system, to be replaced soon...")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoLabel", CommandFlags.UsePickSet)]
 		public void Main()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

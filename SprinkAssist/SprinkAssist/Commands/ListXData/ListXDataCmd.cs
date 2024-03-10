@@ -1,4 +1,5 @@
 ﻿using Autodesk.AutoCAD.Runtime;
+using Ironwill.Commands.Help;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +12,11 @@ namespace Ironwill.Commands.ListXData
 {
 	internal class ListXDataCmd
 	{
-		[CommandMethod("SpkAssist", "ListXData", CommandFlags.NoBlockEditor)]
+		[CommandDescription("Lists all XData (AutoCAD internal settings data) being stored in this drawing.", "Mostly intended to be used to debug SprinkAssist issues only.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ListXData", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{
-			Session.Log("Hello world");
+			Session.Log("NOT IMPLEMENTED YET!");
 		}
 	}
 }

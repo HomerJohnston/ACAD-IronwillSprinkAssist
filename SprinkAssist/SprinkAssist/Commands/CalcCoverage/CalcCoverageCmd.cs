@@ -18,7 +18,7 @@ namespace Ironwill.Commands.CalcCoverage
 {
 	public class CalcCoverageCmd
 	{
-		[CommandMethod("SpkAssist", "CalcCoverage", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "CalcCoverage", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void Main()
 		{
 			Document document = AcApplication.DocumentManager.MdiActiveDocument;

@@ -22,7 +22,7 @@ namespace Ironwill.Commands.OrientView
 		/// <summary>
 		/// 
 		/// </summary>
-		[CommandMethod("SpkAssist", "OrientView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "OrientView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
 		{
 			using (Transaction transaction = Session.StartTransaction())
@@ -198,7 +198,7 @@ namespace Ironwill.Commands.OrientView
 			}
 		}
 
-		[CommandMethod("SpkAssist", "ResetView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ResetView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void ResetViewCmd()
 		{
 			using (Transaction transaction = Session.StartTransaction())

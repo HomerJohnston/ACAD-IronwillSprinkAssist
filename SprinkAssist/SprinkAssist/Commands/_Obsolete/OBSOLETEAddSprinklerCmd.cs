@@ -21,6 +21,7 @@ using Autodesk.AutoCAD.Colors;
 
 [assembly: CommandClass(typeof(Ironwill.Commands._Obsolete.OBSOLETEAddSprinklerCmd))]
 
+// This old system tried to parse the drawing and generate tbar ceiling snap points. It worked sometimes but whenever the ceiling was patchy or other issues it didn't work well.
 namespace Ironwill.Commands._Obsolete
 {
 	internal class OBSOLETEAddSprinklerCmd : SprinkAssistCommand
@@ -85,7 +86,7 @@ namespace Ironwill.Commands._Obsolete
 			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", "", cmdSettings); // TODO - global settings for available sprinkler blocks
 		}
 
-		//[CommandMethod("SpkAssist", "AddSprinklerOLD", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
+		//[CommandMethod(SprinkAssist.CommandMethodPrefix, "AddSprinklerOLD", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void Main()
 		{
 			int OSMODE = System.Convert.ToInt32(AcApplication.GetSystemVariable("OSMODE"));

@@ -36,8 +36,8 @@ namespace Ironwill.Commands
 			selectedFittingSetting = new CommandSetting<string>("SelectedFitting", elbowKeyword, cmdSettings);
 		}
 
-		[CommandMethodDescription("Test Test!\nOMG")]
-		[CommandMethod("SpkAssist", "AddFitting", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
+		[CommandDescription("Draws fittings onto sprinkler pipe.", "Attempts to place fittings on ends or midpoints of pipe lines.", "Will also place it anywhere lines if another line's endpoint touches the line nearby.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AddFitting", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void Main()
 		{
 			bool bStopCommand = false;

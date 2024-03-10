@@ -21,7 +21,7 @@ namespace Ironwill.Commands.AutoLabel
 {
 	internal class AutoLabelCmd : SprinkAssistCommand
 	{		
-		[CommandMethod("SpkAssist", "AutoLabelNew", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoLabelNew", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;

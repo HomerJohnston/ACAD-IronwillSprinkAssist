@@ -18,7 +18,7 @@ namespace Ironwill.Commands.ReplaceHeads
 {
 	public class ReplaceHeadsCmd
 	{
-		[CommandMethod("SpkAssist", "ReplaceHeads", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ReplaceHeads", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{
 			using (Transaction transaction = Session.StartTransaction())

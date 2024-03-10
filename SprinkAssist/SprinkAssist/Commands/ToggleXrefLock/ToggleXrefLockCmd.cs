@@ -4,6 +4,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
 using Ironwill;
+using Ironwill.Commands.Help;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -56,7 +57,8 @@ namespace Ironwill.Commands.ToggleXrefLock
 			}
 		}
 
-		[CommandMethod("SpkAssist", "ToggleXrefLock", CommandFlags.NoBlockEditor)]
+		[CommandDescription("Locks the XREF layer and makes it non-selectable", "The XREF layer can still be clicked on; it will simply be instantly deselected any time it is selected.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefLock", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{
 			using (Transaction transaction = Session.StartTransaction())
