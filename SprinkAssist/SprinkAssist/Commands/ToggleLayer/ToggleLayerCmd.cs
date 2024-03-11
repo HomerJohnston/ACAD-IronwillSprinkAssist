@@ -14,6 +14,7 @@ using Autodesk.AutoCAD.GraphicsSystem;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using System.Data.Common;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.ToggleLayer.ToggleLayerCmd))]
 
@@ -28,6 +29,7 @@ namespace Ironwill.Commands.ToggleLayer
             coverageShowFill = new CommandSetting<bool>("CoverageShowFill", true, cmdSettings);
         }
 
+		[CommandDescription("Toggles the solid fill of the sprinkler head coverage layer on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleHeadCoverageFill", CommandFlags.NoBlockEditor)]
 		public void ToggleHeadCoverageFillCmd()
         {
@@ -49,7 +51,8 @@ namespace Ironwill.Commands.ToggleLayer
                 transaction.Commit();
 			}
 		}
-
+		
+		[CommandDescription("Adjusts the transparency of the head coverage layers.", "Enter a value from 0 to 100.", "You can adjust transparency in layer settings but AutoCAD limits that to 90%. With this you can specify up to 100%.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "SetHeadCoverageTransparency", CommandFlags.NoBlockEditor)]
 		public void SetHeadCoverageTransparency()
 		{
@@ -91,6 +94,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
+		[CommandDescription("Turns the draft aid layer on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleDraftAidFrozen", CommandFlags.NoBlockEditor)]
 		public void ToggleDraftAidFrozenCmd()
 		{
@@ -104,6 +108,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
+		[CommandDescription("Turns the Xref layer on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefFrozen", CommandFlags.NoBlockEditor)]
 		public void ToggleXrefFrozenCmd()
 		{
@@ -117,7 +122,8 @@ namespace Ironwill.Commands.ToggleLayer
 
 		/// <summary>
 		/// 
-		/// </summary>
+		/// </summary>		
+		[CommandDescription("Turns the head coverage layer on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleCoverage", CommandFlags.NoBlockEditor)]
 		public void ToggleCoverageCmd()
 		{
@@ -143,6 +149,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
+		[CommandDescription("Turns the pipe labels layer on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "TogglePipeLabels", CommandFlags.NoBlockEditor)]
 		public void TogglePipeLabelsCmd()
 		{
@@ -156,6 +163,7 @@ namespace Ironwill.Commands.ToggleLayer
 		/// <summary>
 		/// 
 		/// </summary>
+		[CommandDescription("Turns AutoCAD lineweight display on or off.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleLineweightDisplay", CommandFlags.NoBlockEditor)]
 		public void ToggleLineweightDisplayCmd()
 		{

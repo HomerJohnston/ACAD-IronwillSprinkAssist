@@ -57,7 +57,7 @@ namespace Ironwill.Commands.ToggleXrefLock
 			}
 		}
 
-		[CommandDescription("Locks the XREF layer and makes it non-selectable", "The XREF layer can still be clicked on; it will simply be instantly deselected any time it is selected.")]
+		[CommandDescription("Locks the XREF layer and makes it non-selectable.", "The XREF layer can still be clicked on; it will simply be instantly deselected any time it is selected.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefLock", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{

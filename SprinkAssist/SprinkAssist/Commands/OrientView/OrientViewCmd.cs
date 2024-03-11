@@ -12,6 +12,7 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.GraphicsInterface;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.OrientView.OrientViewCmd))]
 
@@ -22,6 +23,7 @@ namespace Ironwill.Commands.OrientView
 		/// <summary>
 		/// 
 		/// </summary>
+		[CommandDescription("Rotates the view.", "Prompts you to draw a line, screen's right-vector will match the line.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "OrientView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
 		{
@@ -198,6 +200,7 @@ namespace Ironwill.Commands.OrientView
 			}
 		}
 
+		[CommandDescription("Resets the view.", "Unrotates the view back to regular world UCS.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ResetView", CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void ResetViewCmd()
 		{

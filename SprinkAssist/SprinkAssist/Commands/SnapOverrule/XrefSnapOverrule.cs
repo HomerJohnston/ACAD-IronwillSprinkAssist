@@ -1,6 +1,7 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
+using Ironwill.Commands.Help;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,8 @@ namespace Ironwill.Commands.SnapOverrule
 	internal class XrefSnapOverruleCmd
 	{
 		private static XrefSnapOverrule xrefSnapOverrule = new XrefSnapOverrule();
-
+		
+		[CommandDescription("Disables all snaps for anything placed on the Xref layer.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleXrefSnapDisable", CommandFlags.NoBlockEditor)]
 		public static void ToggleXrefSnapping()
 		{

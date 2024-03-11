@@ -1,6 +1,7 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Runtime;
+using Ironwill.Commands.Help;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,6 +66,7 @@ namespace Ironwill.Commands.SnapOverrule
 			sprinklerSnapOverrule.SetEnabled(true);
 		}
 
+		[CommandDescription("Disables most snaps on anything placed on the sprinkler heads layer.", "Leaves only the 'Insertion' and 'Node' snaps active on sprinkler head blocks when active.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleHeadSnapOverrule", CommandFlags.NoBlockEditor)]
 		public static void Main()
 		{

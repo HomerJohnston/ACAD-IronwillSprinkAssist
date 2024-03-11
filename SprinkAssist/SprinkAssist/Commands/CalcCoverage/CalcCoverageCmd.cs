@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.CalcCoverage.CalcCoverageCmd))]
 
@@ -18,6 +19,7 @@ namespace Ironwill.Commands.CalcCoverage
 {
 	public class CalcCoverageCmd
 	{
+		[CommandDescription("Simple helper to calculate rectangular coverage area from a sprinkler to two points (horizontal/vertical).", "Works in current coordinate space only.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "CalcCoverage", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
 		public void Main()
 		{

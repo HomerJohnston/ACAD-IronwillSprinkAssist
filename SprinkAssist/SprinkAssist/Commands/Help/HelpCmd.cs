@@ -17,8 +17,8 @@ namespace Ironwill.Commands.Help
 	{
 		// TODO: in debug mode list which commands don't have help descriptions added
 		[CommandDescription("Lists all SprinkAssist commands.")]
-		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ListCommandsFromThisAssembly", CommandFlags.NoBlockEditor)]
-		static public void ListCommandsFromThisAssembly()
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ListSprinkAssistCommands", CommandFlags.NoBlockEditor)]
+		static public void ListSprinkAssistCommands()
 		{
 			// Just get the commands for this assembly
 			Editor editor = Session.GetEditor();
@@ -142,6 +142,11 @@ namespace Ironwill.Commands.Help
 					}
 
 					stringCollection.Add("");
+
+					for (int i = 0; i < 1 - bulletPoints.Count; i++)
+					{
+						stringCollection.Add("");
+					}
 				}
 			}
 

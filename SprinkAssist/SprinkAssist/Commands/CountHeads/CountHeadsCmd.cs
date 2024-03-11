@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.CountHeads.CountHeadsCmd))]
 
@@ -18,6 +19,7 @@ namespace Ironwill.Commands.CountHeads
 {
 	public class CountHeadsCmd
 	{
+		[CommandDescription("Simple head counter.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "CountHeads", CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{

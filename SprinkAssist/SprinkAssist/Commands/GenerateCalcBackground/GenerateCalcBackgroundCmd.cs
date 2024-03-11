@@ -14,6 +14,7 @@ using Autodesk.AutoCAD.BoundaryRepresentation;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.GenerateCalcBackground.GenerateCalcBackgroundCmd))]
 
@@ -21,6 +22,7 @@ namespace Ironwill.Commands.GenerateCalcBackground
 {
 	public class GenerateCalcBackgroundCmd
 	{
+		[CommandDescription("Exports the current sprinkler system data into a separate DWG file.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "GenerateCalcBackground", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
 		{/*

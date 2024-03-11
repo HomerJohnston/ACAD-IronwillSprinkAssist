@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.XRoom))]
 
@@ -95,6 +96,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		[CommandDescription("Simple command to draw X's over rectangular rooms.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "XRoom", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void XRoomCmd()
 		{

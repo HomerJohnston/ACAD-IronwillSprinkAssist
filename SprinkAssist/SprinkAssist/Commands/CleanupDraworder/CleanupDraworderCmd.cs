@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.CleanupDraworder.CleanupDraworderCmd))]
 
@@ -38,6 +39,7 @@ namespace Ironwill.Commands.CleanupDraworder
 		static TypedValue modelSpace = new TypedValue((int)DxfCode.ViewportVisibility, 0);
 		static string anyLayer = string.Empty;
 
+		[CommandDescription("Sets up common draw order of sprinkler elements.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "CleanupDrawOrder", CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{

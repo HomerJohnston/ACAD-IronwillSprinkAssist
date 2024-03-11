@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.DrawPipeCmd))]
 
@@ -18,6 +19,7 @@ namespace Ironwill.Commands
 {
 	public class DrawPipeCmd
 	{
+		[CommandDescription("Switches to the draft aid layer and starts the line command.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "DrawDraftAid", CommandFlags.Modal)]
 		public void DrawDraftAid()
 		{
@@ -27,6 +29,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		[CommandDescription("Switches to the pipe main layer and starts the line command.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "DrawPipeMain", CommandFlags.Modal)]
 		public void DrawPipeMain()
 		{
@@ -36,6 +39,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		[CommandDescription("Switches to the pipe branchline layer and starts the line command.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "DrawPipeBranchline", CommandFlags.Modal)]
 		public void DrawPipeBranchline()
 		{
@@ -45,6 +49,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		[CommandDescription("Switches to the pipe armover layer and starts the line command.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "DrawPipeArmover", CommandFlags.Modal)]
 		public void DrawPipeArmover()
 		{
@@ -54,6 +59,7 @@ namespace Ironwill.Commands
 			}
 		}
 
+		[CommandDescription("Switches to the pipe drain layer and starts the line command.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "DrawPipeDrain", CommandFlags.Modal)]
 		public void DrawPipeDrain()
 		{

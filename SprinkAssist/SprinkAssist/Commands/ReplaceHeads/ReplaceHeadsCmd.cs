@@ -11,6 +11,7 @@ using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using Ironwill.Commands.Help;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.ReplaceHeads.ReplaceHeadsCmd))]
 
@@ -18,6 +19,7 @@ namespace Ironwill.Commands.ReplaceHeads
 {
 	public class ReplaceHeadsCmd
 	{
+		[CommandDescription("Swaps out specified sprinkler heads with another head block.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ReplaceHeads", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{
