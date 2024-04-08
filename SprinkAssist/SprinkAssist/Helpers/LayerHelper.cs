@@ -293,9 +293,10 @@ namespace Ironwill
 				
 				LayerTableRecord layer = (LayerTableRecord)transaction.GetObject(layerId, OpenMode.ForWrite);
 				layer.IsLocked = false;
+
 				BlockTable blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForRead);
-				foreach (ObjectId btrId in blockTable)
 				
+				foreach (ObjectId btrId in blockTable)
 				{
 					BlockTableRecord block = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForRead);
 					foreach (var entId in block)

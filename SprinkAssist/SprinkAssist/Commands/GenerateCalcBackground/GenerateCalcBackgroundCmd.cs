@@ -26,195 +26,44 @@ namespace Ironwill.Commands.GenerateCalcBackground
 
 		public GenerateCalcBackgroundCmd() 
 		{
-			includeXREF = settings.RegisterNew("IncludeXref", true);
+			includeXREF = settings.RegisterNew("IncludeXref", false);
 		}
 
 		[CommandDescription("Toggles whether or not to include xref data in generated calc background.")]
-		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleCalcBackgroundXRef", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoUndoMarker)]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleCalcBackgroundXRef", CommandFlags.NoBlockEditor | CommandFlags.Modal)]
 		public void ToggleIncludeXRef()
 		{
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				bool current = includeXREF.Get(transaction);
+				bool currentValue = includeXREF.Get(transaction);
 
-				includeXREF.Set(transaction, !current);
+				PromptIntegerOptions promptIntegerOptions = new PromptIntegerOptions($"Include XRefs in generated file? <{currentValue}>");//
+				promptIntegerOptions.LowerLimit = 0;
+				promptIntegerOptions.UpperLimit = 1;
+				promptIntegerOptions.AllowNone = true;
 
-				Session.Log($"Include XRef in Calc Background: {!current}");
+				PromptIntegerResult promptIntegerResult = Session.GetEditor().GetInteger(promptIntegerOptions);
 
-				transaction.Commit();
-			}
-		}
-
-		[CommandMethod(SprinkAssist.CommandMethodPrefix, "TestTest", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoUndoMarker)]
-		public void TestTest()
-		{
-			Document document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-
-			using (Transaction ttt = document.TransactionManager.StartTransaction())
-			{
-				using (Transaction transaction = document.TransactionManager.StartTransaction())
+				if (promptIntegerResult.Status == PromptStatus.OK)
 				{
-					LayerHelper.SetCurrentLayer(transaction, Layer.Default);
+					bool newValue = (promptIntegerResult.Value == 1);
 
-					//document.Editor.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
-					//document.Editor.Command("-laydel", "N", Layer.HeadCoverage_Fill.Get(), "", "Y");
-					//document.Editor.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
-
-					Database database = document.Database;
-
-					LayerDelete(transaction, database, Layer.HeadCoverage);
-					LayerDelete(transaction, database, Layer.HeadCoverage_Fill);
-					LayerDelete(transaction, database, Layer.Wipeout);
-
-					ObjectIdCollection xrefCollection = new ObjectIdCollection();
-					
-					using (XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false))
+					if (currentValue != newValue)
 					{
-						int numNodes = xrefGraph.NumNodes;
-
-						for (int i = 0; i < numNodes; i++)
-						{
-							XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
-
-							if (xrefGraphNode.Database.Filename.Equals(database.Filename))
-							{
-								continue;
-							}
-
-							if (xrefGraphNode.XrefStatus != XrefStatus.Resolved)
-							{
-								continue;
-							}
-
-							xrefCollection.Add(xrefGraphNode.BlockTableRecordId);
-						}
+						Session.Log($"Changed to {newValue}");
+						includeXREF.Set(transaction, newValue);
+						transaction.Commit();
 					}
-
-					if (xrefCollection.Count > 0)
+					else
 					{
-						database.BindXrefs(xrefCollection, true);
-					}                    
-
-					transaction.Commit();
-				}
-
-				ttt.Abort();
-			}
-		}
-
-		private string LayerDelete(Transaction transaction, Database database, string layerName)
-		{
-			if (layerName == "0")
-			{
-				return "Layer '0' cannot be deleted.";
-			}
-
-			LayerTable layerTable = transaction.GetObject(database.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-			if (!layerTable.Has(layerName))
-			{
-				return "Layer '" + layerName + "' not found.";
-			}
-
-			try
-			{
-				var layerId = layerTable[layerName];
-				
-				if (database.Clayer == layerId)
+                        transaction.Abort();
+                    }
+                }
+				else
 				{
-					return "Current layer cannot be deleted.";
-				}
-
-				LayerTableRecord layer = (LayerTableRecord)transaction.GetObject(layerId, OpenMode.ForWrite);
-				layer.IsLocked = false;
-
-				BlockTable blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForRead);
-
-				foreach (var btrId in blockTable)
-				{
-					var block = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForRead);
-					foreach (var entId in block)
-					{
-						var ent = (Entity)transaction.GetObject(entId, OpenMode.ForRead);
-						if (ent.Layer == layerName)
-						{
-							ent.UpgradeOpen();
-							ent.Erase();
-						}
-					}
-				}
-
-				layer.Erase();
-					
-				return "Layer '" + layerName + "' have been deleted.";
-			}
-			catch (System.Exception e)
-			{
-				return "Error: " + e.Message;
-			}
-		}
-
-		private List<Entity> TestXref(Transaction transaction)
-		{
-			List<Entity> entities = new List<Entity>();
-
-			Database database = Session.GetDatabase();
-			database.ResolveXrefs(true, false);
-
-			XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false);
-
-			GraphNode root = xrefGraph.RootNode;
-
-			List<Database> xrefs = new List<Database>();
-
-			for (int i = 0; i < xrefGraph.NumNodes; i++) 
-			{
-				XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
-
-				Database xrefDatabase = null;
-
-				if (xrefGraphNode != null)
-				{
-					xrefDatabase = new Database(false, true);
-
-					xrefDatabase.ReadDwgFile(xrefGraphNode.Database.Filename, System.IO.FileShare.Read, true, null);
-
-					xrefs.Add(xrefDatabase);
-				}
-
-				xrefGraphNode.Dispose();
-
-				if (xrefDatabase != null)
-				{
-					using (Transaction transaction2 = Session.StartTransaction())
-					{
-						BlockTable blockTable = transaction2.GetObject(xrefDatabase.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-						BlockTableRecord blockTableRecord = transaction2.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
-
-						foreach (ObjectId id in blockTableRecord)
-						{
-							Entity entity = transaction2.GetObject(id, OpenMode.ForRead) as Entity;
-
-							LayerTable layerTable = transaction2.GetObject(xrefDatabase.LayerTableId, OpenMode.ForRead) as LayerTable;
-
-							if (entity != null)
-							{
-								var entityType = entity.GetType();
-
-								if (entity is Line)
-								{
-									entities.Add(entity);
-								}
-							}
-						}
-
-						transaction2.Commit();
-					}
+					transaction.Abort();
 				}
 			}
-
-			return entities;
 		}
 
 		[CommandDescription("Exports the current sprinkler system data into a separate DWG file.")]
@@ -308,7 +157,7 @@ namespace Ironwill.Commands.GenerateCalcBackground
 
 				List<Entity> objectsInBounds = FindObjectsInBounds(transaction);
 
-                Dictionary<string, int> layerCounts = new Dictionary<string, int>();
+				Dictionary<string, int> layerCounts = new Dictionary<string, int>();
 
 				if (objectsInBounds.Count == 0)
 				{
@@ -336,12 +185,12 @@ namespace Ironwill.Commands.GenerateCalcBackground
 				Export(objectIDsToExport);
 
 				transaction.Commit();
-            }
+			}
 
 			// There is some sort of bug in .net, deleting layers and then aborting the transaction causes some sort of corruption which crashes autocad. Instead of aborting the above transaction, we commit the transaction and then undo it normally.
 			Session.Log("");
 			Session.Command("undo", "1");
-        }
+		}
 
 		private void EraseIrrelevantSprinklerLayers()
 		{
