@@ -15,6 +15,7 @@ using Autodesk.AutoCAD.Publishing;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Ironwill.Commands.Help;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoPublish.AutoPublishCmd))]
@@ -25,19 +26,24 @@ namespace Ironwill.Commands.AutoPublish
 	{
 		string currentPdfFile;
 
-		// TODO remove hardcoded property strings somehow
-		[CommandDescription("Quick-publish PDF of drawings.", "Publishes all layouts starting with 'FP' to a PDF file named according to the ProjectName_1 file property.")]
+		object CTAB_original;
+		object BACKGROUNDPLOT_original;
+
+		readonly string defaultOverrideName = "FP Dwgs - [WHATEVER YOU TYPE HERE] - IssuedFor (Date)";
+
+        // TODO remove hardcoded property strings somehow
+        [CommandDescription("Quick-publish PDF of drawings.", "Publishes all layouts starting with 'FP' to a PDF file named according to the ProjectName_1 file property.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
 		{
 			Session.Log("Running AutoPublish - Make sure your drawing has been saved to pick up any tab changes.");
 
-			var CTAB = AcApplication.GetSystemVariable("CTAB");
-			var BACKGROUNDPLOT = AcApplication.GetSystemVariable("BACKGROUNDPLOT");
-			AcApplication.SetSystemVariable("BACKGROUNDPLOT", 0);
+			StoreSystemVariables();
 
-			// Get all layout names
-			List<string> layouts = GetLayouts();
+            CheckSystemPlotVariables();
+
+            // Get all layout names
+            List<string> layouts = GetLayouts();
 
 			if (layouts.Count == 0)
 			{
@@ -45,24 +51,30 @@ namespace Ironwill.Commands.AutoPublish
 				return;
 			}
 
-			int PDFSHX = System.Convert.ToInt32(AcApplication.GetSystemVariable("PDFSHX"));
+            string overrideName = Session.GetDatabase().GetCustomProperty("PlotFilename");
+            string revisionString = Session.GetDatabase().GetCustomProperty("PlotRevision");
 
-			if (PDFSHX > 0)
+            string projectName;
+
+            if (overrideName != null && overrideName != defaultOverrideName && overrideName != string.Empty)
+            {
+				projectName = overrideName;
+            }
+			else
 			{
-				Session.Log("Warning: PDFSHX was 1, setting to 0!");
-				AcApplication.SetSystemVariable("PDFSHX", 0);
-			}
+                projectName = Session.GetDatabase().GetCustomProperty("ProjectName_1");
+            }
 
-			string dwgName = Session.GetDocument().Name;
+			if (revisionString != null && revisionString != string.Empty)
+			{
+				projectName += " - Rev " + revisionString;
+            }
 
+            string dwgName = Session.GetDocument().Name;
 			string dwgDirectory = Path.GetDirectoryName(dwgName);
-			
 			string destinationPath = dwgDirectory;
 
 			string plotFileNameBase = "FP Dwgs";
-			
-			string projectName = Session.GetDatabase().GetCustomProperty("ProjectName_1");
-			//projectName = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(projectName.ToLower());
 
 			string issuedFor = Session.GetDatabase().GetCustomProperty("IssuedFor");
 			string issuedForAbbrev = "IF" + new string(issuedFor.Split(' ').Select(s => s[0]).ToArray()).ToUpper();
@@ -77,6 +89,7 @@ namespace Ironwill.Commands.AutoPublish
 			{
 				pdfFileName = pdfFileName.Replace(c.ToString(), string.Empty);
 			}
+
 			pdfFileName = pdfFileName.Replace(".", string.Empty);
 
 			pdfFileName = Path.ChangeExtension(pdfFileName, "pdf");
@@ -137,24 +150,43 @@ namespace Ironwill.Commands.AutoPublish
 				
 				PlotConfigManager.SetCurrentConfig("DWG to PDF.pc3");
 				
-				//publisher.EndPublish += EndPublishEventHandler;
+				publisher.EndPublish += EndPublishEventHandler;
 				
 				Session.Log("Starting publish...");
 				publisher.PublishExecute(dsdData, PlotConfigManager.CurrentConfig);
-				Session.Log("Publish ending... Opening file");
-
-				// Opens PDF file
-				System.Diagnostics.Process.Start(currentPdfFile);
 			}
 
-			AcApplication.SetSystemVariable("CTAB", CTAB);
-			AcApplication.SetSystemVariable("BACKGROUNDPLOT", BACKGROUNDPLOT);
+			RestoreSystemVariables();
 		}
+
+		void StoreSystemVariables()
+		{
+            CTAB_original = AcApplication.GetSystemVariable("CTAB");
+            BACKGROUNDPLOT_original = AcApplication.GetSystemVariable("BACKGROUNDPLOT");
+            AcApplication.SetSystemVariable("BACKGROUNDPLOT", 0);
+        }
+
+		void RestoreSystemVariables()
+		{
+            AcApplication.SetSystemVariable("CTAB", CTAB_original);
+            AcApplication.SetSystemVariable("BACKGROUNDPLOT", BACKGROUNDPLOT_original);
+        }
+
+		void CheckSystemPlotVariables()
+		{
+            int PDFSHX = System.Convert.ToInt32(AcApplication.GetSystemVariable("PDFSHX"));
+
+            if (PDFSHX > 0)
+            {
+                Session.Log("Warning: PDFSHX was 1, setting to 0!");
+                AcApplication.SetSystemVariable("PDFSHX", 0);
+            }
+        }
 
 		void EndPublishEventHandler(object sender, PublishEventArgs e)
 		{
-			//Session.WriteMessage("Publish ending... Opening file");
-			//System.Diagnostics.Process.Start(currentPdfFile);
+			Session.Log("Publish ending... Opening file");
+			System.Diagnostics.Process.Start(currentPdfFile);
 		}
 
 		List<string> GetLayouts()
@@ -184,7 +216,7 @@ namespace Ironwill.Commands.AutoPublish
 
 					string layoutName = layout.LayoutName;
 
-					if (!ValidLayoutName(layoutName))
+					if (!IsValidLayoutName(layoutName))
 					{
 						continue;
 					}
@@ -196,7 +228,7 @@ namespace Ironwill.Commands.AutoPublish
 			return layouts;
 		}
 
-		bool ValidLayoutName(string layoutName)
+		bool IsValidLayoutName(string layoutName)
 		{
 			if (layoutName == String.Empty)
 			{
