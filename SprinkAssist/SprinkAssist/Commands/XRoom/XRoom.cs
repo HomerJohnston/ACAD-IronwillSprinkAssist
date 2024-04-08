@@ -52,9 +52,9 @@ namespace Ironwill.Commands
 			PromptPointOptions promptPointOptions = new PromptPointOptions(Environment.NewLine + prompt + " (" + roomTypeSetting.Get(transaction) + ")");
 			promptPointOptions.Message = "Check " + roomTypeSetting.Get(transaction);
 			promptPointOptions.AllowNone = true;
-			promptPointOptions.Keywords.Add("Closet");
-			promptPointOptions.Keywords.Add("Bathroom");
-			promptPointOptions.Keywords.Add("None");
+			promptPointOptions.Keywords.Add(closetKeyword);
+			promptPointOptions.Keywords.Add(bathroomKeyword);
+			promptPointOptions.Keywords.Add(noneKeyword);
 			//promptPointOptions.Keywords.Default = DrawingSettings.XRoom;
 
 			PromptPointResult promptPointResult = null;

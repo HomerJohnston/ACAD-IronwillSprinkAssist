@@ -20,230 +20,463 @@ using Ironwill.Commands.Help;
 
 namespace Ironwill.Commands.GenerateCalcBackground
 {
-	public class GenerateCalcBackgroundCmd
+	internal class GenerateCalcBackgroundCmd : SprinkAssistCommand
 	{
-		[CommandDescription("Exports the current sprinkler system data into a separate DWG file.")]
-		[CommandMethod(SprinkAssist.CommandMethodPrefix, "GenerateCalcBackground", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
-		public void Main()
-		{/*
+		CommandSetting<bool> includeXREF;
+
+		public GenerateCalcBackgroundCmd() 
+		{
+			includeXREF = settings.RegisterNew("IncludeXref", true);
+		}
+
+		[CommandDescription("Toggles whether or not to include xref data in generated calc background.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "ToggleCalcBackgroundXRef", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoUndoMarker)]
+		public void ToggleIncludeXRef()
+		{
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				// Bind all XREFs
-				Document document = Session.GetDocument();
-				Database database = Session.GetDatabase();
+				bool current = includeXREF.Get(transaction);
 
-				ObjectIdCollection xrefCollection = new ObjectIdCollection();
+				includeXREF.Set(transaction, !current);
 
-				using (XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false))
-				{
-					int numNodes = xrefGraph.NumNodes;
-
-					for (int i = 0; i < numNodes; i++)
-					{
-						XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
-
-						if (xrefGraphNode.Database.Filename.Equals(database.Filename))
-						{
-							continue;
-						}
-
-						if (xrefGraphNode.XrefStatus != XrefStatus.Resolved)
-						{
-							continue;
-						}
-
-						xrefCollection.Add(xrefGraphNode.BlockTableRecordId);
-					}
-				}
-
-				if (xrefCollection.Count > 0)
-				{
-					database.BindXrefs(xrefCollection, true);
-				}
-
-				Session.Log("Bound " + xrefCollection.Count.ToString() + " xrefs");
+				Session.Log($"Include XRef in Calc Background: {!current}");
 
 				transaction.Commit();
 			}
-*/
-			using (Transaction transaction = Session.StartTransaction())
+		}
+
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "TestTest", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoUndoMarker)]
+		public void TestTest()
+		{
+			Document document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+
+			using (Transaction ttt = document.TransactionManager.StartTransaction())
 			{
-				List<Curve> boundaryCurves = new List<Curve>();
-				List<Entity> candidateObjects = new List<Entity>();
-
-				GetBoundaryCurvesAndCandidateObjects(ref boundaryCurves, ref candidateObjects);
-
-				List<Region> allBoundaryRegions = new List<Region>();
-
-				foreach (Curve curve in boundaryCurves)
+				using (Transaction transaction = document.TransactionManager.StartTransaction())
 				{
-					if (!curve.Closed)
-					{
-						Session.Log("Skipping open boundary shape (polylines must be closed)");
-						continue;
-					}
+					LayerHelper.SetCurrentLayer(transaction, Layer.Default);
 
-					DBObjectCollection curves = new DBObjectCollection();
+					//document.Editor.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
+					//document.Editor.Command("-laydel", "N", Layer.HeadCoverage_Fill.Get(), "", "Y");
+					//document.Editor.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
+
+					Database database = document.Database;
+
+					LayerDelete(transaction, database, Layer.HeadCoverage);
+					LayerDelete(transaction, database, Layer.HeadCoverage_Fill);
+					LayerDelete(transaction, database, Layer.Wipeout);
+
+					ObjectIdCollection xrefCollection = new ObjectIdCollection();
 					
-					curves.Add(curve);
-
-					using (DBObjectCollection regions = Region.CreateFromCurves(curves))
+					using (XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false))
 					{
-						if (regions == null || regions.Count == 0)
+						int numNodes = xrefGraph.NumNodes;
+
+						for (int i = 0; i < numNodes; i++)
 						{
-							Session.Log("Error: Failed to create regions");
-							continue;
-						}
-						if (regions.Count > 1)
-						{
-							Session.Log("Error: Multiple regions created for one curve");
-							continue;
-						}
+							XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
 
-						allBoundaryRegions.Add(regions.Cast<Region>().First());
-					}
-				}
-
-				if (allBoundaryRegions.Count == 0)
-				{
-					Session.Log("No boundaries found. Did you create any polylines on " + Layer.Area_CalcBackground.Get() + " layer?");
-					return;
-				}
-
-				LayerTable layerTable = transaction.GetObject(Session.GetDatabase().LayerTableId, OpenMode.ForRead) as LayerTable;
-
-				Session.GetDatabase().Clayer = layerTable[Layer.Default.Get()];
-
-				Session.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
-				Session.Command("-laydel", "N", Layer.HeadCoverage_Fill.Get(), "", "Y");
-				Session.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
-
-				ObjectIdCollection objectIds = new ObjectIdCollection();
-
-				List<Brep> breps = new List<Brep>();
-				
-				foreach (Region region in allBoundaryRegions)
-				{
-					breps.Add(new Brep(region));
-				}
-
-				foreach (Entity entity in candidateObjects)
-				{
-					List<Point3d> points = new List<Point3d>();
-
-					if (entity is Line)
-					{
-						Line line = (Line)entity;
-						points.Add(line.StartPoint);
-						points.Add(line.EndPoint);
-					}
-					else if (entity is Polyline)
-					{
-						Polyline polyline = (Polyline)entity;
-
-						int numVerts = polyline.NumberOfVertices;
-
-						for (int i = 0; i < numVerts; i++)
-						{
-							points.Add(polyline.GetPoint3dAt(i));
-						}
-					}
-					else if (entity is BlockReference)
-					{
-						BlockReference block = (BlockReference)entity;
-						points.Add(block.Position);
-					}
-
-					if (points.Count == 0)
-					{
-						continue;
-					}
-
-					foreach (Brep brep in breps)
-					{
-						if (brep == null)
-						{
-							continue;
-						}
-
-						PointContainment result;
-
-						int numIn = 0;
-
-						foreach (Point3d point in points)
-						{
-							using (BrepEntity brepEntity = brep.GetPointContainment(point, out result))
+							if (xrefGraphNode.Database.Filename.Equals(database.Filename))
 							{
-								if ((brepEntity is Autodesk.AutoCAD.BoundaryRepresentation.Face))
+								continue;
+							}
+
+							if (xrefGraphNode.XrefStatus != XrefStatus.Resolved)
+							{
+								continue;
+							}
+
+							xrefCollection.Add(xrefGraphNode.BlockTableRecordId);
+						}
+					}
+
+					if (xrefCollection.Count > 0)
+					{
+						database.BindXrefs(xrefCollection, true);
+					}                    
+
+					transaction.Commit();
+				}
+
+				ttt.Abort();
+			}
+		}
+
+		private string LayerDelete(Transaction transaction, Database database, string layerName)
+		{
+			if (layerName == "0")
+			{
+				return "Layer '0' cannot be deleted.";
+			}
+
+			LayerTable layerTable = transaction.GetObject(database.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+			if (!layerTable.Has(layerName))
+			{
+				return "Layer '" + layerName + "' not found.";
+			}
+
+			try
+			{
+				var layerId = layerTable[layerName];
+				
+				if (database.Clayer == layerId)
+				{
+					return "Current layer cannot be deleted.";
+				}
+
+				LayerTableRecord layer = (LayerTableRecord)transaction.GetObject(layerId, OpenMode.ForWrite);
+				layer.IsLocked = false;
+
+				BlockTable blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForRead);
+
+				foreach (var btrId in blockTable)
+				{
+					var block = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForRead);
+					foreach (var entId in block)
+					{
+						var ent = (Entity)transaction.GetObject(entId, OpenMode.ForRead);
+						if (ent.Layer == layerName)
+						{
+							ent.UpgradeOpen();
+							ent.Erase();
+						}
+					}
+				}
+
+				layer.Erase();
+					
+				return "Layer '" + layerName + "' have been deleted.";
+			}
+			catch (System.Exception e)
+			{
+				return "Error: " + e.Message;
+			}
+		}
+
+		private List<Entity> TestXref(Transaction transaction)
+		{
+			List<Entity> entities = new List<Entity>();
+
+			Database database = Session.GetDatabase();
+			database.ResolveXrefs(true, false);
+
+			XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false);
+
+			GraphNode root = xrefGraph.RootNode;
+
+			List<Database> xrefs = new List<Database>();
+
+			for (int i = 0; i < xrefGraph.NumNodes; i++) 
+			{
+				XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
+
+				Database xrefDatabase = null;
+
+				if (xrefGraphNode != null)
+				{
+					xrefDatabase = new Database(false, true);
+
+					xrefDatabase.ReadDwgFile(xrefGraphNode.Database.Filename, System.IO.FileShare.Read, true, null);
+
+					xrefs.Add(xrefDatabase);
+				}
+
+				xrefGraphNode.Dispose();
+
+				if (xrefDatabase != null)
+				{
+					using (Transaction transaction2 = Session.StartTransaction())
+					{
+						BlockTable blockTable = transaction2.GetObject(xrefDatabase.BlockTableId, OpenMode.ForRead) as BlockTable;
+
+						BlockTableRecord blockTableRecord = transaction2.GetObject(blockTable[BlockTableRecord.ModelSpace], OpenMode.ForRead) as BlockTableRecord;
+
+						foreach (ObjectId id in blockTableRecord)
+						{
+							Entity entity = transaction2.GetObject(id, OpenMode.ForRead) as Entity;
+
+							LayerTable layerTable = transaction2.GetObject(xrefDatabase.LayerTableId, OpenMode.ForRead) as LayerTable;
+
+							if (entity != null)
+							{
+								var entityType = entity.GetType();
+
+								if (entity is Line)
 								{
-									numIn++;
-								}
-								else
-								{
-									break;
+									entities.Add(entity);
 								}
 							}
 						}
 
-						if (numIn == points.Count)
-						{
-							objectIds.Add(entity.ObjectId);
-							break;
-						}
+						transaction2.Commit();
 					}
 				}
+			}
 
-				foreach (Brep brep in breps)
+			return entities;
+		}
+
+		[CommandDescription("Exports the current sprinkler system data into a separate DWG file.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "GenerateCalcBackground", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoUndoMarker)]
+		public void Main()
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				LayerHelper.SetCurrentLayer(transaction, Layer.Default);
+
+				EraseIrrelevantSprinklerLayers();
+
+				if (includeXREF.Get(transaction))
 				{
-					brep.Dispose();
-				}
+					// Unlock the layer
+					LayerHelper.SetLocked(transaction, false, Layer.XREF);
 
-				//Session.GetEditor().SetImpliedSelection(foundObjects.ToArray());
+					// Bind all XREFs
+					Document document = Session.GetDocument();
+					Database database = Session.GetDatabase();
 
-				using (Database tempDb = new Database(true, false))
-				{
-					Session.GetDatabase().Wblock(tempDb, objectIds, Point3d.Origin, DuplicateRecordCloning.Ignore);
+					ObjectIdCollection xrefCollection = new ObjectIdCollection();
 
-					string docName = Session.GetDocument().Name;
-
-					string path = Path.GetDirectoryName(docName);
-
-					string fileName = Path.GetFileNameWithoutExtension(docName);
-
-					string fileExtension = Path.GetExtension(docName);
-
-					string calcSuffix = "_CalcBG";
-
-					string fullPath = String.Empty;
-
-					for (int i = 1; i < 999; i++)
+					using (XrefGraph xrefGraph = database.GetHostDwgXrefGraph(false))
 					{
-						string candidateFile = string.Format("{0}{1}{2}", fileName, calcSuffix, (i > 1) ? "_" + i.ToString() : "");
+						int numNodes = xrefGraph.NumNodes;
 
-						string candidateFilePath = Path.Combine(path, candidateFile);
-
-						candidateFilePath = Path.ChangeExtension(candidateFilePath, fileExtension);
-
-						bool? locked = IsFileLocked(candidateFilePath);
-
-						if (locked.HasValue && !locked.Value)
+						for (int i = 0; i < numNodes; i++)
 						{
-							fullPath = candidateFilePath;
-							break;
+							XrefGraphNode xrefGraphNode = xrefGraph.GetXrefNode(i);
+
+							if (xrefGraphNode.Database.Filename.Equals(database.Filename))
+							{
+								continue;
+							}
+
+							if (xrefGraphNode.XrefStatus != XrefStatus.Resolved)
+							{
+								continue;
+							}
+
+							xrefCollection.Add(xrefGraphNode.BlockTableRecordId);
 						}
 					}
-
-					if (fullPath == String.Empty)
+					
+					if (xrefCollection.Count > 0)
 					{
-						Session.Log("Error: could not save calc background file");
+						database.BindXrefs(xrefCollection, true);
+					}
+
+					Session.Log("Bound " + xrefCollection.Count.ToString() + " xrefs");
+
+					// Explode xref block
+					BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(Session.GetDatabase()), OpenMode.ForWrite) as BlockTableRecord;
+
+					if (modelSpaceBTR == null)
+					{
 						return;
 					}
 
-					Session.Log("Saving: " + fullPath);
-					tempDb.SaveAs(fullPath, false, DwgVersion.Newest, tempDb.SecurityParameters);
+					foreach (ObjectId objectId in modelSpaceBTR)
+					{
+						Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
+
+						if (entity is BlockReference && entity.Layer == Layer.XREF)
+						{
+							DBObjectCollection entityContents = new DBObjectCollection();
+							entity.Explode(entityContents);
+
+							if (entityContents.Count > 0)
+							{
+								entity.UpgradeOpen();
+								entity.Erase();
+
+								foreach (DBObject explodedObj in entityContents)
+								{
+									Entity explodedEnt = explodedObj as Entity;
+
+									if (explodedObj == null)
+									{
+										continue;
+									}
+
+									modelSpaceBTR.AppendEntity(explodedEnt);
+									transaction.AddNewlyCreatedDBObject(explodedEnt, true);
+								}
+							}
+						}
+					}
 				}
 
-				transaction.Abort();
+				List<Entity> objectsInBounds = FindObjectsInBounds(transaction);
+
+                Dictionary<string, int> layerCounts = new Dictionary<string, int>();
+
+				if (objectsInBounds.Count == 0)
+				{
+					Session.Log($"No candidate objects found. Did you enclose any drawing objects within polylines on {Layer.Area_CalcBackground.Get()} layer?");
+					return;
+				}
+
+				foreach (Entity entity in objectsInBounds)
+				{
+					if (!layerCounts.ContainsKey(entity.Layer))
+					{
+						layerCounts.Add(entity.Layer, 0);
+					}
+
+					layerCounts[entity.Layer]++;
+				}
+
+				foreach (var kvp in layerCounts)
+				{
+					Session.Log($"{kvp.Key}: {kvp.Value}");
+				}
+
+				ObjectIdCollection objectIDsToExport = FilterObjectsToExport(objectsInBounds, transaction);
+
+				Export(objectIDsToExport);
+
+				transaction.Commit();
+            }
+
+			// There is some sort of bug in .net, deleting layers and then aborting the transaction causes some sort of corruption which crashes autocad. Instead of aborting the above transaction, we commit the transaction and then undo it normally.
+			Session.Log("");
+			Session.Command("undo", "1");
+        }
+
+		private void EraseIrrelevantSprinklerLayers()
+		{
+			using (Transaction t = Session.StartTransaction())
+			{
+				Session.Command("-laydel", "N", Layer.HeadCoverage.Get(), "", "Y");
+				Session.Command("-laydel", "N", Layer.HeadCoverage_Fill.Get(), "", "Y");
+				Session.Command("-laydel", "N", Layer.Wipeout.Get(), "", "Y");
+
+				t.Commit();
+			}
+		}
+
+		private List<Entity> FindObjectsInBounds(Transaction transaction)
+		{
+			List<Entity> objectsInBounds = new List<Entity>();
+
+			ModelSpaceHelper.GetObjectsWithinBoundaryCurvesOfLayerByExtents(Session.GetDocument(), transaction, ref objectsInBounds, Layer.Area_CalcBackground, OpenMode.ForRead);
+
+			Session.Log($"Found {objectsInBounds.Count} objects");
+
+			return objectsInBounds;
+		}
+
+		private ObjectIdCollection FilterObjectsToExport(List<Entity> candidateEntities, Transaction transaction)
+		{
+			ObjectIdCollection objectIDsToExport = new ObjectIdCollection();
+
+			List<string> sprinklerWhitelist = new List<string>
+			{
+				Layer.Calculation.Get(),
+				Layer.SystemDevice.Get(),
+				Layer.SystemFitting.Get(),
+				Layer.SystemHead.Get(),
+				Layer.SystemPipe_Armover.Get(),
+				Layer.SystemPipe_AuxDrain.Get(),
+				Layer.SystemPipe_Branchline.Get(),
+				Layer.SystemPipe_Main.Get(),
+			};
+
+			List<string> backgroundWhitelist = new List<string>() // TODO make this UI driven
+			{
+				"WALL",
+				"PARTITION",
+				"BEAM",
+				"JOIST",
+				"COL",
+				"RCP",
+				"ROOF",
+				"DOOR",
+				"GLAZ",
+				"CEILING",
+				"CLG",
+				"CLNG",
+			};
+
+			int sprinklerCount = 0;
+			int backgroundCount = 0;
+
+			foreach (Entity entity in candidateEntities)
+			{
+				// Skip hatch objects, unless they might be representing columns
+				if (entity is Hatch && !entity.Layer.ToUpper().Contains("COL"))
+				{
+					continue;
+				}
+
+				if (entity.Layer.StartsWith(Layer.Pfix))
+				{
+					if (sprinklerWhitelist.Any(s => s == entity.Layer))
+					{
+						objectIDsToExport.Add(entity.Id);
+						sprinklerCount++;
+						
+					}
+				}
+				else
+				{
+					if (backgroundWhitelist.Any(s => entity.Layer.ToUpper().Contains(s)))
+					{
+						objectIDsToExport.Add(entity.Id);
+						backgroundCount++;
+					}
+				}
+			}
+
+			Session.Log($"Filtered to {objectIDsToExport.Count} objects; {sprinklerCount} sprinkler entities, {backgroundCount} background entities");
+
+			return objectIDsToExport;
+		}
+
+		private void Export(ObjectIdCollection objectIDsToExport)
+		{
+			using (Database tempDb = new Database(true, false))
+			{
+				Session.GetDatabase().Wblock(tempDb, objectIDsToExport, Point3d.Origin, DuplicateRecordCloning.Ignore);
+
+				string docName = Session.GetDocument().Name;
+
+				string path = Path.GetDirectoryName(docName);
+
+				string fileName = Path.GetFileNameWithoutExtension(docName);
+
+				string fileExtension = Path.GetExtension(docName);
+
+				string calcSuffix = "_CalcBG";
+
+				string fullPath = String.Empty;
+
+				for (int i = 1; i < 999; i++)
+				{
+					string candidateFile = string.Format("{0}{1}{2}", fileName, calcSuffix, (i > 1) ? "_" + i.ToString() : "");
+
+					string candidateFilePath = Path.Combine(path, candidateFile);
+
+					candidateFilePath = Path.ChangeExtension(candidateFilePath, fileExtension);
+
+					bool? locked = IsFileLocked(candidateFilePath);
+
+					if (locked.HasValue && !locked.Value)
+					{
+						fullPath = candidateFilePath;
+						break;
+					}
+				}
+
+				if (fullPath == String.Empty)
+				{
+					Session.Log("Error: could not save calc background file");
+					return;
+				}
+
+				Session.Log("Saving: " + fullPath);
+
+				tempDb.SaveAs(fullPath, false, DwgVersion.Newest, tempDb.SecurityParameters);
 			}
 		}
 
@@ -265,58 +498,6 @@ namespace Ironwill.Commands.GenerateCalcBackground
 			{
 				MessageBox.Show(e.Message, "IsFileLocked Checking");
 				return null;
-			}
-		}
-
-		// TODO use modelspacehelper variants?
-		void GetBoundaryCurvesAndCandidateObjects(ref List<Curve> foundCurves, ref List<Entity> candidateObjects)
-		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				BlockTableRecord modelSpaceBTR = transaction.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(Session.GetDatabase()), OpenMode.ForRead) as BlockTableRecord;
-
-				if (modelSpaceBTR == null)
-				{
-					return;
-				}
-
-				List<string> suitableLayers = new List<string>
-				{
-					Layer.Calculation.Get(),
-					Layer.SystemDevice.Get(),
-					Layer.SystemFitting.Get(),
-					Layer.SystemHead.Get(),
-					Layer.SystemPipe_Armover.Get(),
-					Layer.SystemPipe_AuxDrain.Get(),
-					Layer.SystemPipe_Branchline.Get(),
-					Layer.SystemPipe_Main.Get(),
-					//Layer.XREF.Get() // TODO iterate the entities of the xref
-				};
-
-				foreach (ObjectId objectId in modelSpaceBTR)
-				{
-					Entity entity = transaction.GetObject(objectId, OpenMode.ForRead) as Entity;
-
-					if (entity.Layer == Layer.Area_CalcBackground.Get())
-					{
-						Curve curve = entity as Curve;
-						if (curve != null)
-						{
-							foundCurves.Add(curve);
-						}
-					}
-					else
-					{
-						BlockReference blockReference = entity as BlockReference;
-
-						if (suitableLayers.Contains(entity.Layer))
-						{
-							candidateObjects.Add(entity);
-						}
-					}
-				}
-
-				transaction.Commit();
 			}
 		}
 	}

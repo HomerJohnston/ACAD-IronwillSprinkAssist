@@ -96,7 +96,16 @@ namespace Ironwill
 					continue;
 				}
 
-				Extents3d extents = entity.GeometricExtents;
+				Extents3d extents;
+
+				try
+				{
+					extents = entity.GeometricExtents;
+				}
+				catch
+				{
+					continue;
+				}
 
 				Point3d min = extents.MinPoint;
 				Point3d max = extents.MaxPoint;
@@ -200,8 +209,6 @@ namespace Ironwill
 			}
 		}
 
-
-
 		/*
 		public static void IterateEntitiesInXrefs(Transaction transaction, Database database, ERecurseFlags recurseFlags, Action<Entity, Matrix3d> processEntityAction)
 		{
@@ -224,11 +231,9 @@ namespace Ironwill
 				}
 
 				BlockTableRecord xrefBlockTableRecord = transaction.GetObject(xrefGraphNode.BlockTableRecordId, OpenMode.ForRead) as BlockTableRecord;
-				
+
 				Session.LogDebug("Iterating xref: " + xrefGraphNode.Name);
 				IterateAllEntities(transaction, xrefBlockTableRecord, recurseFlags, processEntityAction);
-
-					
 			}
 		}
 		*/

@@ -13,11 +13,17 @@ namespace Ironwill
 	{
 		readonly string settingName;
 
-		readonly DBDictionary owningDictionary;
+		DBDictionary owningDictionary;
 
 		readonly object defaultValue;
 
-		public CommandSetting(string inSettingName, object inDefaultValue, DBDictionary inOwningDictionary)
+        public CommandSetting(string inSettingName, object inDefaultValue)
+        {
+            settingName = inSettingName;
+            defaultValue = inDefaultValue;
+        }
+
+        public CommandSetting(string inSettingName, object inDefaultValue, DBDictionary inOwningDictionary)
 		{
 			settingName = inSettingName;
 			defaultValue = inDefaultValue;
@@ -28,7 +34,7 @@ namespace Ironwill
         {
 			T val = (T)defaultValue;
 
-			if (!XRecordLibrary.ReadXRecord<T>(transaction, owningDictionary, settingName, ref val))
+			if (!XRecordLibrary.ReadXRecord(transaction, owningDictionary, settingName, ref val))
 			{
 				Session.LogDebug($"Value {settingName} not found; using default");
 			}
@@ -66,6 +72,11 @@ namespace Ironwill
 					break;
 				}
 			}
+		}
+
+		public void SetOwningDictionary(DBDictionary dictionary)
+		{
+			owningDictionary = dictionary;
 		}
 	}
 }

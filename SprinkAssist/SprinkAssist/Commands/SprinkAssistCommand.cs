@@ -101,11 +101,30 @@ namespace Ironwill.Commands
 			}
 		}
 	}
-
+    
 	// ----------------------------
-	internal class SprinkAssistCommand
+	internal class SprinkAssistCommandSettings
+	{
+		readonly DBDictionary dic;
+
+		public SprinkAssistCommandSettings(Transaction creationTransaction, DBDictionary dictionary)
+        {
+            dic = dictionary;
+        }
+
+		public CommandSetting<T> RegisterNew<T>(string settingName, T defaultValue)
+		{
+			CommandSetting<T> newSetting = new CommandSetting<T>(settingName, defaultValue, dic);
+			return newSetting;
+		}
+	}
+
+    // ----------------------------
+    internal class SprinkAssistCommand
 	{
 		protected DBDictionary cmdSettings;
+
+		protected SprinkAssistCommandSettings settings;
 
 		protected StateMachine stateMachine = new StateMachine();
 
@@ -114,7 +133,10 @@ namespace Ironwill.Commands
 			// This ensures that the command settings are created and/or updated
 			using (Transaction transaction = Session.StartTransaction())
 			{
-				cmdSettings = XRecordLibrary.GetCommandDictionary(transaction, GetType());
+				DBDictionary cmdSettingsDictionary = XRecordLibrary.GetCommandDictionary(transaction, GetType());
+				
+				settings = new SprinkAssistCommandSettings(transaction, cmdSettingsDictionary);
+				
 				transaction.Commit();
 			}
 		}

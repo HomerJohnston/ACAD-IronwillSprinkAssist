@@ -18,7 +18,7 @@ using Ironwill.Commands.Help;
 
 namespace Ironwill.Commands.OrientView
 {
-	public class OrientViewCmd
+	internal class OrientViewCmd : SprinkAssistCommand
 	{
 		/// <summary>
 		/// 
