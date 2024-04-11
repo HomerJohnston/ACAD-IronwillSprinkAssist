@@ -33,7 +33,7 @@ namespace Ironwill.Commands
 
 		public AddFittingCmd()
 		{
-			selectedFittingSetting = new CommandSetting<string>("SelectedFitting", elbowKeyword, cmdSettings);
+			selectedFittingSetting = settings.RegisterNew("SelectedFitting", elbowKeyword);
 		}
 
 		[CommandDescription("Draws fittings onto sprinkler pipe.", "Attempts to place fittings on ends or midpoints of pipe lines.", "Will also place it anywhere lines if another line's endpoint touches the line nearby.")]

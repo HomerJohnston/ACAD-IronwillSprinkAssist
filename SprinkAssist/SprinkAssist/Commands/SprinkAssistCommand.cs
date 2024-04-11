@@ -122,8 +122,6 @@ namespace Ironwill.Commands
     // ----------------------------
     internal class SprinkAssistCommand
 	{
-		protected DBDictionary cmdSettings;
-
 		protected SprinkAssistCommandSettings settings;
 
 		protected StateMachine stateMachine = new StateMachine();
@@ -134,9 +132,9 @@ namespace Ironwill.Commands
 			using (Transaction transaction = Session.StartTransaction())
 			{
 				DBDictionary cmdSettingsDictionary = XRecordLibrary.GetCommandDictionary(transaction, GetType());
-				
-				settings = new SprinkAssistCommandSettings(transaction, cmdSettingsDictionary);
-				
+                
+                settings = new SprinkAssistCommandSettings(transaction, cmdSettingsDictionary);
+
 				transaction.Commit();
 			}
 		}

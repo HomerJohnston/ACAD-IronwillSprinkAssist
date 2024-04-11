@@ -26,7 +26,7 @@ namespace Ironwill.Commands.ToggleLayer
 
         public ToggleLayerCmd()
         {
-            coverageShowFill = new CommandSetting<bool>("CoverageShowFill", true, cmdSettings);
+            coverageShowFill = settings.RegisterNew("CoverageShowFill", true);
         }
 
 		[CommandDescription("Toggles the solid fill of the sprinkler head coverage layer on or off.")]

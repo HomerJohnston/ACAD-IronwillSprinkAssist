@@ -27,7 +27,7 @@ namespace Ironwill.Commands
 
 		public XRoom()
 		{
-			roomTypeSetting = new CommandSetting<string>("RoomType", bathroomKeyword, cmdSettings);
+			roomTypeSetting = settings.RegisterNew("RoomType", bathroomKeyword);
 		}
 
 		bool IsValid(PromptPointResult promptPointResult)

@@ -60,30 +60,30 @@ namespace Ironwill.Commands._Obsolete
 				case DrawingUnits.Metric:
 				{
 					// TODO rework CommandSetting so I can define its name once at declaration and set up its runtime data (default and dictionary) separately?
-					MinRadiusSetting = new CommandSetting<double>("MinRadius", 1828.0, cmdSettings);
-					MaxPrimaryCoverageRadiusSetting = new CommandSetting<double>("MaxPrimaryCoverageRadius", 4572.0, cmdSettings);
-					MaxSecondaryCoverageRadiusSetting = new CommandSetting<double>("MaxSecondaryCoverageRadius", 2743.0, cmdSettings);
+					MinRadiusSetting = settings.RegisterNew("MinRadius", 1828.0);
+					MaxPrimaryCoverageRadiusSetting = settings.RegisterNew("MaxPrimaryCoverageRadius", 4572.0);
+					MaxSecondaryCoverageRadiusSetting = settings.RegisterNew("MaxSecondaryCoverageRadius", 2743.0);
 
-					TBarTileGrid = new CommandSetting<double>("TBarTileGrid", 609.6, cmdSettings);
+					TBarTileGrid = settings.RegisterNew("TBarTileGrid", 609.6);
 					break;
 				}
 				case DrawingUnits.Imperial:
 				{
-					MinRadiusSetting = new CommandSetting<double>("MinRadius", 72.0, cmdSettings);
-					MaxPrimaryCoverageRadiusSetting = new CommandSetting<double>("MaxPrimaryCoverageRadius", 180.0, cmdSettings);
-					MaxSecondaryCoverageRadiusSetting = new CommandSetting<double>("MaxSecondaryCoverageRadius", 108.0, cmdSettings);
+					MinRadiusSetting = settings.RegisterNew("MinRadius", 72.0);
+					MaxPrimaryCoverageRadiusSetting = settings.RegisterNew("MaxPrimaryCoverageRadius", 180.0);
+					MaxSecondaryCoverageRadiusSetting = settings.RegisterNew("MaxSecondaryCoverageRadius", 108.0);
 
-					TBarTileGrid = new CommandSetting<double>("TBarTileGrid", 24.0, cmdSettings);
+					TBarTileGrid = settings.RegisterNew("TBarTileGrid", 24.0);
 					break;
 				}
 			}
 
-			TBarPlacementSetting = new CommandSetting<bool>("TBarPlacement", true, cmdSettings);
+			TBarPlacementSetting = settings.RegisterNew("TBarPlacement", true);
 			
-			CeilingLayerSetting = new CommandSetting<string>("CeilingLayer", "CLNG", cmdSettings); // TODO - global settings for sensing layers names
-			WallLayerSetting = new CommandSetting<string>("WallLayer", "WALL", cmdSettings);
+			CeilingLayerSetting = settings.RegisterNew("CeilingLayer", "CLNG"); // TODO - global settings for sensing layers names
+			WallLayerSetting = settings.RegisterNew("WallLayer", "WALL");
 
-			SprinklerBlockNameSetting = new CommandSetting<string>("SprinklerBlock", "", cmdSettings); // TODO - global settings for available sprinkler blocks
+			SprinklerBlockNameSetting = settings.RegisterNew("SprinklerBlock", ""); // TODO - global settings for available sprinkler blocks
 		}
 
 		//[CommandMethod(SprinkAssist.CommandMethodPrefix, "AddSprinklerOLD", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoPaperSpace)]
