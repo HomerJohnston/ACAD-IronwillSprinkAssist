@@ -181,9 +181,14 @@
     <Compile Include="Commands\SnapOverrule\OsnapOverruleBase.cs" />
     <Compile Include="Commands\SnapOverrule\SprinklerSnapOverrule.cs" />
     <Compile Include="Commands\SnapOverrule\XrefSnapOverrule.cs" />
+    <Compile Include="Commands\StateMachine.cs" />
     <Compile Include="Extensions\Entity.cs" />
     <Compile Include="Extensions\Editor.cs" />
     <Compile Include="Helpers\GetSetEnv.cs" />
+    <Compile Include="Math\Intersection.cs" />
+    <Compile Include="Structures\BoundingVolumeHierarchy.cs" />
+    <Compile Include="Structures\BoundingVolumeHierarchyNode.cs" />
+    <Compile Include="Structures\BoundingVolumeHierarchyNodeAdapter.cs" />
     <Compile Include="Template\AutoGenTemplates.cs" />
     <Compile Include="Commands\_Obsolete\OBSOLETEAutoLabelCmd.cs" />
     <Compile Include="Commands\AutoLabel\AutoLabelCmd.cs" />

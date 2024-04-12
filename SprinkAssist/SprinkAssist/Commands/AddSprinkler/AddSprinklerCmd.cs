@@ -200,11 +200,16 @@ namespace Ironwill.Commands.AddSprinkler
 		}*/
 	}
 
-	internal class AddSprinklerKeywordManager<T> : KeywordActionManager<T> where T : AddSprinklerCmd
+	internal class AddSprinklerKeywordHandler<T> : KeywordActionHandler<T> where T : AddSprinklerCmd
 	{
-		public AddSprinklerKeywordManager(T inCommand) : base(inCommand)
-		{
-		}
+		public AddSprinklerKeywordHandler(T inCommand) : base(inCommand)
+        {
+            RegisterKeyword("Head", (transaction, cmd) =>
+            {
+                cmd.ResetTemplateSprinkler();
+                cmd.ValidateTemplateSprinkler(transaction);
+            });
+        }
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -225,19 +230,14 @@ namespace Ironwill.Commands.AddSprinkler
 			templateSprinklerId = ObjectId.Null;
 		}
 
-		AddSprinklerKeywordManager<AddSprinklerCmd> keywordActionManager;
+		AddSprinklerKeywordHandler<AddSprinklerCmd> keywordActionManager;
 
 		AddSprinklerJigger currentJigger = null;
 
+		// Constructor --------------------------------
 		public AddSprinklerCmd()
 		{
-			keywordActionManager = new AddSprinklerKeywordManager<AddSprinklerCmd>(this);
-
-			keywordActionManager.Register("Head", (transaction, T) =>
-			{
-				T.ResetTemplateSprinkler();
-				T.ValidateTemplateSprinkler(transaction);
-			});
+			keywordActionManager = new AddSprinklerKeywordHandler<AddSprinklerCmd>(this);
 		}
 
 		[CommandDescription("Places sprinkler heads.", "Intended to be used for T-Bar ceilings.", "Select a template source sprinklers and place a 'Tile Anchor' down onto the grids of a T-Bar ceiling to use.", "Displays simple circles showing min/max light hazard standard spray spacing.")]
@@ -272,8 +272,8 @@ namespace Ironwill.Commands.AddSprinkler
 					{
 						case PromptStatus.Keyword:
 						{
-							keywordActionManager.Consume(transaction, promptResult.StringResult);
-
+							string keyword = promptResult.StringResult;
+							keywordActionManager.Consume(transaction, keyword);
 							currentJigger.RemoveSprinkler();
 							break;
 						}
@@ -294,7 +294,7 @@ namespace Ironwill.Commands.AddSprinkler
 			}
 		}
 
-		bool ValidateTemplateSprinkler(Transaction transaction)
+		public bool ValidateTemplateSprinkler(Transaction transaction)
 		{
 			if (templateSprinklerId.IsNull)
 			{

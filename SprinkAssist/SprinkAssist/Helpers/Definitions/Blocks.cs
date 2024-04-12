@@ -193,5 +193,10 @@ namespace Ironwill
 				}
 			}
 		}
-	}
+
+        public static implicit operator string(BlockStruct blockStruct)
+        {
+            return blockStruct.Get();
+        }
+    }
 }
