@@ -37,6 +37,8 @@ namespace Ironwill.Commands
 		CommandSetting<string> selectedFittingSetting;
 		CommandSetting<double> snapDistanceScreenPercentage;
 
+		public BoundingVolumeHierarchy pipeBVH;
+
 		public double GetSnapDistanceScreenPercentage(Transaction transaction)
 		{
 			return snapDistanceScreenPercentage.Get(transaction);
@@ -57,6 +59,35 @@ namespace Ironwill.Commands
 			object OSMODE_Value = Application.GetSystemVariable("OSMODE");
 			Application.SetSystemVariable("OSMODE", 0);
 
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
+
+				List<string> pipeLayers = Layer.PipeLayers;
+
+				List<Entity> pipeLines = new List<Entity>();
+
+				foreach (ObjectId objectId in blockTableRecord)
+				{
+					DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
+					Line testLine = dbObject as Line;
+
+					if (testLine == null)
+					{
+						continue;
+					}
+
+					if (pipeLayers.Contains(testLine.Layer))
+					{
+						pipeLines.Add(testLine);
+					}
+				}
+
+				pipeBVH = new BoundingVolumeHierarchy(pipeLines);
+
+				//pipeBVHPolylines = pipeBVH.GeneratePolylines();
+			}
+
 			while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
 			{
 				using (Transaction transactionNew = Session.StartTransaction())
@@ -71,13 +102,15 @@ namespace Ironwill.Commands
 							{
 								Session.Log("Parent Keyword");
 								selectedFittingSetting.Set(transactionNew, promptResult.StringResult);
-								transactionNew.Abort();
+								jigger.EraseJiggedFitting();
+								transactionNew.Commit();
 								break;
 							}
 						case PromptStatus.Cancel:
 							{
 								Session.Log("Parent Cancel");
-								transactionNew.Abort();
+								jigger.EraseJiggedFitting();
+								transactionNew.Commit();
 								break;
 							}
 						case PromptStatus.OK:
@@ -149,8 +182,6 @@ namespace Ironwill.Commands
 
 		AddFittingKeywordHandler<AddFittingJigger> keywordHandler;
 
-		BoundingVolumeHierarchy pipeBVH;
-
 		List<Polyline3d> pipeBVHPolylines = new List<Polyline3d>();
 
 		Circle snapPreviewCircle = new Circle();
@@ -186,32 +217,6 @@ namespace Ironwill.Commands
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
 			keywordHandler.Consume(transaction, blockName);
 			
-			BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
-
-			List<string> pipeLayers = Layer.PipeLayers;
-
-			List<Entity> pipeLines = new List<Entity>();
-
-			foreach (ObjectId objectId in blockTableRecord)
-			{
-				DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
-				Line testLine = dbObject as Line;
-
-				if (testLine == null)
-				{
-					continue;
-				}
-
-				if (pipeLayers.Contains(testLine.Layer))
-				{
-					pipeLines.Add(testLine);
-				}
-			}
-			
-			pipeBVH = new BoundingVolumeHierarchy(pipeLines);
-			
-			//pipeBVHPolylines = pipeBVH.GeneratePolylines();
-
 			Session.GetEditor().PointMonitor += CursorUpdateMonitor;
 		}
 
@@ -366,7 +371,7 @@ namespace Ironwill.Commands
 			{
 			}
 
-			List<Entity> candidatePipeEntities = pipeBVH.FindEntities(cursorPosition);
+			List<Entity> candidatePipeEntities = owningCommand.pipeBVH.FindEntities(cursorPosition);
 
 			List<Entity> closePipeEntities = new List<Entity>();
 
@@ -472,7 +477,6 @@ namespace Ironwill.Commands
 			{
 				if (pointOnLine2d.IsEqualTo(snapPoint2d, tolerance))
 				{
-					Session.Log("A");
 					Point2d startPoint = new Point2d(line.StartPoint.X, line.StartPoint.Y);
 					Point2d endPoint = new Point2d(line.EndPoint.X, line.EndPoint.Y);
 
@@ -483,14 +487,12 @@ namespace Ironwill.Commands
 				}
 				else
 				{
-					Session.Log("B");
 					rotation += (snapPoint2d - pointOnLine2d).Angle;
 					return true;
 				}
 			}
 			else
 			{
-				Session.Log("C");
 				// Cursor is off the end of the line
 				rotation += 0;
 				return false;

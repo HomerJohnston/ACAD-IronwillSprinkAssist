@@ -34,8 +34,6 @@ namespace Ironwill.Structures
 
 			nodeAdapter = new BoundingVolumeHierarchyNodeAdapter(this);
 
-			//node adapter
-
 			if (entities ==  null || entities.Count == 0)
 			{
 				rootNode = new BoundingVolumeHierarchyNode(this);
