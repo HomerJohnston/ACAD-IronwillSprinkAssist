@@ -139,6 +139,11 @@ namespace Ironwill
 			}
 		}
 
+		public static double GlobalSelectDistance()
+		{
+			return 1000 * AutoScaleFactor();
+		}
+
 		// TODO move to a math helper class
 		public static double SanitizeAngle(double inDegrees, Vector3d segmentDirection)
 		{

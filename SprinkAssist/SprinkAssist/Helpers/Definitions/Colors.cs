@@ -18,6 +18,7 @@ namespace Ironwill
 		public const short Magenta =			6;
 		public const short White =				7;
 		public const short DarkGrey =			8;
+		public const short VeryDarkGrey =		250;
 		public const short LightGrey =			9;
 
 		public const short DarkOrange =			22;

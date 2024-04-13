@@ -187,6 +187,7 @@ namespace Ironwill
 			}
 			catch
 			{
+				Session.LogDebug($"Failed to find xrecord {name}");
 				return null;
 			}
 		}

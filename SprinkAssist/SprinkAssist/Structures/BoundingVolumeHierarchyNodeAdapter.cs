@@ -47,8 +47,8 @@ namespace Ironwill.Structures
 			
 			Extents3d extents = entity.GeometricExtents;
 
-			// TODO make the 500 expansion a setting
-			double exp = 500;
+			// TODO make the 1000 expansion a setting
+			double exp = Session.GlobalSelectDistance();
 
 			extents.ExpandBy(new Vector3d(+exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor()));
 			extents.ExpandBy(new Vector3d(-exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor()));

@@ -186,6 +186,7 @@
     <Compile Include="Extensions\Editor.cs" />
     <Compile Include="Helpers\GetSetEnv.cs" />
     <Compile Include="Math\Intersection.cs" />
+    <Compile Include="Objects\Cross.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchy.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchyNode.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchyNodeAdapter.cs" />
@@ -300,9 +301,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Objects\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Page Include="Dialogs\PipesPalette.xaml">
       <SubType>Designer</SubType>
