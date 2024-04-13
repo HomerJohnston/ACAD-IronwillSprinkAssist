@@ -33,12 +33,19 @@ namespace Ironwill.Commands
 		readonly IList<string> Keywords = new ReadOnlyCollection<string>( new List<string> { elbowKeyword, teeKeyword, capKeyword, riserKeyword, reducerKeyword, couplingKeyword } );
 
 		CommandSetting<string> selectedFittingSetting;
+		CommandSetting<double> snapDistance;
+
+		public double GetSnapDistance(Transaction transaction)
+		{
+			return snapDistance.Get(transaction);
+		}
 
 		AddFittingJigger jigger = null;
 
 		public AddFittingCmd()
 		{
 			selectedFittingSetting = settings.RegisterNew("SelectedFitting", elbowKeyword);
+			snapDistance = settings.RegisterNew("SnapDistance", 0.05);
 		}
 
 		[CommandDescription("Draws fittings onto sprinkler pipe.", "Attempts to place fittings on ends or midpoints of pipe lines.", "Will also place it anywhere lines if another line's endpoint touches the line nearby.")]
@@ -54,7 +61,7 @@ namespace Ironwill.Commands
 			{
 				using (Transaction transactionNew = Session.StartTransaction())
 				{
-					jigger = new AddFittingJigger(transactionNew, selectedFittingSetting.Get(transactionNew));
+					jigger = new AddFittingJigger(transactionNew, selectedFittingSetting.Get(transactionNew), this);
 
 					promptResult = Session.GetEditor().Drag(jigger);
 
@@ -69,11 +76,6 @@ namespace Ironwill.Commands
 							{
 								break;
 							}
-					}
-
-					if (!jigger.draw)
-					{
-						jigger.EraseJiggedFitting();
 					}
 
 					transactionNew.Commit();
@@ -107,90 +109,6 @@ namespace Ironwill.Commands
 			}
 
 			return "";
-		}
-
-		bool FindPlacementPoint(Transaction transaction, Point3d cursorPoint, Line pickedLine, out Point3d foundPoint)
-		{
-			Point3d closestCandidatePoint = new Point3d(double.MaxValue, double.MaxValue, double.MaxValue);
-
-			bool foundFittingPoint = false;
-
-			BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
-
-			Point3dCollection candidatePoints = new Point3dCollection() { pickedLine.StartPoint, pickedLine.EndPoint};
-
-			Point3d centrePoint = new Point3d(pickedLine.StartPoint.X + pickedLine.EndPoint.X, pickedLine.StartPoint.Y + pickedLine.EndPoint.Y, pickedLine.StartPoint.Z + pickedLine.EndPoint.Z).MultiplyBy(0.5);
-			candidatePoints.Add(centrePoint);
-
-			foreach (ObjectId objectId in blockTableRecord)
-			{
-				DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
-				Line testLine = dbObject as Line;
-
-				if (testLine == null)
-				{
-					continue;
-				}
-
-				Point3dCollection points = new Point3dCollection();
-				pickedLine.IntersectWith(testLine, Intersect.OnBothOperands, points, IntPtr.Zero, IntPtr.Zero);
-
-				if (points.Count != 1)
-				{
-					continue;
-				}
-
-				candidatePoints.Add(points[0]);
-			}
-
-			if (candidatePoints.Count == 0)
-			{
-				foundPoint = new Point3d(0.0, 0.0, 0.0);
-				return false;
-			}
-
-			foreach (Point3d candidateIntersectionPoint in candidatePoints)
-			{
-				if (candidateIntersectionPoint.DistanceTo(cursorPoint) < closestCandidatePoint.DistanceTo(cursorPoint))
-				{
-					foundFittingPoint = true;
-					closestCandidatePoint = candidateIntersectionPoint;
-				}
-			}
-
-			if (!foundFittingPoint)
-			{
-				foundPoint = pickedLine.GetClosestPointTo(cursorPoint, true);
-				return true;
-			}
-
-			foundPoint = closestCandidatePoint;
-			return true;
-		}
-
-		double GetFittingRotation(Point3d clickPoint, Point3d fittingPoint, Line line)
-		{
-			Point3d pointOnLine = line.GetClosestPointTo(clickPoint, true);
-
-			Point2d fittingPoint2d = new Point2d(fittingPoint.X, fittingPoint.Y);
-			Point2d clickPoint2d = new Point2d(pointOnLine.X, pointOnLine.Y);
-
-			return fittingPoint2d.GetVectorTo(clickPoint2d).Angle;
-		}
-
-		void PlaceFitting(string blockName, Point3d position, double rotation, string layer)
-		{
-			BlockReference blockRef = BlockOps.InsertBlock(blockName);
-
-			if (blockRef == null)
-			{
-				return;
-			}
-
-			blockRef.Position = position;
-			blockRef.Rotation = rotation;
-			blockRef.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
-			blockRef.Layer = layer;
 		}
 	}
 
@@ -237,6 +155,8 @@ namespace Ironwill.Commands
 		// State ----------------------------------------------------------------------------------
 		Transaction transaction;
 
+		AddFittingCmd owningCommand;
+
 		BlockReference jiggedFitting = null;
 
 		Point3d cursorPosition;
@@ -247,18 +167,22 @@ namespace Ironwill.Commands
 
 		List<Polyline3d> pipeBVHPolylines = new List<Polyline3d>();
 
-		List<Line> currentLines = new List<Line>();
+		List<Line> linesUnderCursor = new List<Line>();
 
-		Point3d jigPosition;
-		
-		double jigRotation = 0;
+		Point3d? jigPosition = null;
 
-		public bool draw = false;
+		double? jigRotation = null;
+
+		public bool HasValidResult()
+		{
+			return jigPosition != null && jigRotation != null;
+		}
 
 		// Constructor ----------------------------------------------------------------------------
-		public AddFittingJigger(Transaction transaction, string blockName) 
+		public AddFittingJigger(Transaction inTransaction, string blockName, AddFittingCmd inOwningCommand) 
 		{
-			this.transaction = transaction;
+			transaction = inTransaction;
+			owningCommand = inOwningCommand;
 
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
 			keywordHandler.Consume(transaction, blockName);
@@ -267,7 +191,7 @@ namespace Ironwill.Commands
 
 			List<string> pipeLayers = Layer.PipeLayers;
 
-			List<Entity> cachedPipeLines = new List<Entity>();
+			List<Entity> pipeLines = new List<Entity>();
 
 			foreach (ObjectId objectId in blockTableRecord)
 			{
@@ -281,22 +205,50 @@ namespace Ironwill.Commands
 
 				if (pipeLayers.Contains(testLine.Layer))
 				{
-					cachedPipeLines.Add(testLine);
+					pipeLines.Add(testLine);
 				}
 			}
+			
+			pipeBVH = new BoundingVolumeHierarchy(pipeLines);
+			
+			//pipeBVHPolylines = pipeBVH.GeneratePolylines();
 
-			if (cachedPipeLines.Count > 0)
-			{
-				pipeBVH = new BoundingVolumeHierarchy(cachedPipeLines);
-				//pipeBVHPolylines = pipeBVH.GeneratePolylines();
-			}
-
-			Session.GetEditor().PointMonitor += PointMonitor;
+			Session.GetEditor().PointMonitor += CursorUpdateMonitor;
 		}
 
 		public void Close()
 		{
-			Session.GetEditor().PointMonitor -= PointMonitor;
+			Session.GetEditor().PointMonitor -= CursorUpdateMonitor;
+		}
+
+		void CursorUpdateMonitor(object sender, PointMonitorEventArgs args)
+		{
+			linesUnderCursor.Clear();
+
+			if (args.Context == null)
+			{
+				return;
+			}
+
+			cursorPosition = args.Context.ComputedPoint;
+			cursorPosition.TransformBy(Session.GetEditor().CurrentUserCoordinateSystem.Inverse());
+
+			FullSubentityPath[] entityPaths = args.Context.GetPickedEntities();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				foreach (FullSubentityPath entityPath in entityPaths)
+				{
+					Line line = transaction.GetObject(entityPath.GetObjectIds().First(), OpenMode.ForRead) as Line;
+
+					if (line != null && Layer.PipeLayers.Contains(line.Layer))
+					{
+						linesUnderCursor.Add(line);
+					}
+				}
+
+				transaction.Commit();
+			}
 		}
 
 		// Methods --------------------------------------------------------------------------------		
@@ -332,79 +284,159 @@ namespace Ironwill.Commands
 						EraseJiggedFitting();
 						return SamplerStatus.Cancel;
 					}
+				case PromptStatus.OK:
+					{
+						UpdateJig(promptPointResult);
+						return SamplerStatus.OK;
+					}
 			}
 
-			Point3d? selectedPosition = null;
-			Point3d? selectedNearestPointOnLine = null;
+			return SamplerStatus.Cancel;
+		}
+
+		private void UpdateJig(PromptPointResult promptPointResult)
+		{
+			jigPosition = null;
+			jigRotation = null;
+
+			if (jiggedFitting == null || linesUnderCursor.Count == 0)
+			{
+				return;
+			}
 
 			Line selectedLine = null;
 
-			if (currentLines.Count == 0)
+			foreach (Line line in linesUnderCursor)
 			{
-				draw = false;
-				selectedPosition = cursorPosition;
-			}
-			else
-			{
-				draw = true;
-				foreach (Line line in currentLines)
+				Point3d candidatePoint;
+				double candidateRotation;
+
+				if (FindSnapPoint(line, out candidatePoint) && FindSnapRotation(line, candidatePoint, out candidateRotation))
 				{
-					Point3d candidatePosition;
-					Point3d candidateNearestPointOnLine;
-
-					if (FindPreferredPointOnLine(transaction, cursorPosition, line, out candidatePosition))
+					if (jigPosition == null || candidatePoint.DistanceTo(cursorPosition) < jigPosition.Value.DistanceTo(cursorPosition))
 					{
-						if (selectedPosition == null)
-						{
-							selectedPosition = candidatePosition;
-							selectedNearestPointOnLine = line.GetClosestPointTo(cursorPosition, false);
-
-							selectedLine = line;
-							continue;
-						}
-
-						candidateNearestPointOnLine = line.GetClosestPointTo(cursorPosition, false);
-
-						if (candidateNearestPointOnLine.DistanceTo(cursorPosition) < selectedNearestPointOnLine.Value.DistanceTo(cursorPosition))
-						{
-							selectedPosition = candidatePosition;
-							selectedLine = line;
-						}
+						jigPosition = candidatePoint;
+						jigRotation = candidateRotation;
+						selectedLine = line;
 					}
 				}
 			}
 
-			if (selectedPosition != null && jiggedFitting  != null)
+			if (jigPosition != null && jigRotation != null)
 			{
-				jiggedFitting.Position = selectedPosition.Value;
-
-				if (selectedLine != null)
-				{
-					jiggedFitting.Rotation = GetFittingRotation(cursorPosition, selectedPosition.Value, selectedLine);
-					jiggedFitting.Layer = selectedLine.Layer;
-				}
-				else
-				{
-					jiggedFitting.Rotation = 0;
-					jiggedFitting.Layer = Layer.DraftAid;
-				}
+				jiggedFitting.Position = jigPosition.Value;
+				jiggedFitting.Rotation = jigRotation.Value;
+				jiggedFitting.Layer = selectedLine.Layer;
 			}
-
-			return SamplerStatus.OK;
 		}
 
-		protected override bool WorldDraw(WorldDraw drawer)
+		bool FindSnapPoint(Line line, out Point3d foundPoint)
 		{
-			if (jiggedFitting == null || !draw)
+			if (line == null)
 			{
+				foundPoint = Point3d.Origin;
 				return false;
 			}
 
-			jiggedFitting.Draw(drawer);
+			// TODO extract this into a global helper
+			System.Windows.Forms.Keys modifierKeys = System.Windows.Forms.Control.ModifierKeys;
+			bool shift = (modifierKeys & System.Windows.Forms.Keys.Shift) > 0;
+			bool control = (modifierKeys & System.Windows.Forms.Keys.Control) > 0;
 
-			foreach (Polyline3d polyline in pipeBVHPolylines)
+			Point3d? closestPoint = null;
+			double closestPointDistToCursor = double.MaxValue;
+
+			Point3dCollection candidatePoints = new Point3dCollection() { line.StartPoint, line.EndPoint };
+
+			if (control && !shift)
 			{
-				//polyline.Draw(drawer);
+				Point3d centrePoint = line.StartPoint + 0.5 * (line.EndPoint - line.StartPoint);
+				candidatePoints.Add(centrePoint);
+			}
+
+			List<Entity> pipeEntities = pipeBVH.FindEntities(cursorPosition);
+
+			// TODO make this snap distance a setting
+			ViewTableRecord viewTableRecord = Session.GetEditor().GetCurrentView();
+
+			double snapScreenDistance = 500;// owningCommand.GetSnapDistance(transaction) * Session.GetEditor().GetCurrentView().Height;
+
+			foreach (Entity otherLine in pipeEntities)
+			{
+				if (otherLine == null)
+				{
+					continue;
+				}
+
+				Point3dCollection points = new Point3dCollection();
+
+				line.IntersectWith(otherLine, Intersect.OnBothOperands, /*out*/ points, IntPtr.Zero, IntPtr.Zero);
+
+				if (points.Count != 1)
+				{
+					continue;
+				}
+
+				candidatePoints.Add(points[0]);
+			}
+
+			foreach (Point3d candidatePoint in candidatePoints)
+			{
+				double distToCursor = candidatePoint.DistanceTo(cursorPosition);
+
+				if (distToCursor < snapScreenDistance * Session.AutoScaleFactor() && distToCursor < closestPointDistToCursor)
+				{
+					closestPoint = candidatePoint;
+					closestPointDistToCursor = distToCursor;
+				}
+			}
+
+			if (closestPoint != null)
+			{
+				foundPoint = closestPoint.Value;
+				return true;
+			}
+
+			foundPoint = line.GetClosestPointTo(cursorPosition, false);
+			return true;
+		}
+
+		bool FindSnapRotation(Line line, Point3d snapPoint, out double rotation)
+		{
+			System.Windows.Forms.Keys mods = System.Windows.Forms.Control.ModifierKeys;
+			bool shift = (mods & System.Windows.Forms.Keys.Shift) > 0;
+			bool control = (mods & System.Windows.Forms.Keys.Control) > 0;
+
+			Point3d pointOnLine = line.GetClosestPointTo(cursorPosition, true);
+			Point2d pointOnLine2d = new Point2d(pointOnLine.X, pointOnLine.Y);
+
+			Point2d snapPoint2d = new Point2d(snapPoint.X, snapPoint.Y);
+			Point2d cursorPos2d = new Point2d(cursorPosition.X, cursorPosition.Y);
+
+			Vector3d lineVector3d = line.EndPoint - line.StartPoint;
+			Vector2d perpendicularVector = new Vector2d(lineVector3d.X, lineVector3d.Y).GetPerpendicularVector();
+
+			Line2d line2D = new Line2d(snapPoint2d, perpendicularVector);
+
+			Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
+				
+			if (pointOnLine2d.IsEqualTo(snapPoint2d, tolerance))
+			{
+				Point2d startPoint = new Point2d(line.StartPoint.X, line.StartPoint.Y);
+				Point2d endPoint = new Point2d(line.EndPoint.X, line.EndPoint.Y);
+
+				Vector2d lineVector = endPoint - startPoint;
+
+				rotation = lineVector.Angle;
+			}
+			else
+			{
+				rotation = snapPoint2d.GetVectorTo(pointOnLine2d).Angle;
+			}
+
+			if (shift)
+			{
+				rotation += Math.PI;
 			}
 
 			return true;
@@ -424,135 +456,27 @@ namespace Ironwill.Commands
 			if (jiggedFitting != null)
 			{
 				jiggedFitting.Erase();
+				jiggedFitting.Dispose();
+
+				jiggedFitting = null;
 			}
 		}
 
-
-		void PointMonitor(object sender, PointMonitorEventArgs args)
+		protected override bool WorldDraw(WorldDraw drawer)
 		{
-			//bool snapped = (args.Context.History & PointHistoryBits.ObjectSnapped) == PointHistoryBits.ObjectSnapped;
-			//cursorPosition = snapped ? args.Context.ObjectSnappedPoint : args.Context.ComputedPoint;
-
-			cursorPosition = args.Context.ComputedPoint;
-			cursorPosition.TransformBy(Session.GetEditor().CurrentUserCoordinateSystem.Inverse());
-
-			if (args.Context == null)
+			if (jiggedFitting == null || jigPosition == null || jigRotation == null)
 			{
-				return;
+				return false;
 			}
 
-			FullSubentityPath[] entityPaths = args.Context.GetPickedEntities();
+			jiggedFitting.Draw(drawer);
 
-			if (entityPaths.Length == 0)
+			foreach (Polyline3d polyline in pipeBVHPolylines)
 			{
-				jigPosition = args.Context.ComputedPoint;
-				jigRotation = 0;
+				polyline.Draw(drawer);
 			}
 
-			List<string> lineLayers = Layer.PipeLayers;
-
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				currentLines.Clear();
-
-				foreach (FullSubentityPath entityPath in entityPaths)
-				{
-					Line line = transaction.GetObject(entityPath.GetObjectIds().First(), OpenMode.ForRead) as Line;
-
-					if (line != null && Layer.PipeLayers.Contains(line.Layer))
-					{
-						currentLines.Add(line);
-					}
-				}
-
-				transaction.Commit();
-			}
-		}
-
-		bool FindPreferredPointOnLine(Transaction transaction, Point3d cursorPoint, Line pickedLine, out Point3d foundPoint)
-		{
-			System.Windows.Forms.Keys mods = System.Windows.Forms.Control.ModifierKeys;
-			bool shift = (mods & System.Windows.Forms.Keys.Shift) > 0;
-			bool control = (mods & System.Windows.Forms.Keys.Control) > 0;
-
-			Point3d closestCandidatePoint = new Point3d(double.MaxValue, double.MaxValue, double.MaxValue);
-
-			bool foundFittingPoint = false;
-
-			Point3dCollection candidatePoints = new Point3dCollection() { pickedLine.StartPoint, pickedLine.EndPoint };
-
-			if (control && !shift)
-			{
-				Point3d centrePoint = new Point3d(pickedLine.StartPoint.X + pickedLine.EndPoint.X, pickedLine.StartPoint.Y + pickedLine.EndPoint.Y, pickedLine.StartPoint.Z + pickedLine.EndPoint.Z).MultiplyBy(0.5);
-				candidatePoints.Add(centrePoint);
-			}
-
-			if (shift && !control)
-			{
-				Point3d nearestPoint = pickedLine.GetClosestPointTo(cursorPoint, false);
-				candidatePoints.Add(nearestPoint);
-			}
-
-			var pipeEntities = pipeBVH.FindEntities(cursorPoint);
-
-			foreach (Line otherLine in pipeEntities)
-			{
-				if (otherLine == null)
-				{
-					continue;
-				}
-
-				Point3dCollection points = new Point3dCollection();
-				pickedLine.IntersectWith(otherLine, Intersect.OnBothOperands, points, IntPtr.Zero, IntPtr.Zero);
-
-				if (points.Count != 1)
-				{
-					continue;
-				}
-
-				candidatePoints.Add(points[0]);
-			}
-
-			foreach (Point3d candidateIntersectionPoint in candidatePoints)
-			{
-				if (candidateIntersectionPoint.DistanceTo(cursorPoint) < closestCandidatePoint.DistanceTo(cursorPoint))
-				{
-					foundFittingPoint = true;
-					closestCandidatePoint = candidateIntersectionPoint;
-				}
-			}
-
-			if (!foundFittingPoint)
-			{
-				foundPoint = pickedLine.GetClosestPointTo(cursorPoint, true);
-				return true;
-			}
-
-			foundPoint = closestCandidatePoint;
 			return true;
 		}
-
-		double GetFittingRotation(Point3d clickPoint, Point3d fittingPoint, Line line)
-		{
-			System.Windows.Forms.Keys mods = System.Windows.Forms.Control.ModifierKeys;
-			bool shift = (mods & System.Windows.Forms.Keys.Shift) > 0;
-			bool control = (mods & System.Windows.Forms.Keys.Control) > 0;
-
-			Point3d pointOnLine = line.GetClosestPointTo(clickPoint, true);
-
-			Point2d fittingPoint2d = new Point2d(fittingPoint.X, fittingPoint.Y);
-			Point2d clickPoint2d = new Point2d(pointOnLine.X, pointOnLine.Y);
-
-			if (shift)
-			{
-				Point2d cursorPos2d = new Point2d(cursorPosition.X, cursorPosition.Y);
-				return fittingPoint2d.GetVectorTo(cursorPos2d).Angle + Math.PI / 2;
-			}
-			else
-			{
-				return fittingPoint2d.GetVectorTo(clickPoint2d).Angle;
-			}
-		}
-
 	}
 }

@@ -46,10 +46,12 @@ namespace Ironwill.Structures
 			Matrix3d scaleMatrix = Matrix3d.Scaling(1.1, GetEntityPos(entity));
 			
 			Extents3d extents = entity.GeometricExtents;
-			
-			//extents.TransformBy(scaleMatrix);
-			extents.ExpandBy(new Vector3d(+500.0 * Session.AutoScaleFactor(), +500.0 * Session.AutoScaleFactor(), +500.0 * Session.AutoScaleFactor()));
-			extents.ExpandBy(new Vector3d(-500.0 * Session.AutoScaleFactor(), -500.0 * Session.AutoScaleFactor(), -500.0 * Session.AutoScaleFactor()));
+
+			// TODO make the 500 expansion a setting
+			double exp = 500;
+
+			extents.ExpandBy(new Vector3d(+exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor()));
+			extents.ExpandBy(new Vector3d(-exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor()));
 
 			return extents;
 		}
