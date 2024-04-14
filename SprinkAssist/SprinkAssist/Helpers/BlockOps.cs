@@ -38,27 +38,26 @@ namespace Ironwill
 
 		public static BlockReference InsertBlock(string blockPath, string blockName)
 		{
-			var doc = AcApplication.DocumentManager.MdiActiveDocument;
-			var db = doc.Database;
+			var database = Session.GetDatabase();
 			
-			using (var tr = db.TransactionManager.StartTransaction())
+			using (var transaction = Session.StartTransaction())
 			{
-				var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForWrite);
-				ObjectId btrId = bt.Has(blockName) ? bt[blockName] : ImportBlock(db, blockName, blockPath);
+				var blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForWrite);
+				ObjectId btrId = blockTable.Has(blockName) ? blockTable[blockName] : ImportBlock(database, blockName, blockPath);
 				if (btrId.IsNull)
 				{
 					Session.Log(Environment.NewLine + $"Block '{blockName}' not found.");
-					tr.Abort();
+					transaction.Abort();
 					return null;
 				}
 
-				var cSpace = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
+				var cSpace = (BlockTableRecord)transaction.GetObject(database.CurrentSpaceId, OpenMode.ForWrite);
 				var br = new BlockReference(Point3d.Origin, btrId);
 				cSpace.AppendEntity(br);
-				tr.AddNewlyCreatedDBObject(br, true);
+				transaction.AddNewlyCreatedDBObject(br, true);
 
 				// add attribute references to the block reference
-				var btr = (BlockTableRecord)tr.GetObject(btrId, OpenMode.ForWrite);
+				var btr = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForWrite);
 				var attInfos = new Dictionary<string, TextInfo>();
 				if (btr.HasAttributeDefinitions)
 				{
@@ -66,7 +65,7 @@ namespace Ironwill
 					{
 						if (id.ObjectClass.DxfName == "ATTDEF")
 						{
-							var attDef = (AttributeDefinition)tr.GetObject(id, OpenMode.ForWrite);
+							var attDef = (AttributeDefinition)transaction.GetObject(id, OpenMode.ForWrite);
 							attInfos[attDef.Tag] = new TextInfo(
 								attDef.Position,
 								attDef.AlignmentPoint,
@@ -77,12 +76,12 @@ namespace Ironwill
 							attRef.TextString = attDef.TextString;
 
 							br.AttributeCollection.AppendAttribute(attRef);
-							tr.AddNewlyCreatedDBObject(attRef, true);
+							transaction.AddNewlyCreatedDBObject(attRef, true);
 						}
 					}
 				}
 
-				tr.Commit();
+				transaction.Commit();
 
 				return br;
 			}

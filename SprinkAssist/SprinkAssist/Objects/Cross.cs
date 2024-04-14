@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Ironwill.Objects
 {
-	internal class Cross
+	internal class Cross : IDisposable
 	{
 		Line line1 = new Line();
 		Line line2 = new Line();

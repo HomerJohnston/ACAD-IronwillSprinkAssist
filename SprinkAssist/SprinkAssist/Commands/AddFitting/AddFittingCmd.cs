@@ -18,6 +18,7 @@ using Ironwill.Structures;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 using Autodesk.AutoCAD.Colors;
 using Ironwill.Objects;
+using Autodesk.Windows;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AddFittingCmd))]
 
@@ -39,6 +40,8 @@ namespace Ironwill.Commands
 
 		public BoundingVolumeHierarchy pipeBVH;
 
+		public List<BlockReference> placedFittings;
+
 		public double GetSnapDistanceScreenPercentage(Transaction transaction)
 		{
 			return snapDistanceScreenPercentage.Get(transaction);
@@ -55,6 +58,8 @@ namespace Ironwill.Commands
 		public void Main()
 		{
 			PromptResult promptResult = null;
+
+			placedFittings = new List<BlockReference>();
 
 			object OSMODE_Value = Application.GetSystemVariable("OSMODE");
 			Application.SetSystemVariable("OSMODE", 0);
@@ -86,45 +91,52 @@ namespace Ironwill.Commands
 				pipeBVH = new BoundingVolumeHierarchy(pipeLines);
 
 				//pipeBVHPolylines = pipeBVH.GeneratePolylines();
-			}
 
-			while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
-			{
-				using (Transaction transactionNew = Session.StartTransaction())
+				while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
 				{
-					AddFittingJigger jigger = new AddFittingJigger(transactionNew, selectedFittingSetting.Get(transactionNew), this);
-
-					promptResult = Session.GetEditor().Drag(jigger);
-
-					switch (promptResult.Status)
+					using (Transaction transactionNew = Session.StartTransaction())
 					{
-						case PromptStatus.Keyword:
-							{
-								Session.Log("Parent Keyword");
-								selectedFittingSetting.Set(transactionNew, promptResult.StringResult);
-								jigger.EraseJiggedFitting();
-								transactionNew.Commit();
-								break;
-							}
-						case PromptStatus.Cancel:
-							{
-								Session.Log("Parent Cancel");
-								jigger.EraseJiggedFitting();
-								transactionNew.Commit();
-								break;
-							}
-						case PromptStatus.OK:
-							{
-								Session.Log("Parent OK");
-								transactionNew.Commit();
-								break;
-							}
-					}
+						AddFittingJigger jigger = new AddFittingJigger(transactionNew, selectedFittingSetting.Get(transactionNew), this);
 
-					jigger.Close();
+						promptResult = Session.GetEditor().Drag(jigger);
+
+						switch (promptResult.Status)
+						{
+							case PromptStatus.Keyword:
+								{
+									selectedFittingSetting.Set(transactionNew, promptResult.StringResult);
+									jigger.EraseJiggedFitting();
+									transactionNew.Commit();
+									break;
+								}
+							case PromptStatus.Cancel:
+								{
+									jigger.EraseJiggedFitting();
+									transactionNew.Commit();
+									break;
+								}
+							case PromptStatus.OK:
+								{
+									if (jigger.HasValidResult())
+									{
+										placedFittings.Add(jigger.jiggedFitting);
+									}
+									else
+									{
+										jigger.EraseJiggedFitting();
+									}
+									transactionNew.Commit();
+									break;
+								}
+						}
+
+						jigger.Close();
+					}
 				}
+
+				transaction.Commit();
 			}
-			
+
 			Application.SetSystemVariable("OSMODE", OSMODE_Value);
 
 			return;
@@ -176,7 +188,7 @@ namespace Ironwill.Commands
 
 		AddFittingCmd owningCommand;
 
-		BlockReference jiggedFitting = null;
+		public BlockReference jiggedFitting = null;
 
 		Point3d cursorPosition;
 
@@ -184,9 +196,7 @@ namespace Ironwill.Commands
 
 		List<Polyline3d> pipeBVHPolylines = new List<Polyline3d>();
 
-		Circle snapPreviewCircle = new Circle();
-
-		Cross snapMidpoint = new Cross();
+		List<Point3d> snapPoints = new List<Point3d>();
 
 		List<Line> linesUnderCursor = new List<Line>();
 
@@ -211,8 +221,6 @@ namespace Ironwill.Commands
 
 			snapDistanceScreenPercentage = owningCommand.GetSnapDistanceScreenPercentage(transaction);
 
-			snapPreviewCircle.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.VeryDarkGrey);
-			snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Yellow);
 
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
 			keywordHandler.Consume(transaction, blockName);
@@ -223,9 +231,6 @@ namespace Ironwill.Commands
 		public void Close()
 		{
 			Session.GetEditor().PointMonitor -= CursorUpdateMonitor;
-
-			snapPreviewCircle.Dispose();
-			snapMidpoint.Dispose();
 		}
 
 		void CursorUpdateMonitor(object sender, PointMonitorEventArgs args)
@@ -310,7 +315,8 @@ namespace Ironwill.Commands
 
 			jigPosition = null;
 			jigRotation = null;
-			snapMidpoint.Center = null;
+
+			snapPoints.Clear();
 
 			if (jiggedFitting == null || linesUnderCursor.Count == 0)
 			{
@@ -318,20 +324,29 @@ namespace Ironwill.Commands
 			}
 
 			Line selectedLine = null;
+			Point3d selectedSnapPoint;
+			double selectedRotation;
+			double selectedLineDistToCursor = double.MaxValue;
 
 			foreach (Line line in linesUnderCursor)
 			{
-				Point3d candidatePoint;
-				double candidateRotation;
+				Point3d pointOnLine = line.GetClosestPointTo(cursorPosition, false);
 
-				if (FindSnapPoint(line, out candidatePoint) && FindSnapRotation(line, candidatePoint, out candidateRotation))
+				double candidateDistance = cursorPosition.DistanceTo(pointOnLine);
+
+				if (candidateDistance < selectedLineDistToCursor)
 				{
-					if (jigPosition == null || candidatePoint.DistanceTo(cursorPosition) < jigPosition.Value.DistanceTo(cursorPosition))
-					{
-						jigPosition = candidatePoint;
-						jigRotation = candidateRotation;
-						selectedLine = line;
-					}
+					selectedLine = line;
+					selectedLineDistToCursor = candidateDistance;
+				}
+			}
+
+			if (selectedLine != null)
+			{
+				if (FindSnapPoint(selectedLine, out selectedSnapPoint) && FindSnapRotation(selectedLine, selectedSnapPoint, out selectedRotation))
+				{
+					jigPosition = selectedSnapPoint;
+					jigRotation = selectedRotation;
 				}
 			}
 
@@ -361,14 +376,12 @@ namespace Ironwill.Commands
 
 			Point3dCollection candidatePoints = new Point3dCollection() { line.StartPoint, line.EndPoint };
 
-			if (control && !shift)
+			if (shift)
 			{
 				Point3d centrePoint = line.StartPoint + 0.5 * (line.EndPoint - line.StartPoint);
 				candidatePoints.Add(centrePoint);
-				snapMidpoint.Center = centrePoint;
-			}
-			else
-			{
+
+				snapPoints.Add(centrePoint);
 			}
 
 			List<Entity> candidatePipeEntities = owningCommand.pipeBVH.FindEntities(cursorPosition);
@@ -439,7 +452,7 @@ namespace Ironwill.Commands
 		{
 			System.Windows.Forms.Keys mods = System.Windows.Forms.Control.ModifierKeys;
 			bool shift = (mods & System.Windows.Forms.Keys.Shift) > 0;
-			bool control = (mods & System.Windows.Forms.Keys.Control) > 0;
+			bool ctrl = (mods & System.Windows.Forms.Keys.Control) > 0;
 
 			Point3d pointOnLineExt = line.GetClosestPointTo(cursorPosition, true);
 			Point2d pointOnLineExt2d = new Point2d(pointOnLineExt.X, pointOnLineExt.Y);
@@ -459,16 +472,17 @@ namespace Ironwill.Commands
 
 			Dictionary<string, double> rotationOffsets = new Dictionary<string, double>()
 			{
-				{ Blocks.Fitting_Elbow, 0 },
+				{ Blocks.Fitting_Elbow, Math.PI },
 				{ Blocks.Fitting_Tee, 0 },
 				{ Blocks.Fitting_GroovedCoupling, Math.PI/2 },
 				{ Blocks.Fitting_GroovedReducingCoupling, Math.PI/2 },
 				{ Blocks.Fitting_Cap, Math.PI },
+				{ Blocks.Fitting_Riser, 0 }
 			};
 
-			rotation = rotationOffsets[jiggedFitting.Name];
+			rotation = rotationOffsets.TryGetValueOrDefault(jiggedFitting.Name, 0);
 
-			if (shift)
+			if (ctrl)
 			{
 				rotation += Math.PI;
 			}
@@ -519,35 +533,51 @@ namespace Ironwill.Commands
 
 		protected override bool WorldDraw(WorldDraw drawer)
 		{
-			snapPreviewCircle.Radius = Math.Min(1000, snapDistance);
-			snapPreviewCircle.Center = cursorPosition;
-			snapPreviewCircle.Draw(drawer);
-
-			if (snapMidpoint.Center != null)
+			foreach (BlockReference fitting in owningCommand.placedFittings)
 			{
-				snapMidpoint.SetScreenSize(0.01);
-				
-				// TODO build some generic tolerances
-				Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
-
-				if (jiggedFitting.Position.IsEqualTo(snapMidpoint.Center.Value, tolerance))
+				if (fitting != null)
 				{
-					snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Green);
+					fitting.Draw(drawer);
 				}
-				else
+			}
+			
+			if (jiggedFitting != null && jigPosition != null && jigRotation != null)
+			{
+				jiggedFitting.Draw(drawer);
+			}
+
+			using (Circle snapPreviewCircle = new Circle())
+			{
+
+				snapPreviewCircle.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.VeryDarkGrey);
+
+				snapPreviewCircle.Radius = Math.Min(1000, snapDistance);
+				snapPreviewCircle.Center = cursorPosition;
+				snapPreviewCircle.Draw(drawer);
+			}
+
+			foreach (Point3d snapPoint in snapPoints)
+			{
+				using (Cross snapMidpoint = new Cross())
 				{
 					snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Yellow);
+					snapMidpoint.Center = snapPoint;
+					snapMidpoint.SetScreenSize(0.01);
+
+					Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
+
+					if (jiggedFitting.Position.IsEqualTo(snapPoint, tolerance))
+					{
+						snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Green);
+					}
+					else
+					{
+						snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Yellow);
+					}
+
+					snapMidpoint.Draw(drawer);
 				}
-
-				snapMidpoint.Draw(drawer);
 			}
-
-			if (jiggedFitting == null || jigPosition == null || jigRotation == null)
-			{
-				return false;
-			}
-
-			jiggedFitting.Draw(drawer);
 
 			foreach (Polyline3d polyline in pipeBVHPolylines)
 			{
