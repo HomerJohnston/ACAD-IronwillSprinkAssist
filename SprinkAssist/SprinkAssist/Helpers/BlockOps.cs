@@ -33,58 +33,60 @@ namespace Ironwill
 
 		public static BlockReference InsertBlock(string blockName)
 		{
-			return InsertBlock("", blockName);
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				return InsertBlock(transaction, "", blockName);
+			}
+		}
+		public static BlockReference InsertBlock(Transaction transaction, string blockName)
+		{
+			return InsertBlock(transaction, "", blockName);
 		}
 
-		public static BlockReference InsertBlock(string blockPath, string blockName)
+		public static BlockReference InsertBlock(Transaction transaction, string blockPath, string blockName)
 		{
 			var database = Session.GetDatabase();
 			
-			using (var transaction = Session.StartTransaction())
+			var blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForWrite);
+			ObjectId btrId = blockTable.Has(blockName) ? blockTable[blockName] : ImportBlock(database, blockName, blockPath);
+			if (btrId.IsNull)
 			{
-				var blockTable = (BlockTable)transaction.GetObject(database.BlockTableId, OpenMode.ForWrite);
-				ObjectId btrId = blockTable.Has(blockName) ? blockTable[blockName] : ImportBlock(database, blockName, blockPath);
-				if (btrId.IsNull)
-				{
-					Session.Log(Environment.NewLine + $"Block '{blockName}' not found.");
-					transaction.Abort();
-					return null;
-				}
+				Session.Log(Environment.NewLine + $"Block '{blockName}' not found.");
+				transaction.Abort();
+				return null;
+			}
 
-				var cSpace = (BlockTableRecord)transaction.GetObject(database.CurrentSpaceId, OpenMode.ForWrite);
-				var br = new BlockReference(Point3d.Origin, btrId);
-				cSpace.AppendEntity(br);
-				transaction.AddNewlyCreatedDBObject(br, true);
+			var cSpace = (BlockTableRecord)transaction.GetObject(database.CurrentSpaceId, OpenMode.ForWrite);
+			var br = new BlockReference(Point3d.Origin, btrId);
+			cSpace.AppendEntity(br);
+			transaction.AddNewlyCreatedDBObject(br, true);
 
-				// add attribute references to the block reference
-				var btr = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForWrite);
-				var attInfos = new Dictionary<string, TextInfo>();
-				if (btr.HasAttributeDefinitions)
+			// add attribute references to the block reference
+			var btr = (BlockTableRecord)transaction.GetObject(btrId, OpenMode.ForWrite);
+			var attInfos = new Dictionary<string, TextInfo>();
+			if (btr.HasAttributeDefinitions)
+			{
+				foreach (ObjectId id in btr)
 				{
-					foreach (ObjectId id in btr)
+					if (id.ObjectClass.DxfName == "ATTDEF")
 					{
-						if (id.ObjectClass.DxfName == "ATTDEF")
-						{
-							var attDef = (AttributeDefinition)transaction.GetObject(id, OpenMode.ForWrite);
-							attInfos[attDef.Tag] = new TextInfo(
-								attDef.Position,
-								attDef.AlignmentPoint,
-								attDef.Justify != AttachmentPoint.BaseLeft,
-								attDef.Rotation);
-							var attRef = new AttributeReference();
-							attRef.SetAttributeFromBlock(attDef, br.BlockTransform);
-							attRef.TextString = attDef.TextString;
+						var attDef = (AttributeDefinition)transaction.GetObject(id, OpenMode.ForWrite);
+						attInfos[attDef.Tag] = new TextInfo(
+							attDef.Position,
+							attDef.AlignmentPoint,
+							attDef.Justify != AttachmentPoint.BaseLeft,
+							attDef.Rotation);
+						var attRef = new AttributeReference();
+						attRef.SetAttributeFromBlock(attDef, br.BlockTransform);
+						attRef.TextString = attDef.TextString;
 
-							br.AttributeCollection.AppendAttribute(attRef);
-							transaction.AddNewlyCreatedDBObject(attRef, true);
-						}
+						br.AttributeCollection.AppendAttribute(attRef);
+						transaction.AddNewlyCreatedDBObject(attRef, true);
 					}
 				}
-
-				transaction.Commit();
-
-				return br;
 			}
+
+			return br;
 		}
 
 		private static ObjectId ImportBlock(Database destDb, string blockName, string sourceFileName)
@@ -252,11 +254,15 @@ namespace Ironwill
 
 		public static void CopyCommonProperties(BlockReference sourceBlock, BlockReference targetBlock)
 		{
+			targetBlock.UpgradeOpen();
+
 			targetBlock.Rotation = sourceBlock.Rotation;
 
 			targetBlock.ScaleFactors = sourceBlock.ScaleFactors;
 
 			targetBlock.Layer = sourceBlock.Layer;
+
+			targetBlock.DowngradeOpen();
 		}
 
 		public static void CopyDynamicBlockProperties(BlockReference sourceBlock, BlockReference targetBlock)

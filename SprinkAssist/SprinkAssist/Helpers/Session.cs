@@ -14,6 +14,8 @@ using Autodesk.AutoCAD.EditorInput;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using AcTransactionManager = Autodesk.AutoCAD.DatabaseServices.TransactionManager;
 using static Autodesk.AutoCAD.EditorInput.Editor;
+using Autodesk.AutoCAD.Internal;
+using System.Windows.Forms;
 
 namespace Ironwill
 {
@@ -37,6 +39,11 @@ namespace Ironwill
 		public static Transaction StartTransaction()
 		{
 			return GetDocument().TransactionManager.StartTransaction();
+		}
+
+		public static void StartUndoTransaction()
+		{
+			throw new NotImplementedException();
 		}
 
 		public static Transaction TopTransaction()
@@ -208,6 +215,11 @@ namespace Ironwill
 		public static CommandResult AsyncCommand(params object[] parameters)
 		{
 			return GetEditor().CommandAsync(parameters);
+		}
+
+		public static void SetUndoMark()
+		{
+			//Utils.SetUndoMark();
 		}
 	}
 }

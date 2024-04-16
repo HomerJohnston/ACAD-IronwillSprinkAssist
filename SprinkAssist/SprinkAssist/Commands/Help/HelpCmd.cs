@@ -7,13 +7,31 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.DatabaseServices;
+using System.Security.Cryptography.X509Certificates;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.Help.HelpCmd))]
 
 
 namespace Ironwill.Commands.Help
 {
-	public class HelpCmd
+	internal struct CommandInfo: IComparable<CommandInfo>
+	{
+		internal CommandMethodAttribute methodAttribute;
+		internal CommandDescription description;
+
+		public CommandInfo(CommandMethodAttribute methodAttribute, CommandDescription description)
+		{
+			this.methodAttribute = methodAttribute;
+			this.description = description;
+		}
+
+		public int CompareTo(CommandInfo other)
+		{
+			return methodAttribute.GlobalName.CompareTo(other.methodAttribute.GlobalName);
+		}
+	}
+
+	internal class HelpCmd
 	{
 		// TODO: in debug mode list which commands don't have help descriptions added
 		[CommandDescription("Lists all SprinkAssist commands.")]
@@ -41,14 +59,14 @@ namespace Ironwill.Commands.Help
 				$"-----------------------------------------\n"
 			};
 
-			Type[] types;
+			List<Type> types;
 
 			object[] commandClassAttributes = asm.GetCustomAttributes(typeof(CommandClassAttribute), true);
 			int numTypes = commandClassAttributes.Length;
 			
 			if (numTypes > 0)
 			{
-				types = new Type[numTypes];
+				types = new List<Type>(numTypes);
 				
 				for (int i = 0; i < numTypes; i++)
 				{
@@ -56,7 +74,7 @@ namespace Ironwill.Commands.Help
 
 					if (commandClassAttr != null)
 					{
-						types[i] = commandClassAttr.Type;
+						types.Add(commandClassAttr.Type);
 					}
 				}
 			}
@@ -66,9 +84,13 @@ namespace Ironwill.Commands.Help
 				// marked CommandClasses, then use an
 				// empty list ??????????????????
 
-				types = asm.GetExportedTypes();
+				types = new List<Type>(asm.GetExportedTypes());
 			}
-			
+
+			//types.Sort((x1, x2) => { return x1.Name.CompareTo(x2.Name); });
+
+			List<MethodInfo> methodInfos = new List<MethodInfo>();
+
 			foreach (Type type in types)
 			{
 				if (type == null)
@@ -77,76 +99,91 @@ namespace Ironwill.Commands.Help
 				}
 
 				MethodInfo[] methods = type.GetMethods();
-				
+
 				foreach (MethodInfo method in methods)
 				{
-					System.Collections.Generic.IEnumerable<CommandMethodAttribute> commandMethods = method.GetCustomAttributes<CommandMethodAttribute>(true);
-					System.Collections.Generic.IEnumerable<CommandDescription> commandDescriptions = method.GetCustomAttributes<CommandDescription>(true);
-
-					string description = string.Empty;
-					List<string> bulletPoints = new List<string>();
-
-					int methodCount = commandMethods.Count();
-					int descCount = commandDescriptions.Count();
-					
-					if (methodCount > 0 && descCount == 0)
+					if (method.GetCustomAttributes<CommandMethodAttribute>(true).Count() == 0)
 					{
-						Session.LogDebug($"WARNING: No description provided for command {method.Name} in {method.DeclaringType}");
-					}
-					else if (methodCount > 0 && descCount > 1)
-					{
-						Session.Log($"WARNING: Multiple CommandMethodDescription attributes on command {method.Name} in {method.DeclaringType}! Only last one will be used!");
-					}
-
-					foreach (CommandDescription commandDescription in commandDescriptions)
-					{
-						description = commandDescription.Description;
-
-						if (!description.EndsWith("."))
-						{
-							Session.LogDebug($"Command {method.Name} in {method.DeclaringType} has help info missing an ending period!");
-						}
-
-						bulletPoints.Clear();
-
-						foreach (string s in commandDescription.BulletPoints)
-						{
-							bulletPoints.Add(s);
-
-							if (!s.EndsWith("."))
-							{
-								Session.LogDebug($"Command {method.Name} in {method.DeclaringType} has help info missing an ending period!");
-							}
-						}
-					}
-
-					if (description == string.Empty)
-					{
-						if (bulletPoints.Count > 0)
-						{
-							Session.Log($"WARNING: Command {method.Name} in {method.DeclaringType} had bullet point info, but no description!");
-						}
-
 						continue;
 					}
 
-					foreach (CommandMethodAttribute commandMethod in commandMethods) 
+					if (method != null)
 					{
-						stringCollection.Add(commandMethod.GlobalName.ToUpper() + ": " + description);
+						methodInfos.Add(method);
+					}
+				}
+			}
 
-						foreach (string s in bulletPoints)
+			methodInfos.Sort((m1, m2) => { return m1.GetCustomAttributes<CommandMethodAttribute>(true).First().GlobalName.CompareTo(m2.GetCustomAttributes<CommandMethodAttribute>(true).First().GlobalName); });
+
+			foreach (MethodInfo method in methodInfos)
+			{
+				IEnumerable<CommandMethodAttribute> commandMethods = method.GetCustomAttributes<CommandMethodAttribute>(true);
+				IEnumerable<CommandDescription> commandDescriptions = method.GetCustomAttributes<CommandDescription>(true);
+
+				string description = string.Empty;
+				List<string> bulletPoints = new List<string>();
+
+				int methodCount = commandMethods.Count();
+				int descCount = commandDescriptions.Count();
+					
+				if (methodCount > 0 && descCount == 0)
+				{
+					Session.LogDebug($"WARNING: No description provided for command {method.Name} in {method.DeclaringType}");
+				}
+				else if (methodCount > 0 && descCount > 1)
+				{
+					Session.Log($"WARNING: Multiple CommandMethodDescription attributes on command {method.Name} in {method.DeclaringType}! Only last one will be used!");
+				}
+
+				foreach (CommandDescription commandDescription in commandDescriptions)
+				{
+					description = commandDescription.Description;
+
+					if (!description.EndsWith("."))
+					{
+						Session.LogDebug($"Command {method.Name} in {method.DeclaringType} has help info missing an ending period!");
+					}
+
+					bulletPoints.Clear();
+
+					foreach (string s in commandDescription.BulletPoints)
+					{
+						bulletPoints.Add(s);
+
+						if (!s.EndsWith("."))
 						{
-							const string bullet = "    \u2022 ";
-							stringCollection.Add(bullet + s);
+							Session.LogDebug($"Command {method.Name} in {method.DeclaringType} has help info missing an ending period!");
 						}
 					}
+				}
 
-					stringCollection.Add("");
-
-					for (int i = 0; i < 1 - bulletPoints.Count; i++)
+				if (description == string.Empty)
+				{
+					if (bulletPoints.Count > 0)
 					{
-						stringCollection.Add("");
+						Session.Log($"WARNING: Command {method.Name} in {method.DeclaringType} had bullet point info, but no description!");
 					}
+
+					continue;
+				}
+
+				foreach (CommandMethodAttribute commandMethod in commandMethods) 
+				{
+					stringCollection.Add(commandMethod.GlobalName.ToUpper() + ": " + description);
+
+					foreach (string s in bulletPoints)
+					{
+						const string bullet = "    \u2022 ";
+						stringCollection.Add(bullet + s);
+					}
+				}
+
+				stringCollection.Add("");
+
+				for (int i = 0; i < 1 - bulletPoints.Count; i++)
+				{
+					stringCollection.Add("");
 				}
 			}
 

@@ -74,7 +74,7 @@ namespace Ironwill.Commands
 
 					foreach (Line segment in segments)
 					{
-						Session.Log("Creating couplings for Line [" + segment.StartPoint.ToString() + ", " + segment.EndPoint.ToString() + "]");
+						Session.LogDebug("Creating couplings for Line [" + segment.StartPoint.ToString() + ", " + segment.EndPoint.ToString() + "]");
 						CreateCouplings(transaction, segment);
 					}
 				}
@@ -97,7 +97,7 @@ namespace Ironwill.Commands
 			
 			GetLineSegments(line, ref segments, ref breakPoints);
 
-			Session.Log("Divided line into " + segments.Count + " segments");
+			Session.LogDebug("Divided line into " + segments.Count + " segments");
 
 			return segments;
 		}

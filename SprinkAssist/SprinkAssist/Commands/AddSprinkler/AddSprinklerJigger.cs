@@ -36,7 +36,7 @@ namespace Ironwill.Commands.AddSprinkler
 
 			if (jigSprinkler == null)
 			{
-				jigSprinkler = BlockOps.InsertBlock(BlockOps.GetDynamicBlockName(templateSprinkler));
+				jigSprinkler = BlockOps.InsertBlock(transaction, BlockOps.GetDynamicBlockName(templateSprinkler));
 
 				BlockOps.CopyCommonProperties(templateSprinkler, jigSprinkler);
 				BlockOps.CopyDynamicBlockProperties(templateSprinkler, jigSprinkler);

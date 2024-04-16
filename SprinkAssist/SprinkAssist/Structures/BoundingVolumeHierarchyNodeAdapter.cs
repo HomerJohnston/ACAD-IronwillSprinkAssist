@@ -50,8 +50,8 @@ namespace Ironwill.Structures
 			// TODO make the 1000 expansion a setting
 			double exp = Session.GlobalSelectDistance();
 
-			extents.ExpandBy(new Vector3d(+exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor(), +exp * Session.AutoScaleFactor()));
-			extents.ExpandBy(new Vector3d(-exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor(), -exp * Session.AutoScaleFactor()));
+			extents.ExpandBy(new Vector3d(+exp, +exp, +exp));
+			extents.ExpandBy(new Vector3d(-exp, -exp, -exp));
 
 			return extents;
 		}

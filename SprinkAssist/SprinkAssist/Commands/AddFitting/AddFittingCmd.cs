@@ -19,11 +19,45 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 using Autodesk.AutoCAD.Colors;
 using Ironwill.Objects;
 using Autodesk.Windows;
+using Autodesk.AutoCAD.Internal;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AddFittingCmd))]
 
 namespace Ironwill.Commands
 {
+	internal struct FittingTransaction
+	{
+		Transaction transaction;
+		BlockReference fitting;
+
+		public FittingTransaction(Transaction transaction, BlockReference fitting)
+		{
+			this.transaction = transaction;
+			this.fitting = fitting;
+		}
+
+		public void Commit()
+		{
+			transaction.Commit();
+		}
+
+		public void CommitWithoutFitting()
+		{
+			fitting.Erase();
+			transaction.Commit();
+		}
+
+		public void Abort()
+		{
+			transaction.Abort();
+		}
+
+		public void Draw(WorldDraw drawer)
+		{
+			fitting.Draw(drawer);
+		}
+	}
+
 	internal class AddFittingCmd : SprinkAssistCommand
 	{
 		const string elbowKeyword = "Elbow";
@@ -40,7 +74,7 @@ namespace Ironwill.Commands
 
 		public BoundingVolumeHierarchy pipeBVH;
 
-		public List<BlockReference> placedFittings;
+		public Stack<FittingTransaction> transactionStack;
 
 		public double GetSnapDistanceScreenPercentage(Transaction transaction)
 		{
@@ -57,10 +91,12 @@ namespace Ironwill.Commands
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AddFitting", CommandFlags.Modal | CommandFlags.NoBlockEditor | CommandFlags.NoMultiple)]
 		public void Main()
 		{
+			Session.Log("Hold <shift> to snap to midpoints. Hold <ctrl> to flip the fitting.");
+
 			PromptResult promptResult = null;
-
-			placedFittings = new List<BlockReference>();
-
+			
+			transactionStack = new Stack<FittingTransaction>();
+			
 			object OSMODE_Value = Application.GetSystemVariable("OSMODE");
 			Application.SetSystemVariable("OSMODE", 0);
 
@@ -90,51 +126,87 @@ namespace Ironwill.Commands
 
 				pipeBVH = new BoundingVolumeHierarchy(pipeLines);
 
-				//pipeBVHPolylines = pipeBVH.GeneratePolylines();
+				transaction.Commit();
+			}
 
-				while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
+
+			while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
+			{
+				Transaction transaction = Session.StartTransaction();
+
+				AddFittingJigger jigger = new AddFittingJigger(transaction, selectedFittingSetting.Get(transaction), this);
+				
+				transactionStack.Push(new FittingTransaction(transaction, jigger.jiggedFitting));
+
+				promptResult = Session.GetEditor().Drag(jigger);
+
+				switch (promptResult.Status)
 				{
-					using (Transaction transactionNew = Session.StartTransaction())
-					{
-						AddFittingJigger jigger = new AddFittingJigger(transactionNew, selectedFittingSetting.Get(transactionNew), this);
-
-						promptResult = Session.GetEditor().Drag(jigger);
-
-						switch (promptResult.Status)
+					case PromptStatus.Keyword:
 						{
-							case PromptStatus.Keyword:
-								{
-									selectedFittingSetting.Set(transactionNew, promptResult.StringResult);
-									jigger.EraseJiggedFitting();
-									transactionNew.Commit();
-									break;
-								}
-							case PromptStatus.Cancel:
-								{
-									jigger.EraseJiggedFitting();
-									transactionNew.Commit();
-									break;
-								}
-							case PromptStatus.OK:
-								{
-									if (jigger.HasValidResult())
-									{
-										placedFittings.Add(jigger.jiggedFitting);
-									}
-									else
-									{
-										jigger.EraseJiggedFitting();
-									}
-									transactionNew.Commit();
-									break;
-								}
-						}
+							string keyword = promptResult.StringResult;
 
-						jigger.Close();
-					}
+							if (keyword == "Undo")
+							{
+								// Cancel the current action
+								transactionStack.Pop().Abort();
+
+								if (transactionStack.Count > 0)
+								{
+									// Cancel the previous action
+									transactionStack.Pop().Abort();
+								}
+								else
+								{
+									Session.Log("Everything has been undone.");
+								}
+							}
+							else
+							{
+								transactionStack.Pop().CommitWithoutFitting();
+
+								using (Transaction keywordTransaction = Session.StartTransaction())
+								{
+									selectedFittingSetting.Set(keywordTransaction, promptResult.StringResult);
+									keywordTransaction.Commit();
+								}
+							}
+
+							break;
+						}
+					case PromptStatus.OK:
+						{
+							if (!jigger.HasValidResult())
+							{
+								transactionStack.Pop().CommitWithoutFitting();
+							}
+							
+							break;
+						}
+					case PromptStatus.None:
+						{
+							transactionStack.Pop().CommitWithoutFitting();
+							break;
+						}
+					case PromptStatus.Cancel:
+						{
+							transactionStack.Pop().CommitWithoutFitting();
+							break;
+						}
+					default:
+						{
+							throw new System.Exception("Unknown error");
+						}
 				}
 
-				transaction.Commit();
+				Session.Log($"Transaction stack: {transactionStack.Count}");
+
+				jigger.Close();
+			}
+
+			while (transactionStack.Count > 0)
+			{
+				transactionStack.Pop().Commit();
 			}
 
 			Application.SetSystemVariable("OSMODE", OSMODE_Value);
@@ -156,27 +228,27 @@ namespace Ironwill.Commands
 		{
 			RegisterKeyword(elbowKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_Elbow);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_Elbow);
 			});
 			RegisterKeyword(teeKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_Tee);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_Tee);
 			});
 			RegisterKeyword(capKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_Cap);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_Cap);
 			});
 			RegisterKeyword(riserKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_Riser);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_Riser);
 			});
 			RegisterKeyword(reducerKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_GroovedReducingCoupling);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_GroovedReducingCoupling);
 			});
 			RegisterKeyword(couplingKeyword, (transaction, cmd) =>
 			{
-				cmd.SetFittingBlock(Blocks.Fitting_GroovedCoupling);
+				cmd.SetFittingBlock(transaction, Blocks.Fitting_GroovedCoupling);
 			});
 		}
 	}
@@ -196,7 +268,7 @@ namespace Ironwill.Commands
 
 		List<Polyline3d> pipeBVHPolylines = new List<Polyline3d>();
 
-		List<Point3d> snapPoints = new List<Point3d>();
+		List<Point3d> previewSnapPoints = new List<Point3d>();
 
 		List<Line> linesUnderCursor = new List<Line>();
 
@@ -221,6 +293,9 @@ namespace Ironwill.Commands
 
 			snapDistanceScreenPercentage = owningCommand.GetSnapDistanceScreenPercentage(transaction);
 
+#if DEBUG
+			//pipeBVHPolylines = owningCommand.pipeBVH.GeneratePolylines();
+#endif
 
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
 			keywordHandler.Consume(transaction, blockName);
@@ -267,33 +342,38 @@ namespace Ironwill.Commands
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Click to place...");
-			
+			jigPromptPointOptions.Cursor = CursorType.Crosshair;
+			jigPromptPointOptions.UserInputControls = UserInputControls.NullResponseAccepted;
 			keywordHandler.SetKeywordsForPrompt(jigPromptPointOptions);
+			jigPromptPointOptions.Keywords.Add("Undo");
 
 			PromptPointResult promptPointResult = prompts.AcquirePoint(jigPromptPointOptions);
-
+			
 			switch (promptPointResult.Status)
 			{
 				case PromptStatus.Keyword:
 					{
 						string keyword = promptPointResult.StringResult;
-						keywordHandler.Consume(transaction, keyword);
 
-						return SamplerStatus.NoChange;
-					}
-				case PromptStatus.None:
-					{
-						//EraseJiggedFitting();
+						if (keyword == "Undo")
+						{
+							return SamplerStatus.NoChange;
+						}
+
+						keywordHandler.Consume(transaction, keyword);
 						return SamplerStatus.NoChange;
 					}
 				case PromptStatus.Cancel:
 					{
-						//EraseJiggedFitting();
+						return SamplerStatus.Cancel;
+					}
+				case PromptStatus.None:
+					{
+						Session.Log("None!");
 						return SamplerStatus.Cancel;
 					}
 				case PromptStatus.Error:
 					{
-						//EraseJiggedFitting();
 						return SamplerStatus.Cancel;
 					}
 				case PromptStatus.OK:
@@ -316,7 +396,7 @@ namespace Ironwill.Commands
 			jigPosition = null;
 			jigRotation = null;
 
-			snapPoints.Clear();
+			previewSnapPoints.Clear();
 
 			if (jiggedFitting == null || linesUnderCursor.Count == 0)
 			{
@@ -374,52 +454,58 @@ namespace Ironwill.Commands
 			Point3d? closestPoint = null;
 			double closestPointDistToCursor = double.MaxValue;
 
-			Point3dCollection candidatePoints = new Point3dCollection() { line.StartPoint, line.EndPoint };
-
-			if (shift)
-			{
-				Point3d centrePoint = line.StartPoint + 0.5 * (line.EndPoint - line.StartPoint);
-				candidatePoints.Add(centrePoint);
-
-				snapPoints.Add(centrePoint);
-			}
+			Point3dCollection candidatePoints = new Point3dCollection();
 
 			List<Entity> candidatePipeEntities = owningCommand.pipeBVH.FindEntities(cursorPosition);
 
 			List<Entity> closePipeEntities = new List<Entity>();
 
-			foreach (Entity entity in candidatePipeEntities)
+			if (shift)
 			{
-				Line candidateLine = entity as Line;
-
-				if (candidateLine == null)
-				{
-					continue;
-				}
-
-				if (candidateLine.GetClosestPointTo(cursorPosition, false).DistanceTo(cursorPosition) < snapDistance)
-				{
-					closePipeEntities.Add(entity);
-				}
+				Point3d centrePoint = line.StartPoint + 0.5 * (line.EndPoint - line.StartPoint);
+				candidatePoints.Add(centrePoint);
+				previewSnapPoints.Add(centrePoint);
 			}
-
-			foreach (Entity otherLine in closePipeEntities)
+			else
 			{
-				if (otherLine == null)
+				candidatePoints = new Point3dCollection() { line.StartPoint, line.EndPoint };
+				previewSnapPoints.Add(line.StartPoint);
+				previewSnapPoints.Add(line.EndPoint);
+
+				foreach (Entity entity in candidatePipeEntities)
 				{
-					continue;
+					Line candidateLine = entity as Line;
+
+					if (candidateLine == null)
+					{
+						continue;
+					}
+
+					if (candidateLine.GetClosestPointTo(cursorPosition, false).DistanceTo(cursorPosition) < snapDistance)
+					{
+						closePipeEntities.Add(entity);
+					}
 				}
 
-				Point3dCollection points = new Point3dCollection();
-
-				line.IntersectWith(otherLine, Intersect.OnBothOperands, /*out*/ points, IntPtr.Zero, IntPtr.Zero);
-
-				if (points.Count != 1)
+				foreach (Entity otherLine in closePipeEntities)
 				{
-					continue;
-				}
+					if (otherLine == null)
+					{
+						continue;
+					}
 
-				candidatePoints.Add(points[0]);
+					Point3dCollection points = new Point3dCollection();
+
+					line.IntersectWith(otherLine, Intersect.OnBothOperands, /*out*/ points, IntPtr.Zero, IntPtr.Zero);
+
+					if (points.Count != 1)
+					{
+						continue;
+					}
+
+					candidatePoints.Add(points[0]);
+					previewSnapPoints.Add(points[0]);
+				}
 			}
 
 			foreach (Point3d candidatePoint in candidatePoints)
@@ -513,13 +599,14 @@ namespace Ironwill.Commands
 			}
 		}
 
-		public void SetFittingBlock(string newBlock)
+		public void SetFittingBlock(Transaction transaction, string newBlock)
 		{
 			EraseJiggedFitting();
 			
-			jiggedFitting = BlockOps.InsertBlock(newBlock);
+			jiggedFitting = BlockOps.InsertBlock(transaction, newBlock);
 			jiggedFitting.Layer = Layer.DraftAid;
 			jiggedFitting.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
+			jiggedFitting.Visible = false;
 		}
 
 		public void EraseJiggedFitting()
@@ -533,17 +620,21 @@ namespace Ironwill.Commands
 
 		protected override bool WorldDraw(WorldDraw drawer)
 		{
-			foreach (BlockReference fitting in owningCommand.placedFittings)
+
+			foreach (FittingTransaction fittingTransaction in owningCommand.transactionStack)
 			{
-				if (fitting != null)
-				{
-					fitting.Draw(drawer);
-				}
+				fittingTransaction.Draw(drawer);
 			}
 			
 			if (jiggedFitting != null && jigPosition != null && jigRotation != null)
 			{
-				jiggedFitting.Draw(drawer);
+				jiggedFitting.Visible = true;
+				//jiggedFitting.Draw(drawer);
+			}
+			else
+			{
+				jiggedFitting.Visible = false;
+				//Session.Log("Can't draw");
 			}
 
 			using (Circle snapPreviewCircle = new Circle())
@@ -556,13 +647,13 @@ namespace Ironwill.Commands
 				snapPreviewCircle.Draw(drawer);
 			}
 
-			foreach (Point3d snapPoint in snapPoints)
+			foreach (Point3d snapPoint in previewSnapPoints)
 			{
 				using (Cross snapMidpoint = new Cross())
 				{
 					snapMidpoint.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.Yellow);
 					snapMidpoint.Center = snapPoint;
-					snapMidpoint.SetScreenSize(0.01);
+					snapMidpoint.SetScreenSize(0.006);
 
 					Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
 
@@ -579,10 +670,12 @@ namespace Ironwill.Commands
 				}
 			}
 
+#if DEBUG
 			foreach (Polyline3d polyline in pipeBVHPolylines)
 			{
 				polyline.Draw(drawer);
 			}
+#endif
 
 			return true;
 		}
