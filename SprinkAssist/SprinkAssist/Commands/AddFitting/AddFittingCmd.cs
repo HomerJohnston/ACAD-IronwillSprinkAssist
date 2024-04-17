@@ -20,6 +20,13 @@ using Autodesk.AutoCAD.Colors;
 using Ironwill.Objects;
 using Autodesk.Windows;
 using Autodesk.AutoCAD.Internal;
+using System.Drawing;
+
+using Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline;
+using Color = Autodesk.AutoCAD.Colors.Color;
+using Ironwill.MessageFilters;
+using System.Windows.Forms;
+using Application = Autodesk.AutoCAD.ApplicationServices.Application;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AddFittingCmd))]
 
@@ -129,7 +136,6 @@ namespace Ironwill.Commands
 				transaction.Commit();
 			}
 
-
 			while (promptResult == null || promptResult.Status == PromptStatus.OK || promptResult.Status == PromptStatus.Keyword)
 			{
 				Transaction transaction = Session.StartTransaction();
@@ -149,12 +155,12 @@ namespace Ironwill.Commands
 							if (keyword == "Undo")
 							{
 								// Cancel the current action
-								transactionStack.Pop().Abort();
+								transactionStack.Pop().CommitWithoutFitting();
 
 								if (transactionStack.Count > 0)
 								{
 									// Cancel the previous action
-									transactionStack.Pop().Abort();
+									transactionStack.Pop().CommitWithoutFitting();
 								}
 								else
 								{
@@ -199,8 +205,6 @@ namespace Ironwill.Commands
 						}
 				}
 
-				Session.Log($"Transaction stack: {transactionStack.Count}");
-
 				jigger.Close();
 			}
 
@@ -223,6 +227,7 @@ namespace Ironwill.Commands
 		const string riserKeyword = "Riser";
 		const string reducerKeyword = "REducer";
 		const string couplingKeyword = "COupling";
+		const string breakKeyword = "Break";
 
 		public AddFittingKeywordHandler(T inCommand) : base(inCommand)
 		{
@@ -250,6 +255,10 @@ namespace Ironwill.Commands
 			{
 				cmd.SetFittingBlock(transaction, Blocks.Fitting_GroovedCoupling);
 			});
+			RegisterKeyword(breakKeyword, (transaction, cmd) =>
+			{
+				cmd.SetFittingBlock(transaction, Blocks.PipeBreak_Single);
+			});
 		}
 	}
 
@@ -270,7 +279,7 @@ namespace Ironwill.Commands
 
 		List<Point3d> previewSnapPoints = new List<Point3d>();
 
-		List<Line> linesUnderCursor = new List<Line>();
+		List<Entity> linesUnderCursor = new List<Entity>();
 
 		Point3d? jigPosition = null;
 
@@ -279,6 +288,10 @@ namespace Ironwill.Commands
 		double snapDistanceScreenPercentage = double.MaxValue;
 
 		double snapDistance;
+
+		double cursorSnapDistance;
+
+		ModifierKey modifierKeyFilter;
 
 		public bool HasValidResult()
 		{
@@ -293,19 +306,30 @@ namespace Ironwill.Commands
 
 			snapDistanceScreenPercentage = owningCommand.GetSnapDistanceScreenPercentage(transaction);
 
+			//cursorSnapDistanceScreenPercentage = owningCommand.GetCursorSnapDistanceScreenPercentage(transaction);
+
 #if DEBUG
 			//pipeBVHPolylines = owningCommand.pipeBVH.GeneratePolylines();
 #endif
 
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
 			keywordHandler.Consume(transaction, blockName);
-			
+
+			modifierKeyFilter = new ModifierKey();
+
+			Open();
+		}
+
+		public void Open()
+		{
 			Session.GetEditor().PointMonitor += CursorUpdateMonitor;
+			System.Windows.Forms.Application.AddMessageFilter(modifierKeyFilter);
 		}
 
 		public void Close()
 		{
 			Session.GetEditor().PointMonitor -= CursorUpdateMonitor;
+			System.Windows.Forms.Application.RemoveMessageFilter(modifierKeyFilter);
 		}
 
 		void CursorUpdateMonitor(object sender, PointMonitorEventArgs args)
@@ -319,30 +343,13 @@ namespace Ironwill.Commands
 
 			cursorPosition = args.Context.ComputedPoint;
 			cursorPosition.TransformBy(Session.GetEditor().CurrentUserCoordinateSystem.Inverse());
-
-			FullSubentityPath[] entityPaths = args.Context.GetPickedEntities();
-
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				foreach (FullSubentityPath entityPath in entityPaths)
-				{
-					Line line = transaction.GetObject(entityPath.GetObjectIds().First(), OpenMode.ForRead) as Line;
-
-					if (line != null && Layer.PipeLayers.Contains(line.Layer))
-					{
-						linesUnderCursor.Add(line);
-					}
-				}
-
-				transaction.Commit();
-			}
 		}
 
 		// Methods --------------------------------------------------------------------------------		
 		protected override SamplerStatus Sampler(JigPrompts prompts)
 		{
 			JigPromptPointOptions jigPromptPointOptions = new JigPromptPointOptions(Environment.NewLine + "Click to place...");
-			jigPromptPointOptions.Cursor = CursorType.Crosshair;
+			jigPromptPointOptions.Cursor = CursorType.Invisible;
 			jigPromptPointOptions.UserInputControls = UserInputControls.NullResponseAccepted;
 			keywordHandler.SetKeywordsForPrompt(jigPromptPointOptions);
 			jigPromptPointOptions.Keywords.Add("Undo");
@@ -369,7 +376,6 @@ namespace Ironwill.Commands
 					}
 				case PromptStatus.None:
 					{
-						Session.Log("None!");
 						return SamplerStatus.Cancel;
 					}
 				case PromptStatus.Error:
@@ -385,20 +391,47 @@ namespace Ironwill.Commands
 
 			return SamplerStatus.Cancel;
 		}
-		 
+
+		List<Entity> potentialLinesUnderCursor;
+
 		private void UpdateJig(PromptPointResult promptPointResult)
 		{
+			if (jiggedFitting == null)
+			{
+				return;
+			}
+
 			using (var View = Session.GetEditor().GetCurrentView())
 			{
-				snapDistance = Math.Min(Session.GlobalSelectDistance(), snapDistanceScreenPercentage * View.Height);
+				short PICKBOX = (short)Application.GetSystemVariable("PICKBOX");
+				Point2d SCREENSIZE = (Point2d)Application.GetSystemVariable("SCREENSIZE");
+
+				double percentage = PICKBOX / SCREENSIZE.Y;
+
+				snapDistance = Math.Min(Session.GlobalCloseToDistance(), snapDistanceScreenPercentage * View.Height);
+				cursorSnapDistance = percentage * View.Height;
 			}
 
 			jigPosition = null;
 			jigRotation = null;
 
+			linesUnderCursor.Clear();
 			previewSnapPoints.Clear();
 
-			if (jiggedFitting == null || linesUnderCursor.Count == 0)
+			potentialLinesUnderCursor = owningCommand.pipeBVH.FindEntities(cursorPosition);
+
+			using (PickBox pickBox = new PickBox(cursorPosition, cursorSnapDistance))
+			{
+				foreach (Line line in potentialLinesUnderCursor)
+				{
+					if (pickBox.IntersectsWithLine(line))
+					{
+						linesUnderCursor.Add(line);
+					}
+				}
+			}
+
+			if (linesUnderCursor.Count == 0)
 			{
 				return;
 			}
@@ -410,6 +443,11 @@ namespace Ironwill.Commands
 
 			foreach (Line line in linesUnderCursor)
 			{
+				if (line == null)
+				{
+					continue;
+				}
+
 				Point3d pointOnLine = line.GetClosestPointTo(cursorPosition, false);
 
 				double candidateDistance = cursorPosition.DistanceTo(pointOnLine);
@@ -456,8 +494,6 @@ namespace Ironwill.Commands
 
 			Point3dCollection candidatePoints = new Point3dCollection();
 
-			List<Entity> candidatePipeEntities = owningCommand.pipeBVH.FindEntities(cursorPosition);
-
 			List<Entity> closePipeEntities = new List<Entity>();
 
 			if (shift)
@@ -472,11 +508,11 @@ namespace Ironwill.Commands
 				previewSnapPoints.Add(line.StartPoint);
 				previewSnapPoints.Add(line.EndPoint);
 
-				foreach (Entity entity in candidatePipeEntities)
+				foreach (Entity entity in potentialLinesUnderCursor)
 				{
 					Line candidateLine = entity as Line;
 
-					if (candidateLine == null)
+					if (candidateLine == null || line == candidateLine)
 					{
 						continue;
 					}
@@ -554,6 +590,7 @@ namespace Ironwill.Commands
 
 			Line2d line2D = new Line2d(snapPoint2d, perpendicularVector);
 
+			// TODO tolerance
 			Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
 
 			Dictionary<string, double> rotationOffsets = new Dictionary<string, double>()
@@ -629,22 +666,26 @@ namespace Ironwill.Commands
 			if (jiggedFitting != null && jigPosition != null && jigRotation != null)
 			{
 				jiggedFitting.Visible = true;
-				//jiggedFitting.Draw(drawer);
+				jiggedFitting.Highlight();
 			}
 			else
 			{
 				jiggedFitting.Visible = false;
-				//Session.Log("Can't draw");
+				jiggedFitting.Unhighlight();
 			}
 
 			using (Circle snapPreviewCircle = new Circle())
 			{
-
 				snapPreviewCircle.Color = Color.FromColorIndex(ColorMethod.ByColor, Colors.VeryDarkGrey);
 
 				snapPreviewCircle.Radius = Math.Min(1000, snapDistance);
 				snapPreviewCircle.Center = cursorPosition;
 				snapPreviewCircle.Draw(drawer);
+			}
+
+			using (PickBox pickBox = new PickBox(cursorPosition, cursorSnapDistance))
+			{
+				pickBox.Draw(drawer);
 			}
 
 			foreach (Point3d snapPoint in previewSnapPoints)
@@ -676,8 +717,92 @@ namespace Ironwill.Commands
 				polyline.Draw(drawer);
 			}
 #endif
-
+			
 			return true;
+		}
+
+		private class PickBox : IDisposable
+		{
+			List<Point3d> points;
+			List<Line> lines;
+
+			public PickBox(Point3d center, double radius)
+			{
+				points = new List<Point3d>();
+				lines = new List<Line>();
+
+				points.Add(new Point3d(center.X - radius, center.Y + radius, 0));
+				points.Add(new Point3d(center.X + radius, center.Y + radius, 0));
+				points.Add(new Point3d(center.X + radius, center.Y - radius, 0));
+				points.Add(new Point3d(center.X - radius, center.Y - radius, 0));
+
+				lines.Add(new Line(points[0], points[1]));
+				lines.Add(new Line(points[1], points[2]));
+				lines.Add(new Line(points[2], points[3]));
+				lines.Add(new Line(points[3], points[0]));
+			}
+
+			public bool IntersectsWithLine(Line line)
+			{
+				foreach (Line segment in lines)
+				{
+					Point3dCollection intersectionPoints = new Point3dCollection();
+
+					segment.IntersectWith(line, Intersect.OnBothOperands, intersectionPoints, IntPtr.Zero, IntPtr.Zero);
+
+					if (intersectionPoints.Count > 0)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			public void Draw(WorldDraw drawer)
+			{
+				foreach (Line line in lines)
+				{
+					line.Draw(drawer);
+				}
+			}
+
+			public void Dispose()
+			{
+				foreach (Line line in lines)
+				{
+					line.Dispose();
+				}
+			}
+		}
+
+		private List<Line> GetPickBox()
+		{
+			Point3d P1 = new Point3d(cursorPosition.X - cursorSnapDistance, cursorPosition.Y + cursorSnapDistance, 0);
+			Point3d P2 = new Point3d(cursorPosition.X + cursorSnapDistance, cursorPosition.Y + cursorSnapDistance, 0);
+			Point3d P3 = new Point3d(cursorPosition.X + cursorSnapDistance, cursorPosition.Y - cursorSnapDistance, 0);
+			Point3d P4 = new Point3d(cursorPosition.X - cursorSnapDistance, cursorPosition.Y - cursorSnapDistance, 0);
+
+			return new List<Line>()
+			{
+				new Line(P1, P2),
+				new Line(P2, P3),
+				new Line(P3, P4),
+				new Line(P4, P1)
+			};
+		}
+
+		private Point3dCollection GetPickBoxVertices()
+		{
+			Point3dCollection point3DCollection = new Point3dCollection()
+			{
+				new Point3d(cursorPosition.X - cursorSnapDistance, cursorPosition.Y + cursorSnapDistance, 0),
+				new Point3d(cursorPosition.X + cursorSnapDistance, cursorPosition.Y + cursorSnapDistance, 0),
+				new Point3d(cursorPosition.X + cursorSnapDistance, cursorPosition.Y - cursorSnapDistance, 0),
+				new Point3d(cursorPosition.X - cursorSnapDistance, cursorPosition.Y - cursorSnapDistance, 0),
+			};
+
+			return point3DCollection;
 		}
 	}
 }

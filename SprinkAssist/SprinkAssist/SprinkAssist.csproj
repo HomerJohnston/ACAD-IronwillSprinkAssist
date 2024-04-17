@@ -187,6 +187,7 @@
     <Compile Include="Helpers\GetSetEnv.cs" />
     <Compile Include="Helpers\UndoTransaction.cs" />
     <Compile Include="Math\Intersection.cs" />
+    <Compile Include="MessageFilters\ModifierKey.cs" />
     <Compile Include="Objects\Cross.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchy.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchyNode.cs" />

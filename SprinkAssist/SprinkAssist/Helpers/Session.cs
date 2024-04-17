@@ -61,6 +61,11 @@ namespace Ironwill
 			return GetDocument().Editor;
 		}
 
+		public static void RefreshViewport()
+		{
+			GetDocument().Window.Focus();
+		}
+
 		public static LayerTable GetLayerTable(Transaction transaction, OpenMode openMode = OpenMode.ForRead)
 		{
 			return transaction.GetObject(GetDatabase().LayerTableId, openMode) as LayerTable;
@@ -146,9 +151,14 @@ namespace Ironwill
 			}
 		}
 
-		public static double GlobalSelectDistance()
+		public static double GlobalCloseToDistance()
 		{
 			return 1000 * AutoScaleFactor();
+		}
+
+		public static double GlobalSelectDistance()
+		{
+			return 100 * AutoScaleFactor();
 		}
 
 		// TODO move to a math helper class
