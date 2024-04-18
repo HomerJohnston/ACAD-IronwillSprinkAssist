@@ -10,6 +10,7 @@ using System.Reflection;
 using Autodesk.AutoCAD.Colors;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
+using System.Runtime.InteropServices;
 
 // This line is not mandatory, but improves loading performances
 [assembly: ExtensionApplication(typeof(Ironwill.SprinkAssist))]
@@ -47,6 +48,7 @@ namespace Ironwill
 			DisplayVersion(null, null);
 			
 			Session.GetDocumentManager().DocumentCreated += DisplayVersion;
+			Session.GetDocumentManager().DocumentCreated += DisplaySaveFidelity;
 
 			Commands.SnapOverrule.SprinklerSnapOverruleCmd.Initialize();
 			Commands.ToggleXrefLock.ToggleXrefLockCmd.Initialize();
@@ -55,7 +57,8 @@ namespace Ironwill
 		void IExtensionApplication.Terminate()
 		{
 			// Do plug-in application clean up here
-			AcApplication.DocumentManager.DocumentCreated -= DisplayVersion;
+			Session.GetDocumentManager().DocumentCreated -= DisplayVersion;
+			Session.GetDocumentManager().DocumentCreated -= DisplaySaveFidelity;
 		}
 
 		private void DisplayVersion(object sender, DocumentCollectionEventArgs e)
@@ -69,8 +72,21 @@ namespace Ironwill
 				"-------------------{0}" +
 				"SprinkAssist Loaded{0}" +
 				"Version: {1}{0}" +
-				//"-------------------", Environment.NewLine, GhettoVersion));
-				"-------------------", Environment.NewLine, assemblyName);
+				"-------------------{0}", Environment.NewLine, assemblyName);
+		}
+
+		private void DisplaySaveFidelity(object sender, DocumentCollectionEventArgs e)
+		{
+			short SAVEFIDELITY = (short)AcApplication.GetSystemVariable("SAVEFIDELITY");
+
+			if (SAVEFIDELITY > 0)
+			{
+				Session.Log(
+					"!!!!!!!!!! WARNING !!!!!!!!!!{0}" +
+					"SAVEFIDELITY AutoCAD variable is not set to 0 for this drawing.{0}" +
+					"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", Environment.NewLine
+					);
+			}
 		}
 	}
 }

@@ -38,7 +38,7 @@ namespace Ironwill
 
 				if (!XRecordLibrary.ReadXRecord(transaction, owningDictionary, settingName, ref val))
 				{
-					Session.LogDebug($"Value {settingName} not found; using default");
+					Session.LogDebug($"Value {settingName} not found; using default\n");
 				}
 
 				transaction.Commit();
@@ -53,11 +53,20 @@ namespace Ironwill
 
 			if (!XRecordLibrary.ReadXRecord(transaction, owningDictionary, settingName, ref val))
 			{
-				Session.LogDebug($"Value {settingName} not found; using default");
+				Session.LogDebug($"Value {settingName} not found; using default\n");
 			}
 
 			return val;
         }
+
+		public void Set(T newValue)
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				Set(transaction, newValue);
+				transaction.Commit();
+			}
+		}
 
 		public void Set(Transaction transaction, T newValue)
 		{

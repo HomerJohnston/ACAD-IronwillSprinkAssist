@@ -44,6 +44,66 @@ namespace Ironwill.Commands.AutoPublish
 			useAutoSheetNumbering = settings.RegisterNew("UseAutoSheetNumbering", true);
 		}
 
+		[CommandDescription("Choose whether Auto Publish command automatically renumbers sheets or not.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoPublishUseAutoSheetNumbering", CommandFlags.NoBlockEditor | CommandFlags.Modal)]
+		public void SetUseAutoSheetNumbering()
+		{
+			string currentValue = useAutoSheetNumbering.Get() ? "Yes" : "No";
+			PromptKeywordOptions promptKeywordOptions = new PromptKeywordOptions($"Automatically renumber sheets before publishing PDFs? <{currentValue}>");
+			promptKeywordOptions.AppendKeywordsToMessage = true;
+			promptKeywordOptions.Keywords.Add("Yes");
+			promptKeywordOptions.Keywords.Add("No");
+
+			PromptResult promptResult = null;
+			
+			bool repeatPrompt = true;
+
+			while (repeatPrompt)
+			{
+				promptResult = Session.GetEditor().GetKeywords(promptKeywordOptions);
+
+				switch (promptResult.Status)
+				{
+					case PromptStatus.OK:
+						{
+							string keyword = promptResult.StringResult;
+
+							bool result;
+
+							if (keyword == "Yes")
+							{
+								result = true;
+								repeatPrompt = false;
+							}
+							else if (keyword == "No")
+							{
+								result = false;
+								repeatPrompt = false;
+							}
+							else
+							{
+								Session.Log("Requires Y or N, or escape to cancel.");
+								break;
+							}
+
+							useAutoSheetNumbering.Set(result);
+
+							break;
+						}
+					case PromptStatus.Cancel:
+						{
+							repeatPrompt = false;
+							break;
+						}
+					default:
+						{
+							Session.Log("Requires Y or N, or escape to cancel.");
+							break;
+						}
+				}
+			}
+		}
+
         // TODO remove hardcoded property strings somehow`
         [CommandDescription("Quick-publish PDF of drawings.", "Publishes all layouts starting with 'FP' to a PDF file named according to the ProjectName_1 file property.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
@@ -331,6 +391,14 @@ namespace Ironwill.Commands.AutoPublish
 
 								if (layoutIndices.TryGetValue(layout.LayoutName, out index))
 								{
+									// I first set them to some "null" value inside a nested transaction. This is to work around an AutoCAD 'bug' where the values won't change if they already exist as the same value.
+									using (Transaction dummy = Session.StartTransaction())
+									{
+										BlockOps.SetBlockAttribute(dummy, blockReference, "X", "-");
+										BlockOps.SetBlockAttribute(dummy, blockReference, "Y", "-");
+										dummy.Commit();
+									}
+
 									BlockOps.SetBlockAttribute(transaction, blockReference, "X", index.ToString());
 									BlockOps.SetBlockAttribute(transaction, blockReference, "Y", layoutIndices.Count.ToString());
 								}
