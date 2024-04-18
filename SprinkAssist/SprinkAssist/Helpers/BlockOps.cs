@@ -137,7 +137,9 @@ namespace Ironwill
 		public static void SetBlockAttributes(Transaction transaction, BlockReference blockReference, Dictionary<string, string> attributeText)
 		{
 			if (blockReference == null)
+			{
 				return;
+			}
 
 			AttributeCollection attributeCollection = blockReference.AttributeCollection;
 
@@ -145,11 +147,36 @@ namespace Ironwill
 			{
 				AttributeReference attributeReference = transaction.GetObject(attObjectId, OpenMode.ForWrite, false) as AttributeReference;
 
-				if (attributeText.ContainsKey(attributeReference.Tag))
+				string text;
+
+				if (attributeText.TryGetValue(attributeReference.Tag, out text))
 				{
 					attributeReference.UpgradeOpen();
-					attributeReference.TextString = attributeText[attributeReference.Tag];
-					attributeReference.TransformBy(blockReference.BlockTransform);
+					attributeReference.TextString = text;
+					attributeReference.TransformBy(blockReference.BlockTransform); // TODO: Does this force the block to update? Do I need this?
+				}
+			}
+		}
+
+		public static void SetBlockAttribute(Transaction transaction, BlockReference blockReference, string attribute, string text)
+		{
+			if (blockReference == null)
+			{
+				return;
+			}
+
+			AttributeCollection attributeCollection = blockReference.AttributeCollection;
+
+			foreach (ObjectId attObjectId in attributeCollection)
+			{
+				AttributeReference attributeReference = transaction.GetObject(attObjectId, OpenMode.ForWrite, false) as AttributeReference;
+
+				if (attribute == attributeReference.Tag)
+				{
+					attributeReference.UpgradeOpen();
+					attributeReference.TextString = text;
+					//attributeReference.TransformBy(blockReference.BlockTransform); // TODO: why did i have this??? Does this force the block to update? Do I need this?
+					attributeReference.DowngradeOpen();
 				}
 			}
 		}
@@ -294,7 +321,53 @@ namespace Ironwill
 					}
 				}
 			}
+		}
 
+		public void GetEveryBlockReference(string blockName)
+		{
+			Document doc = Application.DocumentManager.MdiActiveDocument;
+			Editor ed = doc.Editor;
+			Database db = doc.Database;
+
+			var SelectedEntOpt = new PromptEntityOptions("\nSlect a BlockReference.");
+			SelectedEntOpt.SetRejectMessage("\nMust be a BlockReference");
+			SelectedEntOpt.AddAllowedClass(typeof(BlockReference), true);
+
+			var SelectedEnt = ed.GetEntity(SelectedEntOpt);
+			if (SelectedEnt.Status != PromptStatus.OK) return;
+
+			var ListofLayoutAndBlockReference = new List<string[]>();
+
+			string BLockName = "";
+
+			using (Transaction tr = db.TransactionManager.StartTransaction())
+			{
+				var BR = SelectedEnt.ObjectId.GetObject(OpenMode.ForRead) as BlockReference;
+				var BTR = BR.BlockTableRecord.GetObject(OpenMode.ForRead) as BlockTableRecord;
+
+				BLockName = BTR.Name;
+
+				var AllReferences = BTR.GetBlockReferenceIds(true, false);
+
+				foreach (ObjectId n in AllReferences)
+				{
+					var BlockReference = n.GetObject(OpenMode.ForRead) as BlockReference;
+					var LayoutBTR = BlockReference.OwnerId.GetObject(OpenMode.ForRead) as BlockTableRecord;
+					if (!LayoutBTR.IsLayout) continue;
+					var Layout = LayoutBTR.LayoutId.GetObject(OpenMode.ForRead) as Layout;
+
+
+
+					ListofLayoutAndBlockReference.Add(new string[2] { Layout.LayoutName, BlockReference.ObjectId.ToString() });
+				}
+
+				tr.Commit();
+			}
+			ed.WriteMessage("\nFound " + ListofLayoutAndBlockReference.Count + " references of selected Block (" + BLockName + ").");
+			foreach (var n in ListofLayoutAndBlockReference)
+			{
+				ed.WriteMessage("\nLayout named " + n[0] + " contanins " + n[1] + ".");
+			}
 		}
 	}
 }

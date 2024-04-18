@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Autodesk.AutoCAD;
 using global::Autodesk.AutoCAD.DatabaseServices;
 using global::Autodesk.AutoCAD.Internal;
-using System;
 
 namespace Ironwill.Helpers
 {

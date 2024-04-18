@@ -185,6 +185,7 @@
     <Compile Include="Extensions\Entity.cs" />
     <Compile Include="Extensions\Editor.cs" />
     <Compile Include="Helpers\GetSetEnv.cs" />
+    <Compile Include="Helpers\Test.cs" />
     <Compile Include="Helpers\UndoTransaction.cs" />
     <Compile Include="Math\Intersection.cs" />
     <Compile Include="MessageFilters\ModifierKey.cs" />

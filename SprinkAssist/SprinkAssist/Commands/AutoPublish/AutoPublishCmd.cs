@@ -13,16 +13,22 @@ using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.PlottingServices;
 using Autodesk.AutoCAD.Publishing;
 
-using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Ironwill.Commands.Help;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
+using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoPublish.AutoPublishCmd))]
 
 namespace Ironwill.Commands.AutoPublish
 {
-	public class AutoPublishCmd
+	enum ELayoutSortMethod
+	{
+		Default,		// AutoCAD default - as of this writing, it defaults to alphabetical sort
+		Alphabetical,	// 
+		TabOrder,		// Keeps the layout list in the same order as the dwg file shows them
+	}
+
+	internal class AutoPublishCmd : SprinkAssistCommand
 	{
 		string currentPdfFile;
 
@@ -31,7 +37,14 @@ namespace Ironwill.Commands.AutoPublish
 
 		readonly string defaultOverrideName = "FP Dwgs - [WHATEVER YOU TYPE HERE] - IssuedFor (Date)";
 
-        // TODO remove hardcoded property strings somehow
+		CommandSetting<bool> useAutoSheetNumbering;
+
+		public AutoPublishCmd()
+		{
+			useAutoSheetNumbering = settings.RegisterNew("UseAutoSheetNumbering", true);
+		}
+
+        // TODO remove hardcoded property strings somehow`
         [CommandDescription("Quick-publish PDF of drawings.", "Publishes all layouts starting with 'FP' to a PDF file named according to the ProjectName_1 file property.")]
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoPublish", CommandFlags.NoBlockEditor | CommandFlags.Modal | CommandFlags.NoHistory | CommandFlags.NoUndoMarker)]
 		public void Main()
@@ -42,8 +55,13 @@ namespace Ironwill.Commands.AutoPublish
 
             CheckSystemPlotVariables();
 
+			if (useAutoSheetNumbering.Get())
+			{
+				AutoSetSheetNumbers();
+			}
+
             // Get all layout names
-            List<string> layouts = GetLayouts();
+            List<string> layouts = GetLayoutNames(ELayoutSortMethod.TabOrder);
 
 			if (layouts.Count == 0)
 			{
@@ -189,19 +207,29 @@ namespace Ironwill.Commands.AutoPublish
 			System.Diagnostics.Process.Start(currentPdfFile);
 		}
 
-		List<string> GetLayouts()
+		List<string> GetLayoutNames(ELayoutSortMethod sortMethod)
 		{
-			List<string> layouts = new List<string>();
+			List<string> layoutNames = new List<string>();
+
+			List<Layout> layouts = GetLayouts(sortMethod);
+			
+			foreach (Layout layout in layouts)
+			{
+				layoutNames.Add(layout.LayoutName);
+			}
+
+			return layoutNames;
+		}
+
+
+		List<Layout> GetLayouts(ELayoutSortMethod sortMethod)
+		{
+			List<Layout> layouts = new List<Layout>();
 
 			using (Transaction transaction = Session.StartTransaction())
 			{
 				Database db = Session.GetDatabase();
 				DBDictionary layoutDictionary = transaction.GetObject(db.LayoutDictionaryId, OpenMode.ForRead, false) as DBDictionary;
-
-				if (layoutDictionary == null)
-				{
-					return layouts;
-				}
 
 				foreach (DBDictionaryEntry layoutEntry in layoutDictionary)
 				{
@@ -221,8 +249,28 @@ namespace Ironwill.Commands.AutoPublish
 						continue;
 					}
 
-					layouts.Add(layoutName);
+					layouts.Add(layout);
 				}
+
+				switch (sortMethod)
+				{
+					case ELayoutSortMethod.TabOrder:
+						{
+							layouts.Sort((x, y) => { return x.TabOrder - y.TabOrder; });
+							break;
+						}
+					case ELayoutSortMethod.Alphabetical:
+						{
+							layouts.Sort((x, y) => { return x.LayoutName.CompareTo(y.LayoutName); });
+							break;
+						}
+					default:
+						{
+							break;
+						}
+				}
+
+				transaction.Commit();
 			}
 
 			return layouts;
@@ -236,6 +284,83 @@ namespace Ironwill.Commands.AutoPublish
 			}
 
 			return layoutName.StartsWith("FP");
+		}
+
+		[CommandDescription("Automatic layout sheet numbering.", "Sets the X/Y numbers of all FP___ sheets automatically.")]
+		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoSheetNumbers", CommandFlags.NoBlockEditor | CommandFlags.Modal)]
+		public void AutoSetSheetNumbers()
+		{
+			Document doc = Application.DocumentManager.MdiActiveDocument;
+			Editor ed = doc.Editor;
+			Database db = doc.Database;
+
+			string blockname = "_TitleblockDwgNo";
+
+			Dictionary<string, int> layoutIndices = GetLayoutIndices();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				BlockTable blockTable = (BlockTable)transaction.GetObject(db.BlockTableId, OpenMode.ForRead);
+
+				foreach (ObjectId blockID in blockTable)
+				{
+					BlockTableRecord blockTableRecord = (BlockTableRecord)transaction.GetObject(blockID, OpenMode.ForRead);
+
+					if (!blockTableRecord.IsLayout && !blockTableRecord.IsAnonymous)
+					{
+						if (blockTableRecord.Name.ToUpper() == blockname.ToUpper())
+						{
+							ObjectIdCollection allBlocks = blockTableRecord.GetBlockReferenceIds(true, false);
+
+							foreach (ObjectId blockReferenceId in allBlocks)
+							{
+								BlockReference blockReference = (BlockReference)transaction.GetObject(blockReferenceId, OpenMode.ForRead);
+
+								BlockTableRecord layoutBTR = (BlockTableRecord)transaction.GetObject(blockReference.OwnerId, OpenMode.ForRead);
+
+								if (!layoutBTR.IsLayout)
+								{
+									continue;
+								}
+
+								Layout layout = (Layout)transaction.GetObject(layoutBTR.LayoutId, OpenMode.ForRead);
+
+								Session.Log($"Found {blockname} on layout {layout.LayoutName}");
+
+								int index;
+
+								if (layoutIndices.TryGetValue(layout.LayoutName, out index))
+								{
+									BlockOps.SetBlockAttribute(transaction, blockReference, "X", index.ToString());
+									BlockOps.SetBlockAttribute(transaction, blockReference, "Y", layoutIndices.Count.ToString());
+								}
+							}
+						}
+					}
+				}
+
+				transaction.Commit();
+
+				return;
+			}
+		}
+
+		public Dictionary<string, int> GetLayoutIndices()
+		{
+			Dictionary<string, int> layoutIndices = new Dictionary<string, int>();
+
+			Database db = Session.GetDatabase();
+
+			int index = 1;
+
+			List<Layout> layouts = GetLayouts(ELayoutSortMethod.TabOrder);
+
+			foreach (Layout layout in layouts)
+			{
+				layoutIndices.Add(layout.LayoutName, index++);
+			}
+
+			return layoutIndices;
 		}
 	}
 }

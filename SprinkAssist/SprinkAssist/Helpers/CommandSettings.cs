@@ -30,7 +30,24 @@ namespace Ironwill
 			owningDictionary = inOwningDictionary;
 		}
 
-        public T Get(Transaction transaction)
+		public T Get()
+		{
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				T val = (T)defaultValue;
+
+				if (!XRecordLibrary.ReadXRecord(transaction, owningDictionary, settingName, ref val))
+				{
+					Session.LogDebug($"Value {settingName} not found; using default");
+				}
+
+				transaction.Commit();
+
+				return val;
+			}
+		}
+
+		public T Get(Transaction transaction)
         {
 			T val = (T)defaultValue;
 
