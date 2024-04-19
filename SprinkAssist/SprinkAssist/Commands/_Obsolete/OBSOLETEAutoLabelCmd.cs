@@ -423,7 +423,7 @@ namespace Ironwill.Commands._Obsolete
 				}
 			}
 
-			BlockReference blockReference = BlockOps.InsertBlock(labelBlockName);
+			BlockReference blockReference = BlockOps.InsertBlock(transaction, labelBlockName);
 
 			if (blockReference == null)
 			{
@@ -433,6 +433,7 @@ namespace Ironwill.Commands._Obsolete
 
 			Vector3d segmentDirection = (segment.EndPoint - segment.StartPoint).GetNormal();
 
+			blockReference.UpgradeOpen();
 			
 			blockReference.Position = midPoint;
 			blockReference.ScaleFactors = new Scale3d(GetScaleFactor());
@@ -440,6 +441,8 @@ namespace Ironwill.Commands._Obsolete
 			blockReference.Layer = Layer.PipeLabel.Get();
 
 			BlockOps.SetBlockAttributes(transaction, blockReference, attributeText);
+
+			blockReference.DowngradeOpen();
 		}
 	}
 }

@@ -227,7 +227,7 @@ namespace Ironwill.Template
 						posX += 1000;
 					}
 
-					BlockReference newBlock = BlockOps.InsertBlock(sprinklerDefinition.baseBlockName);
+					BlockReference newBlock = BlockOps.InsertBlock(transaction, sprinklerDefinition.baseBlockName);
 
 					newBlock.Position = new Point3d(posX, posY, 0);
 					newBlock.ScaleFactors = new Scale3d(100, 100, 100);

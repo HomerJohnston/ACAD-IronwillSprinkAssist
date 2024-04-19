@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -198,5 +199,22 @@ namespace Ironwill
         {
             return blockStruct.Get();
         }
+
+		public override int GetHashCode()
+		{
+			return Get().GetHashCode();
+		}
+
+		public override bool Equals(object other)
+		{
+			BlockStruct blockStruct = other as BlockStruct;
+
+			if (blockStruct == null)
+			{
+				return false;
+			}
+
+			return Get() == blockStruct.Get();
+		}
     }
 }

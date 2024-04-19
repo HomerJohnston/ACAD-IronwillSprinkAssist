@@ -12,6 +12,7 @@ using Autodesk.AutoCAD.EditorInput;
 
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Ironwill.Commands.Help;
+using Ironwill.Structures;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoCouplingsCmd))]
 
@@ -19,6 +20,36 @@ namespace Ironwill.Commands
 {
 	class AutoCouplingsCmd
 	{
+		BoundingVolumeHierarchy pipeBVH;
+
+		public AutoCouplingsCmd() {
+
+			List<Entity> pipeLines = new List<Entity>();
+
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
+
+				foreach (ObjectId objectId in blockTableRecord)
+				{
+					DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
+					Line testLine = dbObject as Line;
+
+					if (testLine == null)
+					{
+						continue;
+					}
+
+					if (Layer.PipeLayers.Contains(testLine.Layer))
+					{
+						pipeLines.Add(testLine);
+					}
+				}
+			}
+
+			pipeBVH = new BoundingVolumeHierarchy(pipeLines);
+		}
+
 		/// ---------------------------------------------------------------------------------------
 		/**  */
 		[CommandDescription("Attempts to place simple coupling symbols along the pipe.", "This should be used AFTER labelling is complete and BEFORE you trim pipe lines around other pipes.", "This does not currently take fitting take-outs into account; it is a simple system to help fitters list material only.")]
@@ -360,6 +391,7 @@ namespace Ironwill.Commands
 		{
 			List<Point3d> connectionPoints = new List<Point3d>();
 
+
 			foreach (Line line in segments)
 			{
 				// Find all points where A) an end of this line touches another line or B) where there is a fitting such as a tee or riser along the length of the line *and* the other connected pipe is of a larger type
@@ -419,7 +451,7 @@ namespace Ironwill.Commands
 
 				currentPoint += pipeLengthDir;
 
-				BlockReference blockReference = BlockOps.InsertBlock(Blocks.Fitting_GroovedCoupling.Get());
+				BlockReference blockReference = BlockOps.InsertBlock(transaction, Blocks.Fitting_GroovedCoupling.Get());
 
 				if (blockReference == null)
 				{

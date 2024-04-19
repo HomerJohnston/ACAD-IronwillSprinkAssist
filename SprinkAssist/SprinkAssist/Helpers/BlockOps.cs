@@ -31,13 +31,7 @@ namespace Ironwill
 			}
 		}
 
-		public static BlockReference InsertBlock(string blockName)
-		{
-			using (Transaction transaction = Session.StartTransaction())
-			{
-				return InsertBlock(transaction, "", blockName);
-			}
-		}
+		// I need to pass in a transaction for this because an Entity var becomes invalid for use outside of the transaction used to create the entity.
 		public static BlockReference InsertBlock(Transaction transaction, string blockName)
 		{
 			return InsertBlock(transaction, "", blockName);
@@ -224,7 +218,7 @@ namespace Ironwill
 
 			string newBlockName = BlockOps.GetDynamicBlockName(sourceBlock);
 
-			BlockReference newBlock = BlockOps.InsertBlock(newBlockName);
+			BlockReference newBlock = BlockOps.InsertBlock(transaction, newBlockName);
 
 			if (newBlock == null)
 			{
@@ -246,7 +240,7 @@ namespace Ironwill
 		{
 			//Session.Log("Recreating block " + blockName);
 
-			BlockReference newBlock = InsertBlock(blockName);
+			BlockReference newBlock = InsertBlock(transaction, blockName);
 
 			if (newBlock == null)
 			{

@@ -111,8 +111,6 @@ namespace Ironwill.Commands
 			{
 				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
-				List<string> pipeLayers = Layer.PipeLayers;
-
 				List<Entity> pipeLines = new List<Entity>();
 
 				foreach (ObjectId objectId in blockTableRecord)
@@ -125,7 +123,7 @@ namespace Ironwill.Commands
 						continue;
 					}
 
-					if (pipeLayers.Contains(testLine.Layer))
+					if (Layer.PipeLayers.Contains(testLine.Layer))
 					{
 						pipeLines.Add(testLine);
 					}
@@ -293,6 +291,13 @@ namespace Ironwill.Commands
 
 		ModifierKey modifierKeyFilter;
 
+		Dictionary<string, string> layerOverrides = new Dictionary<string, string>()
+			{
+				{ Blocks.Fitting_GroovedCoupling, Layer.SystemFitting },
+				{ Blocks.Fitting_GroovedReducingCoupling, Layer.SystemFitting },
+				{ Blocks.PipeBreak_Single, Layer.Detail }
+			};
+
 		public bool HasValidResult()
 		{
 			return jigPosition != null && jigRotation != null;
@@ -306,10 +311,8 @@ namespace Ironwill.Commands
 
 			snapDistanceScreenPercentage = owningCommand.GetSnapDistanceScreenPercentage(transaction);
 
-			//cursorSnapDistanceScreenPercentage = owningCommand.GetCursorSnapDistanceScreenPercentage(transaction);
-
 #if DEBUG
-			//pipeBVHPolylines = owningCommand.pipeBVH.GeneratePolylines();
+			pipeBVHPolylines = owningCommand.pipeBVH.GeneratePolylines();
 #endif
 
 			keywordHandler = new AddFittingKeywordHandler<AddFittingJigger>(this);
@@ -330,6 +333,11 @@ namespace Ironwill.Commands
 		{
 			Session.GetEditor().PointMonitor -= CursorUpdateMonitor;
 			System.Windows.Forms.Application.RemoveMessageFilter(modifierKeyFilter);
+
+			foreach (Polyline3d line in pipeBVHPolylines)
+			{
+				line.Dispose();
+			}
 		}
 
 		void CursorUpdateMonitor(object sender, PointMonitorEventArgs args)
@@ -472,7 +480,17 @@ namespace Ironwill.Commands
 			{
 				jiggedFitting.Position = jigPosition.Value;
 				jiggedFitting.Rotation = jigRotation.Value;
-				jiggedFitting.Layer = selectedLine.Layer;
+
+				string overrideLayer;
+
+				if (layerOverrides.TryGetValue(jiggedFitting.Name, out overrideLayer))
+				{
+					jiggedFitting.Layer = overrideLayer;
+				}
+				else
+				{
+					jiggedFitting.Layer = selectedLine.Layer;
+				}
 			}
 		}
 
@@ -600,7 +618,8 @@ namespace Ironwill.Commands
 				{ Blocks.Fitting_GroovedCoupling, Math.PI/2 },
 				{ Blocks.Fitting_GroovedReducingCoupling, Math.PI/2 },
 				{ Blocks.Fitting_Cap, Math.PI },
-				{ Blocks.Fitting_Riser, 0 }
+				{ Blocks.Fitting_Riser, 0 },
+				{ Blocks.PipeBreak_Single, Math.PI }
 			};
 
 			rotation = rotationOffsets.TryGetValueOrDefault(jiggedFitting.Name, 0);
