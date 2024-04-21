@@ -272,6 +272,76 @@ namespace Ironwill.Commands
 
 		private List<Line> DivideLineIntoSegments(Transaction transaction, Line selectedLine, List<Point3d> breakPoints)
 		{
+			Stack<Line> undividedSegments = new Stack<Line>();
+			
+			undividedSegments.Push(selectedLine);
+
+			List<Line> foundSegments = new List<Line>();
+
+			while (undividedSegments.Count > 0)
+			{
+				Line segmentToCheck = undividedSegments.Pop();
+
+				bool split = false;
+
+				for (int i = breakPoints.Count - 1; i >= 0; --i)
+				{
+					Point3d breakPoint = breakPoints[i];
+
+					const double threshold = 0.5; // TODO tolerance!
+
+					// Check if this break point is on one of the ends of the line, ignore it if so
+					if (breakPoint.DistanceTo(segmentToCheck.StartPoint) < threshold || breakPoint.DistanceTo(segmentToCheck.EndPoint) < threshold)
+					{
+						continue;
+					}
+
+					// Check if this break point is not on the line, ignore it if so
+					Point3d closestPoint = segmentToCheck.GetClosestPointTo(breakPoint, false);
+
+					if (closestPoint.DistanceTo(breakPoint) > threshold)
+					{
+						continue;
+					}
+
+					List<Line> splitLines = SplitLine(segmentToCheck, breakPoint);
+					splitLines.ForEach(line => undividedSegments.Push(line));
+
+					breakPoints.RemoveAt(i--);
+
+					split = true;
+
+					if (segmentToCheck.Database == null)
+					{
+						segmentToCheck.Dispose();
+					}
+
+					break;
+				}
+
+				if (!split)
+				{
+					foundSegments.Add(segmentToCheck);
+				}
+			}
+
+			return foundSegments;
+		}
+
+		private List<Line> SplitLine(Line lineToSplit, Point3d splitPoint)
+		{
+			Line firstSegment = new Line(lineToSplit.StartPoint, splitPoint);
+			Line secondSegment = new Line(lineToSplit.EndPoint, splitPoint);
+
+			firstSegment.Layer = lineToSplit.Layer;
+			secondSegment.Layer = lineToSplit.Layer;
+
+			return new List<Line>() { firstSegment, secondSegment };
+		}
+
+		/*
+		private List<Line> DivideLineIntoSegments(Transaction transaction, Line selectedLine, List<Point3d> breakPoints)
+		{
 			List<Line> segments = new List<Line>();
 
 			bool split = false;
@@ -340,6 +410,7 @@ namespace Ironwill.Commands
 
 			return segments;
 		}
+		*/
 
 		enum EConnectionType
 		{
