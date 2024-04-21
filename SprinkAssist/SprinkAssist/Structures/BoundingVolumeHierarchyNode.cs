@@ -15,31 +15,33 @@ using SysColor = System.Drawing.Color;
 
 namespace Ironwill.Structures
 {
-	internal class BoundingVolumeHierarchyNode
+	internal class BoundingVolumeHierarchyNode<T> where T : Entity
 	{
 		public Extents3d extents;
 
-		public BoundingVolumeHierarchyNode parent = null;
-		public BoundingVolumeHierarchyNode leftChild = null;
-		public BoundingVolumeHierarchyNode rightChild = null;
+		public BoundingVolumeHierarchyNode<T> parent = null;
+		public BoundingVolumeHierarchyNode<T> leftChild = null;
+		public BoundingVolumeHierarchyNode<T> rightChild = null;
 
 		public int depth;
 		public int nodeNumber; // for debugging only
 
-		public List<Entity> entities; // will only contain anything in leaf nodes
+		public List<T> entities; // will only contain anything in leaf nodes
 
 		private float minEntitySize = float.MaxValue;
 		private float maxEntitySize = float.MinValue;
 
-		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy bvh)
+		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy<T> bvh)
 		{
 			nodeNumber = bvh.nodeCount++;
 		}
 
-		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy bvh, List<Entity> inEntities, BoundingVolumeHierarchyNode inParent, int currentDepth)
+		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy<T> bvh, List<T> inEntities, BoundingVolumeHierarchyNode<T> inParent, int currentDepth)
 		{
 			nodeNumber = bvh.nodeCount++;
 			
+			bvh.maxDepth = Math.Max(currentDepth, bvh.maxDepth);
+
 			parent = inParent;
 			depth = currentDepth;
 
@@ -55,7 +57,7 @@ namespace Ironwill.Structures
 				leftChild = null;
 				rightChild = null;
 
-				foreach(Entity entity in entities)
+				foreach(T entity in entities)
 				{
 					ComputeVolume(bvh.nodeAdapter);
 					SplitIfNecessary(bvh.nodeAdapter);
@@ -69,7 +71,7 @@ namespace Ironwill.Structures
 			}
 		}
 
-		void ComputeVolume(BoundingVolumeHierarchyNodeAdapter nodeAdapter)
+		void ComputeVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
 		{
 			AssignVolume(nodeAdapter.GetExtents(entities[0]));
 
@@ -84,7 +86,7 @@ namespace Ironwill.Structures
 			extents = volume;
 		}
 
-		void ExpandVolume(BoundingVolumeHierarchyNodeAdapter nodeAdapter, Extents3d inExtents)
+		void ExpandVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, Extents3d inExtents)
 		{
 			bool expanded = false;
 
@@ -102,7 +104,7 @@ namespace Ironwill.Structures
 			}
 		}
 
-		void SplitIfNecessary(BoundingVolumeHierarchyNodeAdapter nodeAdapter)
+		void SplitIfNecessary(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
 		{
 			if (entities.Count > nodeAdapter.bvh.leafObjectMax)
 			{
@@ -110,11 +112,11 @@ namespace Ironwill.Structures
 			}
 		}
 
-		void SplitNode(BoundingVolumeHierarchyNodeAdapter nodeAdapter)
+		void SplitNode(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
 		{
-			List<Entity> splitList = entities;
+			List<T> splitList = entities;
 
-			foreach (Entity entity in splitList)
+			foreach (T entity in splitList)
 			{
 				nodeAdapter.UnmapObject(entity);
 			}
@@ -127,25 +129,25 @@ namespace Ironwill.Structures
 			{
 				case Axis.X:
 					{
-						splitList.Sort(delegate (Entity ent1, Entity ent2) { return nodeAdapter.GetEntityPos(ent1).X.CompareTo(nodeAdapter.GetEntityPos(ent2).X); });
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).X.CompareTo(nodeAdapter.GetEntityPos(ent2).X); });
 						break;
 					}
 				case Axis.Y:
 					{
-						splitList.Sort(delegate (Entity ent1, Entity ent2) { return nodeAdapter.GetEntityPos(ent1).Y.CompareTo(nodeAdapter.GetEntityPos(ent2).Y); });
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).Y.CompareTo(nodeAdapter.GetEntityPos(ent2).Y); });
 						break;
 					}
 				case Axis.Z:
 					{
-						splitList.Sort(delegate (Entity ent1, Entity ent2) { return nodeAdapter.GetEntityPos(ent1).Z.CompareTo(nodeAdapter.GetEntityPos(ent2).Z); });
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).Z.CompareTo(nodeAdapter.GetEntityPos(ent2).Z); });
 						break;
 					}
 			}
 
 			center = splitList.Count / 2;
 			
-			leftChild = new BoundingVolumeHierarchyNode(nodeAdapter.bvh, splitList.GetRange(0, center), this, depth + 1);
-			rightChild = new BoundingVolumeHierarchyNode(nodeAdapter.bvh, splitList.GetRange(center, splitList.Count - center), this, depth + 1);
+			leftChild = new BoundingVolumeHierarchyNode<T>(nodeAdapter.bvh, splitList.GetRange(0, center), this, depth + 1);
+			rightChild = new BoundingVolumeHierarchyNode<T>(nodeAdapter.bvh, splitList.GetRange(center, splitList.Count - center), this, depth + 1);
 			
 			entities = null;
 		}
@@ -169,7 +171,7 @@ namespace Ironwill.Structures
 			return Axis.Z;
 		}
 
-		bool RefitVolume(BoundingVolumeHierarchyNodeAdapter nodeAdapter)
+		bool RefitVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
 		{
 			if (entities.Count == 0)
 			{
@@ -194,7 +196,7 @@ namespace Ironwill.Structures
 			}
 		}
 
-		void ChildExpanded(BoundingVolumeHierarchyNodeAdapter nodeAdapter, BoundingVolumeHierarchyNode childNode)
+		void ChildExpanded(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, BoundingVolumeHierarchyNode<T> childNode)
 		{
 			bool expanded = false;
 
@@ -214,7 +216,7 @@ namespace Ironwill.Structures
 			}
 		}
 
-		void ChildRefit(BoundingVolumeHierarchyNodeAdapter nodeAdapter, bool recurse = true)
+		void ChildRefit(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, bool recurse = true)
 		{
 			extents = leftChild.extents;
 			extents.AddExtents(rightChild.extents);
@@ -225,7 +227,7 @@ namespace Ironwill.Structures
 			}
 		}
 
-		public void GeneratePolylines(ref List<Polyline3d> polylines)
+		public void GeneratePolylines(ref List<Polyline3d> polylines, int maxDepth)
 		{
 			Point3d[] bottomPoints = new Point3d[4] 
 			{
@@ -276,17 +278,16 @@ namespace Ironwill.Structures
 				corner3, 
 				corner4
 			};
-
-			int maxDepth = 20;
-			double percentage = depth / maxDepth;
+			
+			double percentage = Math.Min((double)depth / (double)maxDepth, 1.0);
 
 			foreach (Point3d[] pointCollection in pointCollections)
 			{
 				Point3dCollection point3dCollection = new Point3dCollection(pointCollection);
 				Polyline3d polyline = new Polyline3d(Poly3dType.SimplePoly, point3dCollection, true);
 
-				SysColor c1 = SysColor.Firebrick;
-				SysColor c2 = SysColor.Teal;
+				SysColor c1 = SysColor.Green;
+				SysColor c2 = SysColor.Red;
 
 				SysColor c3 = Blend(c1, c2, percentage);
 
@@ -297,12 +298,12 @@ namespace Ironwill.Structures
 
 			if (leftChild != null)
 			{
-				leftChild.GeneratePolylines(ref polylines);
+				leftChild.GeneratePolylines(ref polylines, maxDepth);
 			}
 
 			if (rightChild != null)
 			{
-				rightChild.GeneratePolylines(ref polylines); 
+				rightChild.GeneratePolylines(ref polylines, maxDepth); 
 			}
 		}
 		public static SysColor Blend(SysColor color, SysColor backColor, double amount)
@@ -313,7 +314,7 @@ namespace Ironwill.Structures
 			return SysColor.FromArgb(255, r, g, b);
 		}
 
-		public void GetEntities(ref List<Entity> foundEntities)
+		public void GetEntities(ref List<T> foundEntities)
 		{
 			if (entities != null)
 			{

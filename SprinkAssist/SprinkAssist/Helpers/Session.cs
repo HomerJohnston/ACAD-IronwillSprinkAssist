@@ -134,7 +134,7 @@ namespace Ironwill
 		}
 
 		/** Assumes all standard input comes in metric units. */
-		public static double AutoScaleFactor()
+		public static double UnitsScaleFactor(DrawingUnits incomingUnits = DrawingUnits.Metric)
 		{
 			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
 			Database db = doc.Database;
@@ -153,12 +153,12 @@ namespace Ironwill
 
 		public static double GlobalCloseToDistance()
 		{
-			return 1000 * AutoScaleFactor();
+			return 1000 * UnitsScaleFactor();
 		}
 
 		public static double GlobalSelectDistance()
 		{
-			return 100 * AutoScaleFactor();
+			return 100 * UnitsScaleFactor();
 		}
 
 		// TODO move to a math helper class

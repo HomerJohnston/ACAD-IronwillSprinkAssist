@@ -8,40 +8,20 @@ using System.Threading.Tasks;
 
 namespace Ironwill.Structures
 {
-	internal class BoundingVolumeHierarchyNodeAdapter
+	internal abstract class BoundingVolumeHierarchyNodeAdapter<T> where T : Entity
 	{
-		Dictionary<Entity, BoundingVolumeHierarchyNode> entityToLeafMap = new Dictionary<Entity, BoundingVolumeHierarchyNode>();
+		Dictionary<T, BoundingVolumeHierarchyNode<T>> entityToLeafMap = new Dictionary<T, BoundingVolumeHierarchyNode<T>>();
 
+		public BoundingVolumeHierarchy<T> bvh;
 
-
-		public BoundingVolumeHierarchy bvh;
-
-		public BoundingVolumeHierarchyNodeAdapter(BoundingVolumeHierarchy inBvh)
+		public void AssignBVH(BoundingVolumeHierarchy<T> inBvh)
 		{
 			bvh = inBvh;
 		}
 
-        public Point3d GetEntityPos(Entity entity)
-		{
-			switch (entity)
-			{
-				case Line line:
-				{
-					Point3d p1 = line.StartPoint;
-					Point3d p2 = line.EndPoint;
+		public abstract Point3d GetEntityPos(T entity);
 
-					return new Point3d(p1.X + p2.X, p1.Y + p2.Y, p1.Z + p2.Z) * 0.5;
-				}
-				case Circle circle:
-				{
-					return circle.Center;
-				}
-			}
-
-			return new Point3d(0, 0, 0);
-		}
-
-		public Extents3d GetExtents(Entity entity)
+		public Extents3d GetExtents(T entity)
 		{
 			Matrix3d scaleMatrix = Matrix3d.Scaling(1.1, GetEntityPos(entity));
 			
@@ -56,22 +36,22 @@ namespace Ironwill.Structures
 			return extents;
 		}
 
-        public double GetSize(Entity entity)
+        public double GetSize(T entity)
 		{
 			return entity.GeometricExtents.MaxPoint.DistanceTo(entity.GeometricExtents.MinPoint);
 		}
 
-        public void MapObjectToNode(Entity entity, BoundingVolumeHierarchyNode node)
+        public void MapObjectToNode(T entity, BoundingVolumeHierarchyNode<T> node)
 		{
 			entityToLeafMap[entity] = node;
 		}
 
-        public void UnmapObject(Entity entity)
+        public void UnmapObject(T entity)
 		{
 			entityToLeafMap.Remove(entity);
         }
 
-        public void CheckMap(Entity entity) 
+        public void CheckMap(T entity) 
 		{
             if (!entityToLeafMap.ContainsKey(entity))
 			{
@@ -79,7 +59,7 @@ namespace Ironwill.Structures
 			}
         }
 
-        public BoundingVolumeHierarchyNode GetLeaf(Entity entity) 
+        public BoundingVolumeHierarchyNode<T> GetLeaf(T entity) 
 		{
 			return entityToLeafMap[entity];
         }

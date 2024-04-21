@@ -130,6 +130,18 @@ namespace Ironwill
 		public static BlockStruct Sprinkler_SW_04_Dry = 				new BlockStruct(	"S_Sidewall_04_Dry",			Layer.SystemHead.Get()		);
 		public static BlockStruct Sprinkler_SW_04_Vert = 				new BlockStruct(	"S_Sidewall_04_Vert",			Layer.SystemHead.Get()		);
 		*/
+
+		public List<string> FittingBlocks = new List<string>()
+		{
+			Fitting_GroovedReducingCoupling,
+			Fitting_GroovedCoupling,
+			Fitting_Elbow,
+			Fitting_Tee,
+			Fitting_Cap,
+			Fitting_Riser,
+			Fitting_ConcentricReducer,
+			Fitting_EccentricReducer
+		};
 	}
 
 	public class BlockStruct

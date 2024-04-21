@@ -88,8 +88,8 @@ namespace Ironwill.Commands.AddSprinkler
 		public TileAnchor()
 		{
 			_tileVector = new Vector3d(1, 0, 0);
-			_tileLength1 = 1220 * Session.AutoScaleFactor();
-			_tileLength2 = 610 * Session.AutoScaleFactor();
+			_tileLength1 = 1220 * Session.UnitsScaleFactor();
+			_tileLength2 = 610 * Session.UnitsScaleFactor();
 		}
 
 		public TileAnchor(TileAnchor refAnchor)
@@ -115,7 +115,7 @@ namespace Ironwill.Commands.AddSprinkler
 
 		public void DrawAnchor(WorldDraw draw, Point3d inAnchorPos, Vector3d inTileVector, double inTileLength1, double inTileLength2)
 		{
-			Circle anchorCircle = new Circle(inAnchorPos, Vector3d.ZAxis, anchorRadius * Session.AutoScaleFactor());
+			Circle anchorCircle = new Circle(inAnchorPos, Vector3d.ZAxis, anchorRadius * Session.UnitsScaleFactor());
 			anchorCircle.Color = anchorColor;
 
 
@@ -127,10 +127,10 @@ namespace Ironwill.Commands.AddSprinkler
 			Line anchorLeg2 = new Line(inAnchorPos, inAnchorPos + inTileLength2 * vector2);
 			anchorLeg2.Color = anchorLeg2Color;
 
-			Circle anchorLeg1Circle = new Circle(inAnchorPos + inTileLength1 * inTileVector, Vector3d.ZAxis, anchorLegRadius * Session.AutoScaleFactor());
+			Circle anchorLeg1Circle = new Circle(inAnchorPos + inTileLength1 * inTileVector, Vector3d.ZAxis, anchorLegRadius * Session.UnitsScaleFactor());
 			anchorLeg1Circle.Color = anchorLeg1Color;
 
-			Circle anchorLeg2Circle = new Circle(inAnchorPos + inTileLength2 * vector2, Vector3d.ZAxis, anchorLegRadius * Session.AutoScaleFactor());
+			Circle anchorLeg2Circle = new Circle(inAnchorPos + inTileLength2 * vector2, Vector3d.ZAxis, anchorLegRadius * Session.UnitsScaleFactor());
 			anchorLeg2Circle.Color = anchorLeg2Color;
 
 			draw.Geometry.Draw(anchorCircle);

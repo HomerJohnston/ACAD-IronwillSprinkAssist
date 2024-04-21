@@ -79,7 +79,7 @@ namespace Ironwill.Commands
 		CommandSetting<string> selectedFittingSetting;
 		CommandSetting<double> snapDistanceScreenPercentage;
 
-		public BoundingVolumeHierarchy pipeBVH;
+		public BoundingVolumeHierarchy<Line> pipeBVH;
 
 		public Stack<FittingTransaction> transactionStack;
 
@@ -111,11 +111,12 @@ namespace Ironwill.Commands
 			{
 				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
 
-				List<Entity> pipeLines = new List<Entity>();
+				List<Line> pipeLines = new List<Line>();
 
 				foreach (ObjectId objectId in blockTableRecord)
 				{
 					DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
+					
 					Line testLine = dbObject as Line;
 
 					if (testLine == null)
@@ -129,7 +130,7 @@ namespace Ironwill.Commands
 					}
 				}
 
-				pipeBVH = new BoundingVolumeHierarchy(pipeLines);
+				pipeBVH = new BoundingVolumeHierarchy<Line>(new BoundingVolumeHierarchyNodeAdapter_Line(), pipeLines);
 
 				transaction.Commit();
 			}
@@ -400,7 +401,7 @@ namespace Ironwill.Commands
 			return SamplerStatus.Cancel;
 		}
 
-		List<Entity> potentialLinesUnderCursor;
+		List<Line> potentialLinesUnderCursor;
 
 		private void UpdateJig(PromptPointResult promptPointResult)
 		{
@@ -609,7 +610,7 @@ namespace Ironwill.Commands
 			Line2d line2D = new Line2d(snapPoint2d, perpendicularVector);
 
 			// TODO tolerance
-			Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
+			Tolerance tolerance = new Tolerance(0.01 * Session.UnitsScaleFactor(), 0.01 * Session.UnitsScaleFactor());
 
 			Dictionary<string, double> rotationOffsets = new Dictionary<string, double>()
 			{
@@ -715,7 +716,7 @@ namespace Ironwill.Commands
 					snapMidpoint.Center = snapPoint;
 					snapMidpoint.SetScreenSize(0.006);
 
-					Tolerance tolerance = new Tolerance(0.01 * Session.AutoScaleFactor(), 0.01 * Session.AutoScaleFactor());
+					Tolerance tolerance = new Tolerance(0.01 * Session.UnitsScaleFactor(), 0.01 * Session.UnitsScaleFactor());
 
 					if (jiggedFitting.Position.IsEqualTo(snapPoint, tolerance))
 					{

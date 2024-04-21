@@ -109,7 +109,7 @@ namespace Ironwill.Commands.AddSprinkler
 
 		protected void DrawNearestRadius(WorldDraw draw)
 		{
-			Circle minimumRadius = new Circle(jigSprinkler.Position, Vector3d.ZAxis, 1828.8 * Session.AutoScaleFactor());
+			Circle minimumRadius = new Circle(jigSprinkler.Position, Vector3d.ZAxis, 1828.8 * Session.UnitsScaleFactor());
 			minimumRadius.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.DarkGrey);
 
 			minimumRadius.Draw(draw);
@@ -117,7 +117,7 @@ namespace Ironwill.Commands.AddSprinkler
 
 		protected void DrawMaximumRadius(WorldDraw draw)
 		{
-			Circle maximumRadius = new Circle(jigSprinkler.Position, Vector3d.ZAxis, 2286 * Session.AutoScaleFactor());
+			Circle maximumRadius = new Circle(jigSprinkler.Position, Vector3d.ZAxis, 2286 * Session.UnitsScaleFactor());
 			maximumRadius.Color = Color.FromColorIndex(ColorMethod.ByAci, Colors.LightGreen);
 
 			maximumRadius.Draw(draw);

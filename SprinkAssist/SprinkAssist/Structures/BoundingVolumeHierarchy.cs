@@ -18,30 +18,33 @@ namespace Ironwill.Structures
 
 	delegate bool NodeTest(Extents3d extents);
 
-	internal class BoundingVolumeHierarchy
+	internal class BoundingVolumeHierarchy<T> where T : Entity
 	{
-		BoundingVolumeHierarchyNode rootNode;
+		BoundingVolumeHierarchyNode<T> rootNode;
 
-		public BoundingVolumeHierarchyNodeAdapter nodeAdapter;
+		public BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter;
 
 		public int leafObjectMax = 1;
 
 		public int nodeCount = 0;
 
-		public BoundingVolumeHierarchy(List<Entity> entities = null, int leafObjectMax = 1)
+		public int maxDepth = 0;
+
+		public BoundingVolumeHierarchy(BoundingVolumeHierarchyNodeAdapter<T> inNodeAdapter, List<T> entities = null, int leafObjectMax = 1)
 		{
 			this.leafObjectMax = leafObjectMax;
 
-			nodeAdapter = new BoundingVolumeHierarchyNodeAdapter(this);
+			nodeAdapter = inNodeAdapter;
+			nodeAdapter.AssignBVH(this);
 
 			if (entities ==  null || entities.Count == 0)
 			{
-				rootNode = new BoundingVolumeHierarchyNode(this);
-				rootNode.entities = new List<Entity>();
+				rootNode = new BoundingVolumeHierarchyNode<T>(this);
+				rootNode.entities = new List<T>();
 			}
 			else
 			{
-				rootNode = new BoundingVolumeHierarchyNode(this, entities, null, 0);
+				rootNode = new BoundingVolumeHierarchyNode<T>(this, entities, null, 0);
 			}
 		}
 
@@ -49,12 +52,12 @@ namespace Ironwill.Structures
 		{
 			List<Polyline3d> polylines = new List<Polyline3d>();
 
-			rootNode.GeneratePolylines(ref polylines);
+			rootNode.GeneratePolylines(ref polylines, maxDepth);
 
 			return polylines;
 		}
 
-		private void TraverseInternal(BoundingVolumeHierarchyNode currentNode, NodeTest hitTest, ref List<BoundingVolumeHierarchyNode> hitList)
+		private void TraverseInternal(BoundingVolumeHierarchyNode<T> currentNode, NodeTest hitTest, ref List<BoundingVolumeHierarchyNode<T>> hitList)
 		{
 			if (currentNode == null)
 			{
@@ -70,15 +73,15 @@ namespace Ironwill.Structures
 			}
 		}
 
-		public List<BoundingVolumeHierarchyNode> Traverse(NodeTest hitTest)
+		private List<BoundingVolumeHierarchyNode<T>> Traverse(NodeTest hitTest)
 		{
-			List<BoundingVolumeHierarchyNode> hits = new List<BoundingVolumeHierarchyNode>();
+			List<BoundingVolumeHierarchyNode<T>> hits = new List<BoundingVolumeHierarchyNode<T>>();
 
 			TraverseInternal(rootNode, hitTest, ref hits);
 
-			List<BoundingVolumeHierarchyNode> populatedHits = new List<BoundingVolumeHierarchyNode>();
+			List<BoundingVolumeHierarchyNode<T>> populatedHits = new List<BoundingVolumeHierarchyNode<T>>();
 
-			foreach (BoundingVolumeHierarchyNode node in hits)
+			foreach (BoundingVolumeHierarchyNode<T> node in hits)
 			{
 				if (node.entities != null && node.entities.Count > 0)
 				{
@@ -89,18 +92,23 @@ namespace Ironwill.Structures
 			return populatedHits;
 		}
 
-		public List<BoundingVolumeHierarchyNode> Traverse(Point3d point)
+		public List<T> FindEntities(Point3d point)
 		{
-			return Traverse(box => IFEMath.Intersection.Extents3dContainsPoint3d(box, point));
+			List<BoundingVolumeHierarchyNode<T>> nodes = Traverse(nodeExtents => IFEMath.Intersection.Extents3dContainsPoint3d(nodeExtents, point));
+			return RetrieveEntities(nodes);
 		}
 
-		public List<Entity> FindEntities(Point3d point)
+		public List<T> FindEntities(Extents3d box)
 		{
-			List<BoundingVolumeHierarchyNode> nodes = Traverse(point);
+			List<BoundingVolumeHierarchyNode<T>> nodes = Traverse(nodeExtents => IFEMath.Intersection.Extents3dCollidesWithExtents3d(nodeExtents, box));
+			return RetrieveEntities(nodes);
+		}
 
-			List<Entity> foundEntities = new List<Entity>();
+		private List<T> RetrieveEntities(List<BoundingVolumeHierarchyNode<T>> nodes)
+		{
+			List<T> foundEntities = new List<T>();
 
-			foreach (BoundingVolumeHierarchyNode node in nodes)
+			foreach (BoundingVolumeHierarchyNode<T> node in nodes)
 			{
 				node.GetEntities(ref foundEntities);
 			}

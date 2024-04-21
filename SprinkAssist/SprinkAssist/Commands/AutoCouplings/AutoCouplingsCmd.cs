@@ -13,41 +13,61 @@ using Autodesk.AutoCAD.EditorInput;
 using AcApplication = Autodesk.AutoCAD.ApplicationServices.Application;
 using Ironwill.Commands.Help;
 using Ironwill.Structures;
+using System.Diagnostics;
+using System.Windows.Navigation;
 
 [assembly: CommandClass(typeof(Ironwill.Commands.AutoCouplingsCmd))]
 
 namespace Ironwill.Commands
 {
-	class AutoCouplingsCmd
+	class AutoCouplingsCmd : SprinkAssistCommand
 	{
-		BoundingVolumeHierarchy pipeBVH;
+		CommandSetting<double> endOfLineOffset;
 
-		public AutoCouplingsCmd() {
+		public AutoCouplingsCmd()
+		{
+			endOfLineOffset = settings.RegisterNew("EndOfLineOffset", 50.8 * Session.UnitsScaleFactor());
+		}
 
-			List<Entity> pipeLines = new List<Entity>();
-
-			using (Transaction transaction = Session.StartTransaction())
+		private bool PipelineMatch(Entity e)
+		{
+			if (!(e is Line))
 			{
-				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
-
-				foreach (ObjectId objectId in blockTableRecord)
-				{
-					DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
-					Line testLine = dbObject as Line;
-
-					if (testLine == null)
-					{
-						continue;
-					}
-
-					if (Layer.PipeLayers.Contains(testLine.Layer))
-					{
-						pipeLines.Add(testLine);
-					}
-				}
+				return false;
 			}
 
-			pipeBVH = new BoundingVolumeHierarchy(pipeLines);
+			return Layer.PipeLayers.Contains(e.Layer);
+		}
+		private bool FittingMatch(Entity e)
+		{
+			BlockReference fitting = e as BlockReference;
+			
+			if (fitting == null)
+			{
+				return false;
+			}
+
+			HashSet<string> fittingLayers = new HashSet<string>()
+			{
+				Layer.SystemFitting,
+				Layer.SystemPipe_Main, 
+				Layer.SystemPipe_Branchline, 
+				Layer.SystemPipe_Armover
+			};
+
+			HashSet<string> fittingBlocks = new HashSet<string>()
+			{
+				Blocks.Fitting_GroovedReducingCoupling,
+				Blocks.Fitting_GroovedCoupling,
+				Blocks.Fitting_Elbow,
+				Blocks.Fitting_Tee,
+				//Blocks.Fitting_Cap,
+				Blocks.Fitting_Riser,
+				Blocks.Fitting_ConcentricReducer,
+				Blocks.Fitting_EccentricReducer
+			};
+
+			return fittingBlocks.Contains(fitting.Name);
 		}
 
 		/// ---------------------------------------------------------------------------------------
@@ -56,26 +76,50 @@ namespace Ironwill.Commands
 		[CommandMethod(SprinkAssist.CommandMethodPrefix, "AutoCouplings", CommandFlags.UsePickSet | CommandFlags.Modal | CommandFlags.NoBlockEditor)]
 		public void Main()
 		{
-			Document doc = AcApplication.DocumentManager.MdiActiveDocument;
-			Database database = doc.Database;
-			Editor editor = doc.Editor;
-
-			TypedValue[] filter = {
-				new TypedValue((int)DxfCode.Operator, "<or"),
-				//new TypedValue((int)DxfCode.LayerName, Layers.Armover.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Branchline.Get()),
-				new TypedValue((int)DxfCode.LayerName, Layer.SystemPipe_Main.Get()),
-				new TypedValue((int)DxfCode.Operator, "or>"),
-			};
-
-			PromptSelectionResult selectionResult = editor.GetSelection(new SelectionFilter(filter));
-
-			if (selectionResult.Status != PromptStatus.OK)
+			if (!VerifyCouplingBlock())
 			{
 				return;
 			}
 
-			using (Transaction transaction = database.TransactionManager.StartTransaction())
+			using (Transaction transaction = Session.StartTransaction())
+			{
+				List<Line> selectedLines = GetSelectedLines(transaction);
+				List<Line> allPipeLines = new List<Line>();
+				List<BlockReference> allFittings = new List<BlockReference>();
+
+				if (selectedLines.Count == 0)
+				{
+					transaction.Commit();
+					return;
+				}
+
+				GetAllDrawingElements(transaction, ref allPipeLines, ref allFittings);
+				
+				BoundingVolumeHierarchy<Line> pipeBVH = new BoundingVolumeHierarchy<Line>(new BoundingVolumeHierarchyNodeAdapter_Line(), allPipeLines);
+				BoundingVolumeHierarchy<BlockReference> fittingsBVH = new BoundingVolumeHierarchy<BlockReference>(new BoundingVolumeHierarchyNodeAdapter_BlockReference(), allFittings);
+
+				foreach (Line selectedLine in selectedLines)
+				{
+					List<Point3d> breakPoints = FindBreakPoints(transaction, selectedLine, pipeBVH, fittingsBVH);
+
+					List<Line> segments = DivideLineIntoSegments(transaction, selectedLine, breakPoints);
+
+					OrientSegments(ref segments, pipeBVH);
+
+					CreateCouplings(transaction, ref segments);
+
+					segments.ForEach((x) => { x.Dispose(); });
+				}
+
+				transaction.Commit();
+			}
+		}
+
+		private bool VerifyCouplingBlock()
+		{
+			Database database = Session.GetDatabase();
+
+			using (Transaction transaction = Session.StartTransaction())
 			{
 				BlockTable blockTable = transaction.GetObject(database.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -84,13 +128,31 @@ namespace Ironwill.Commands
 				if (!blockTable.Has(couplingBlockName))
 				{
 					AcApplication.ShowAlertDialog("Coupling block" + couplingBlockName + "missing, aborting");
-					transaction.Abort();
-					return;
+					return false;
 				}
 
-				SelectionSet selectionSet = selectionResult.Value;
+				transaction.Commit();
+			}
 
-				foreach (ObjectId objectId in selectionSet.GetObjectIds())
+			return true;
+		}
+
+		private List<Line> GetSelectedLines(Transaction transaction)
+		{
+			List<Line> lines = new List<Line>();
+
+			Editor editor = Session.GetEditor();
+
+			TypedValue[] filter = {
+				new TypedValue((int)DxfCode.Start, "LINE"),
+				new TypedValue((int)DxfCode.LayerName, $"{Layer.SystemPipe_Branchline.Get()},{Layer.SystemPipe_Main.Get()}"),
+			};
+
+			PromptSelectionResult selectionResult = editor.GetSelection(new SelectionFilter(filter));
+
+			if (selectionResult.Status == PromptStatus.OK)
+			{
+				foreach (ObjectId objectId in selectionResult.Value.GetObjectIds())
 				{
 					Line line = transaction.GetObject(objectId, OpenMode.ForRead) as Line;
 
@@ -99,374 +161,319 @@ namespace Ironwill.Commands
 						continue;
 					}
 
-					List<Line> segments = GetLineSegments(line);
-
-					OrderLineSegments(ref segments);
-
-					foreach (Line segment in segments)
-					{
-						Session.LogDebug("Creating couplings for Line [" + segment.StartPoint.ToString() + ", " + segment.EndPoint.ToString() + "]");
-						CreateCouplings(transaction, segment);
-					}
+					lines.Add(line);
 				}
-
-				transaction.Commit();
 			}
 
-			// Iterate over all pipes
-			// For each pipe, find the end(s) of the pipe
-			// Determine how many couplings are required and place them
-			// TODO: check for other nearby fittings or heads along the line and adjust spacing
+			return lines;
 		}
 
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private static List<Line> GetLineSegments(Line line)
+		private void GetAllDrawingElements(Transaction transaction, ref List<Line> allPipeLines, ref List<BlockReference> allFittings)
 		{
-			List<Line> segments = new List<Line>();
-			List<Point3d> breakPoints = GetBreakPoints(line, true, true);
-			
-			GetLineSegments(line, ref segments, ref breakPoints);
+			List<Entity> allPipeLineEntities = new List<Entity>();
+			List<Entity> allFittingEntities = new List<Entity>();
+			Drawing.GetMultipleEntities(transaction, new Drawing.EntityGetter(allPipeLineEntities, PipelineMatch), new Drawing.EntityGetter(allFittingEntities, FittingMatch));
 
-			Session.LogDebug("Divided line into " + segments.Count + " segments");
-
-			return segments;
+			allPipeLines = allPipeLineEntities.Cast<Line>().ToList();
+			allFittings = allFittingEntities.Cast<BlockReference>().ToList();
 		}
 
-		private static void GetLineSegments(Line line, ref List<Line> segments, ref List<Point3d> breakPoints)
+		private List<Point3d> FindBreakPoints(Transaction transaction, Line selectedLine, BoundingVolumeHierarchy<Line> pipesBVH, BoundingVolumeHierarchy<BlockReference> fittingsBVH)
 		{
-			Document document = AcApplication.DocumentManager.MdiActiveDocument;
+			List<Point3d> breakPoints = new List<Point3d>();
 
-			Database database = document.Database;
+			List<Line> nearbyPipes = pipesBVH.FindEntities(selectedLine.GeometricExtents);
+			List<BlockReference> nearbyFittings = fittingsBVH.FindEntities(selectedLine.GeometricExtents);
 
-			using (Transaction transaction = database.TransactionManager.StartTransaction())
+			foreach (Line otherLine in nearbyPipes)
 			{
-				bool lineSplit = false;
-
-				foreach (Point3d breakPoint in breakPoints)
-				{
-					// TODO units scale
-					const double threshold = 0.5;
-
-					// Check if this break point is on one of the ends of the line, ignore it if so
-					if (breakPoint.DistanceTo(line.StartPoint) < threshold || breakPoint.DistanceTo(line.EndPoint) < threshold)
-					{
-						continue;
-					}
-
-					// Check if this break point is not on the line, ignore it if so
-					Point3d closestPoint = line.GetClosestPointTo(breakPoint, false);
-					double distance = closestPoint.DistanceTo(breakPoint);
-
-					if (distance > threshold)
-					{
-						continue;
-					}
-
-					// Divide up the line into two pieces and recursively get breakpoints of the new pieces
-					// The order of the points is imporant - other code elsewhere assumes the first point is the end of the line
-					Line firstSegment = new Line(line.StartPoint, closestPoint);
-					Line secondSegment = new Line(line.EndPoint, closestPoint);
-
-					GetLineSegments(firstSegment, ref segments, ref breakPoints);
-					GetLineSegments(secondSegment, ref segments, ref breakPoints);
-
-					lineSplit = true;
-
-					// Don't process this line anymore, it's been split into two new lines
-					break;
-				}
-
-				if (!lineSplit)
-				{
-					segments.Add(line);
-				}
+				FindBreakPoints(selectedLine, otherLine, ref breakPoints);
 			}
-		}
 
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private static List<Point3d> GetBreakPoints(Line targetLine, bool breakOnBlocks, bool breakOnLines)
-		{
-			var points = new List<Point3d>();
-
-			Document document = AcApplication.DocumentManager.MdiActiveDocument;
-			Database database = document.Database;
-
-			using (Transaction transaction = database.TransactionManager.StartTransaction())
+			foreach (BlockReference fitting in nearbyFittings)
 			{
-				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
-
-				foreach (ObjectId objectId in blockTableRecord)
-				{
-					DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
-
-					TryGetBreakPointsAsBlock(targetLine, dbObject, ref points);
-					TryGetBreakPointsAsLine(targetLine, dbObject, ref points);
-				}
+				FindBreakPoints(transaction, selectedLine, fitting, ref breakPoints);
 			}
 
-			return points;
+			return breakPoints;
 		}
 
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private static void TryGetBreakPointsAsBlock(Line targetLine, DBObject dbObject, ref List<Point3d> breakPoints)
+		private static void FindBreakPoints(Line selectedLine, Line otherLine, ref List<Point3d> breakPoints)
 		{
-			BlockReference block = dbObject as BlockReference;
-
-			if (block == null)
+			if (otherLine == selectedLine)
 			{
 				return;
 			}
 
-			if (block.Name == Blocks.Fitting_Cap.Get())
+			List<string> validLineLayers;
+
+			if (selectedLine.Layer == Layer.SystemPipe_Main)
+			{
+				validLineLayers = new List<string> { Layer.SystemPipe_Main };
+			}
+			else if (selectedLine.Layer == Layer.SystemPipe_Branchline)
+			{
+				validLineLayers = new List<string> { Layer.SystemPipe_Main, Layer.SystemPipe_Branchline };
+			}
+			else if (selectedLine.Layer == Layer.SystemPipe_Armover)
+			{
+				validLineLayers = new List<string> { Layer.SystemPipe_Main, Layer.SystemPipe_Branchline, Layer.SystemPipe_Armover };
+			}
+			else
 			{
 				return;
 			}
 
-			List<string> validBlockLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
-
-			if (!validBlockLayers.Contains(block.Layer))
+			if (!validLineLayers.Contains(otherLine.Layer))
 			{
 				return;
 			}
 
-			double threshold = 0.5;
+			breakPoints.Add(otherLine.StartPoint);
+			breakPoints.Add(otherLine.EndPoint);
+		}
 
-			if (targetLine.GetClosestPointTo(block.Position, false).DistanceTo(block.Position) > threshold)
+		private static void FindBreakPoints(Transaction transaction, Line selectedLine, BlockReference fitting, ref List<Point3d> breakPoints)
+		{
+			double threshold = 0.5; // TODO hardcoded shit
+
+			if (selectedLine.GetClosestPointTo(fitting.Position, false).DistanceTo(fitting.Position) > threshold)
 			{
 				return;
 			}
 
 			// I need to find the line which this block would attach the target pipe to and evaluate if the other line is a smaller type
-			Document document = AcApplication.DocumentManager.MdiActiveDocument;
-			Database database = document.Database;
-
 			List<string> validLineLayers;
 
-			if (targetLine.Layer == Layer.SystemPipe_Main.Get())
+			if (selectedLine.Layer == Layer.SystemPipe_Main)
 			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main };
 			}
-			else if (targetLine.Layer == Layer.SystemPipe_Branchline.Get())
+			else if (selectedLine.Layer == Layer.SystemPipe_Branchline)
 			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main, Layer.SystemPipe_Branchline };
 			}
-			else if (targetLine.Layer == Layer.SystemPipe_Armover.Get())
+			else if (selectedLine.Layer == Layer.SystemPipe_Armover)
 			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
+				validLineLayers = new List<string> { Layer.SystemPipe_Main, Layer.SystemPipe_Branchline, Layer.SystemPipe_Armover };
 			}
 			else
 			{
 				validLineLayers = new List<string> { };
 			}
 
-			using (Transaction transaction = database.TransactionManager.StartTransaction())
-			{
-				BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
-
-				//bool handled = false;
-
-				// Check all lines 
-				foreach (ObjectId objectId in blockTableRecord)
-				{
-					DBObject otherObject = transaction.GetObject(objectId, OpenMode.ForRead);
-
-					Line otherLine = otherObject as Line;
-
-					if (otherLine == null)
-					{
-						continue;
-					}
-
-					if (otherLine == targetLine)
-					{
-						continue;
-					}
-
-					if (otherLine.GetClosestPointTo(block.Position, false).DistanceTo(block.Position) <= threshold)
-					{
-						if (!validLineLayers.Contains(otherLine.Layer))
-						{
-							continue;
-						}
-
-						breakPoints.Add(block.Position);
-						//handled = true;
-						break;
-					}
-				}
-
-				// TODO: This won't catch every possibility. If there is not info about the line below, I can't judge whether or not there is actually a pipe diameter change.
-				// if (!handled) {  }
-
-				transaction.Commit();
-			}
-		}
-
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private static void TryGetBreakPointsAsLine(Line targetLine, DBObject dbObject, ref List<Point3d> breakPoints)
-		{
-			Line line = dbObject as Line;
-
-			if (line == null || line == targetLine)
+			if (!validLineLayers.Contains(fitting.Layer))
 			{
 				return;
 			}
 
-			List<string> validLineLayers;
-
-			if (targetLine.Layer == Layer.SystemPipe_Main.Get())
-			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get() };
-			}
-			else if (targetLine.Layer == Layer.SystemPipe_Branchline.Get())
-			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get() };
-			}
-			else if (targetLine.Layer == Layer.SystemPipe_Armover.Get())
-			{
-				validLineLayers = new List<string> { Layer.SystemPipe_Main.Get(), Layer.SystemPipe_Branchline.Get(), Layer.SystemPipe_Armover.Get() };
-			}
-			else
-			{
-				validLineLayers = new List<string> { };
-			}
-
-			if (!validLineLayers.Contains(line.Layer))
-			{
-				return;
-			}
-
-			breakPoints.Add(line.StartPoint);
-			breakPoints.Add(line.EndPoint);
+			breakPoints.Add(fitting.Position);
 		}
 
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private void OrderLineSegments(ref List<Line> segments)
+		private List<Line> DivideLineIntoSegments(Transaction transaction, Line selectedLine, List<Point3d> breakPoints)
 		{
-			List<Point3d> connectionPoints = GetConnectionPoints(segments);
+			List<Line> segments = new List<Line>();
 
-			// For each segment, check if the start and/or end are connected to another pipe. Set the first point as the unconnected point, if applicable. Do nothing otherwise (e.g. for grid systems)
-			// TODO mouse click for start point?
+			bool split = false;
 
-			foreach (Line line in segments)
+			foreach (Point3d breakPoint in breakPoints)
 			{
-				bool startPointConnected = false;
-				bool endPointConnected = false;
+				const double threshold = 0.5; // TODO tolerance!
 
-				foreach (Point3d point in connectionPoints)
+				// Check if this break point is on one of the ends of the line, ignore it if so
+				if (breakPoint.DistanceTo(selectedLine.StartPoint) < threshold || breakPoint.DistanceTo(selectedLine.EndPoint) < threshold)
 				{
-					if (line.StartPoint.DistanceTo(point) < 0.5)
-					{
-						startPointConnected = true;
-					}
-
-					if (line.EndPoint.DistanceTo(point) < 0.5)
-					{
-						endPointConnected = true;
-					}
-
-					if (startPointConnected && endPointConnected)
-					{
-						break;
-					}
+					continue;
 				}
 
-				if (startPointConnected && !endPointConnected)
+				// Check if this break point is not on the line, ignore it if so
+				Point3d closestPoint = selectedLine.GetClosestPointTo(breakPoint, false);
+
+				if (closestPoint.DistanceTo(breakPoint) > threshold)
 				{
-					Point3d temp = line.EndPoint;
-					line.EndPoint = line.StartPoint;
-					line.StartPoint = temp;
+					continue;
+				}
+
+				// Divide up the line into two pieces and recursively get breakpoints of the new pieces
+				// The order of the points is imporant - other code elsewhere assumes the first point is the end of the line
+				Line firstSegment = new Line(selectedLine.StartPoint, closestPoint);
+				Line secondSegment = new Line(selectedLine.EndPoint, closestPoint);
+
+				firstSegment.Layer = selectedLine.Layer;
+				secondSegment.Layer = selectedLine.Layer;
+
+				List<Line> firstSegmentSubSegments = DivideLineIntoSegments(transaction, firstSegment, breakPoints);
+				List<Line> secondSegmentSubSegments = DivideLineIntoSegments(transaction, secondSegment, breakPoints);
+				
+				if (firstSegmentSubSegments.Count > 1)
+				{
+					firstSegment.Dispose();
+				}
+
+				if (secondSegmentSubSegments.Count > 1)
+				{
+					secondSegment.Dispose();
+				}
+
+				segments.AddRange(firstSegmentSubSegments);
+				segments.AddRange(secondSegmentSubSegments);
+
+				split = true;
+			}
+
+			if (!split)
+			{
+				Line finalLine;
+
+				if (selectedLine.Database == null)
+				{
+					finalLine = selectedLine;
+				}
+				else
+				{
+					finalLine = new Line(selectedLine.StartPoint, selectedLine.EndPoint);
+					finalLine.Layer = selectedLine.Layer;
+				}
+
+				segments.Add(finalLine);
+			}
+
+			return segments;
+		}
+
+		enum EConnectionType
+		{
+			None = 0,
+			Armover = 1,
+			Branchline = 2,
+			Main = 3,
+			Fitting = 4,
+		}
+
+		void OrientSegments(ref List<Line> segments, BoundingVolumeHierarchy<Line> pipesBVH)
+		{
+			// Note: these lines are local copies. None of them are in the BHV.
+			foreach (Line segment in segments)
+			{
+				List<Line> linesNearStart = pipesBVH.FindEntities(segment.StartPoint);
+				List<Line> linesNearEnd = pipesBVH.FindEntities(segment.EndPoint);
+
+				Clean(segment, ref linesNearStart);
+				Clean(segment, ref linesNearEnd);
+
+				EConnectionType atStart = EConnectionType.None;
+				EConnectionType atEnd = EConnectionType.None;
+
+				CheckIfPointConnected(segment.StartPoint, ref linesNearStart, ref atStart);
+				CheckIfPointConnected(segment.EndPoint, ref linesNearEnd, ref atEnd);
+
+				if (atStart > atEnd)
+				{
+					FlipLine(segment);
 				}
 			}
 		}
 
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private List<Point3d> GetConnectionPoints(List<Line> segments)
+		void Clean(Line segment, ref List<Line> nearbyLines)
 		{
-			List<Point3d> connectionPoints = new List<Point3d>();
-
-
-			foreach (Line line in segments)
+			for (int i = 0; i < nearbyLines.Count; ++i)
 			{
-				// Find all points where A) an end of this line touches another line or B) where there is a fitting such as a tee or riser along the length of the line *and* the other connected pipe is of a larger type
-
-				Document document = AcApplication.DocumentManager.MdiActiveDocument;
-				Database database = document.Database;
-
-				using (Transaction transaction = database.TransactionManager.StartTransaction())
+				Line otherLine = nearbyLines[i];
+				if (segment.StartPoint == otherLine.StartPoint && segment.EndPoint == otherLine.EndPoint)
 				{
-					BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
+					nearbyLines.RemoveAt(i);
+					break;
+				}
+			}
+		}
 
-					foreach (ObjectId objectId in blockTableRecord)
+		private void CheckIfPointConnected(Point3d point, ref List<Line> otherLinesNearEndPoint, ref EConnectionType endConnected)
+		{
+			foreach (Line otherLine in otherLinesNearEndPoint)
+			{
+				if (otherLine.Layer != Layer.SystemPipe_Branchline && otherLine.Layer != Layer.SystemPipe_Main)
+				{
+					continue;
+				}
+
+				Point3d closestPoint = otherLine.GetClosestPointTo(point, false);
+				double distance = closestPoint.DistanceTo(point);
+
+				if (distance < 0.5)
+				{
+					if (otherLine.Layer == Layer.SystemPipe_Main)
 					{
-						DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
-
-
+						endConnected = (EConnectionType)Math.Max((int)endConnected, (int)EConnectionType.Main);
+					}
+					else if (otherLine.Layer == Layer.SystemPipe_Branchline)
+					{
+						endConnected = (EConnectionType)Math.Max((int)endConnected, (int)EConnectionType.Branchline);
 					}
 				}
 			}
-
-			return connectionPoints;
 		}
 
-
-		/// ---------------------------------------------------------------------------------------
-		/**  */
-		private void CreateCouplings(Transaction transaction, Line segment)
+		private void FlipLine(Line line)
 		{
-			double remainingLength = segment.Length;
+			Point3d temp = line.EndPoint;
+			line.EndPoint = line.StartPoint;
+			line.StartPoint = temp;
+		}
 
-			// TODO units and setting up global constants
-			// TODO plastic?
-			double pipeLength = 0;
-			DrawingUnits units = Session.GetPrimaryUnits();
-
-			if (units == DrawingUnits.Metric)
+		private void CreateCouplings(Transaction transaction, ref List<Line> segments)
+		{
+			foreach (Line segment in segments)
 			{
-				pipeLength = 6400.8;
-			}
-			else if (units == DrawingUnits.Imperial)
-			{
-				pipeLength = 252;
-			}
-			else
-			{
-				Session.Log("Drawing units not properly set! Must be metric or architectural");
-				return;
-			}
+				double remainingLength = segment.Length;
 
-			Point3d currentPoint = segment.StartPoint;
+				// TODO units and setting up global constants
+				// TODO plastic?
 
-			while (remainingLength > pipeLength)
-			{
-				Vector3d lineDir = segment.EndPoint - segment.StartPoint;
-				Vector3d normalizedDir = lineDir.GetNormal();
-				Vector3d pipeLengthDir = pipeLength * normalizedDir;
+				double pipeLength;
 
-				currentPoint += pipeLengthDir;
+				DrawingUnits units = Session.GetPrimaryUnits();
 
-				BlockReference blockReference = BlockOps.InsertBlock(transaction, Blocks.Fitting_GroovedCoupling.Get());
-
-				if (blockReference == null)
+				if (units == DrawingUnits.Metric)
 				{
-					Session.Log("Block " + Blocks.Fitting_GroovedCoupling.Get() + " was not found, aborting");
+					pipeLength = 6400.8;
+				}
+				else if (units == DrawingUnits.Imperial)
+				{
+					pipeLength = 252;
+				}
+				else
+				{
+					Session.Log("Drawing units not properly set! Must be metric or architectural");
 					return;
 				}
 
-				Vector3d segmentDirection = (segment.EndPoint - segment.StartPoint).GetNormal();
+				Point3d currentPoint = segment.StartPoint;
 
-				blockReference.Position = currentPoint;
-				blockReference.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
-				blockReference.Rotation = Session.SanitizeAngle(segment.Angle + Session.Radians(90), segmentDirection);
-				blockReference.Layer = Layer.SystemFitting.Get();
+				while (remainingLength > pipeLength)
+				{
+					Vector3d lineDir = segment.EndPoint - segment.StartPoint;
+					Vector3d normalizedDir = lineDir.GetNormal();
+					Vector3d pipeLengthDir = pipeLength * normalizedDir;
 
-				remainingLength -= pipeLength;
+					currentPoint += pipeLengthDir;
+
+					BlockReference blockReference = BlockOps.InsertBlock(transaction, Blocks.Fitting_GroovedCoupling.Get());
+
+					if (blockReference == null)
+					{
+						Session.Log("Block " + Blocks.Fitting_GroovedCoupling.Get() + " was not found, aborting");
+						return;
+					}
+
+					Vector3d segmentDirection = (segment.EndPoint - segment.StartPoint).GetNormal();
+
+					blockReference.Position = currentPoint;
+					blockReference.ScaleFactors = new Scale3d(Session.GetBlockScaleFactor());
+					blockReference.Rotation = Session.SanitizeAngle(segment.Angle + Session.Radians(90), segmentDirection);
+					blockReference.Layer = Layer.SystemFitting;
+
+					remainingLength -= pipeLength;
+				}
 			}
 		}
 	}

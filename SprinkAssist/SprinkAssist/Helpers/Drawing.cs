@@ -68,5 +68,76 @@ namespace Ironwill
 		{
 
 		}
+
+		public static List<Entity> GetAllPipeLines(Transaction transaction)
+		{
+			BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
+
+			List<Entity> pipeLines = new List<Entity>();
+
+			foreach (ObjectId objectId in blockTableRecord)
+			{
+				DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
+				Line testLine = dbObject as Line;
+
+				if (testLine == null)
+				{
+					continue;
+				}
+
+				if (Layer.PipeLayers.Contains(testLine.Layer))
+				{
+					pipeLines.Add(testLine);
+				}
+			}
+
+			return pipeLines;
+		}
+
+		public delegate bool EntityMatchDelegate(Entity entity);
+
+		public class EntityGetter
+		{
+			List<Entity> foundEntities = new List<Entity>();
+
+			EntityMatchDelegate matchFunction;
+
+			public EntityGetter(List<Entity> foundEntities, EntityMatchDelegate matchFunction)
+			{
+				this.foundEntities = foundEntities;
+				this.matchFunction = matchFunction;
+			}
+
+			public void TryGet(Entity entity)
+			{
+				if (matchFunction(entity))
+				{
+					foundEntities.Add(entity);
+				}
+			}
+		}
+
+		/** Function to find multiple types of entities in a single pass. */
+		public static void GetMultipleEntities(Transaction transaction, params EntityGetter[] stuffGetterClasses)
+		{
+			BlockTableRecord blockTableRecord = Session.GetModelSpaceBlockTableRecord(transaction);
+
+			foreach (ObjectId objectId in blockTableRecord)
+			{
+				DBObject dbObject = transaction.GetObject(objectId, OpenMode.ForRead);
+
+				Entity entity = dbObject as Entity;
+				
+				if (entity == null)
+				{
+					continue;
+				}
+
+				foreach (EntityGetter stuffGetter in stuffGetterClasses)
+				{
+					stuffGetter.TryGet(entity);
+				}
+			}
+		}
 	}
 }

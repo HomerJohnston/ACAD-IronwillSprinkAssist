@@ -192,6 +192,8 @@
     <Compile Include="Objects\Cross.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchy.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchyNode.cs" />
+    <Compile Include="Structures\BoundingVolumeHierarchyNodeAdapter_BlockReference.cs" />
+    <Compile Include="Structures\BoundingVolumeHierarchyNodeAdapter_Line.cs" />
     <Compile Include="Structures\BoundingVolumeHierarchyNodeAdapter.cs" />
     <Compile Include="Template\AutoGenTemplates.cs" />
     <Compile Include="Commands\_Obsolete\OBSOLETEAutoLabelCmd.cs" />
