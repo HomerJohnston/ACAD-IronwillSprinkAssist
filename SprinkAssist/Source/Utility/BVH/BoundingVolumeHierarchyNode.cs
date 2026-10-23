@@ -1,0 +1,329 @@
+﻿using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+
+using Color = Autodesk.AutoCAD.Colors.Color;
+using SysColor = System.Drawing.Color;
+
+namespace Ironwill.Utility.BVH
+{
+	public class BoundingVolumeHierarchyNode<T> where T : Entity
+	{
+		public Extents3d extents;
+
+		public BoundingVolumeHierarchyNode<T>? parent = null;
+		public BoundingVolumeHierarchyNode<T>? leftChild = null;
+		public BoundingVolumeHierarchyNode<T>? rightChild = null;
+
+		public int depth;
+		public int nodeNumber; // for debugging only
+
+		public List<T> entities; // will only contain anything in leaf nodes
+
+		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy<T> bvh)
+		{
+			nodeNumber = bvh.nodeCount++;
+			entities = [];
+		}
+
+		public BoundingVolumeHierarchyNode(BoundingVolumeHierarchy<T> bvh, List<T> inEntities, BoundingVolumeHierarchyNode<T>? inParent, int currentDepth)
+		{
+			nodeNumber = bvh.nodeCount++;
+			
+			bvh.maxDepth = System.Math.Max(currentDepth, bvh.maxDepth);
+
+			parent = inParent;
+			depth = currentDepth;
+
+			if (inEntities == null || inEntities.Count == 0)
+			{
+				throw new Exception("BVH Node constructed with null entities list or zero entities");
+			}
+
+			entities = inEntities;
+
+			if (inEntities.Count <= bvh.leafObjectMax)
+			{
+				leftChild = null;
+				rightChild = null;
+
+				foreach(T entity in entities)
+				{
+					ComputeVolume(bvh.nodeAdapter);
+					SplitIfNecessary(bvh.nodeAdapter);
+				}
+			}
+			else
+			{
+				ComputeVolume(bvh.nodeAdapter);
+				SplitNode(bvh.nodeAdapter);
+				ChildRefit(bvh.nodeAdapter, false);
+			}
+		}
+
+		void ComputeVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
+		{
+			AssignVolume(nodeAdapter.GetExtents(entities[0]));
+
+			for (int i = 1; i < entities.Count; i++)
+			{
+				ExpandVolume(nodeAdapter, nodeAdapter.GetExtents(entities[i]));
+			}
+		}
+
+		void AssignVolume(Extents3d volume)
+		{
+			extents = volume;
+		}
+
+		void ExpandVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, Extents3d inExtents)
+		{
+			bool expanded = false;
+
+			if (inExtents.MinPoint.X < extents.MinPoint.X || inExtents.MinPoint.Y < extents.MinPoint.Y || inExtents.MinPoint.Z < extents.MinPoint.Z
+				||
+				inExtents.MaxPoint.X > extents.MaxPoint.X || inExtents.MaxPoint.Y > extents.MaxPoint.Y || inExtents.MaxPoint.Z > extents.MaxPoint.Z)
+			{
+				expanded = true;
+				extents.AddExtents(inExtents);
+			}
+
+			if (expanded && parent != null)
+			{
+				parent.ChildExpanded(nodeAdapter, this); // TODO should parent subscribe to child events instead, child just broadcasts? maybe that's overkill.
+			}
+		}
+
+		void SplitIfNecessary(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
+		{
+			if (entities.Count > nodeAdapter.bvh.leafObjectMax)
+			{
+				SplitNode(nodeAdapter);
+			}
+		}
+
+		void SplitNode(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
+		{
+			List<T> splitList = entities;
+
+			foreach (T entity in splitList)
+			{
+				nodeAdapter.UnmapObject(entity);
+			}
+
+			int center;
+
+			Axis splitAxis = PickSplitAxis();
+
+			switch (splitAxis)
+			{
+				case Axis.X:
+					{
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).X.CompareTo(nodeAdapter.GetEntityPos(ent2).X); });
+						break;
+					}
+				case Axis.Y:
+					{
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).Y.CompareTo(nodeAdapter.GetEntityPos(ent2).Y); });
+						break;
+					}
+				case Axis.Z:
+					{
+						splitList.Sort(delegate (T ent1, T ent2) { return nodeAdapter.GetEntityPos(ent1).Z.CompareTo(nodeAdapter.GetEntityPos(ent2).Z); });
+						break;
+					}
+			}
+
+			center = splitList.Count / 2;
+			
+			leftChild = new BoundingVolumeHierarchyNode<T>(nodeAdapter.bvh, splitList.GetRange(0, center), this, depth + 1);
+			rightChild = new BoundingVolumeHierarchyNode<T>(nodeAdapter.bvh, splitList.GetRange(center, splitList.Count - center), this, depth + 1);
+			
+			entities.Clear();
+		}
+
+		Axis PickSplitAxis()
+		{
+			double axisX = extents.MaxPoint.X - extents.MinPoint.X;
+			double axisY = extents.MaxPoint.Y - extents.MinPoint.Y;
+			double axisZ = extents.MaxPoint.Z - extents.MinPoint.Z;
+
+			if (axisX > axisY && axisX > axisZ)
+			{
+				return Axis.X;
+			}
+			
+			if (axisY > axisX && axisY > axisZ)
+			{
+				return Axis.Y;
+			}
+
+			return Axis.Z;
+		}
+
+		bool RefitVolume(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter)
+		{
+			if (entities.Count == 0)
+			{
+				throw new NotImplementedException();
+			}
+
+			Extents3d oldExtents = extents;
+
+			ComputeVolume(nodeAdapter);
+
+			if (!extents.Equals(oldExtents))
+			{
+				if (parent != null)
+				{
+					parent.ChildRefit(nodeAdapter);
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		void ChildExpanded(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, BoundingVolumeHierarchyNode<T> childNode)
+		{
+			bool expanded = false;
+
+			Extents3d childExtents = childNode.extents;
+
+			if (childExtents.MinPoint.X < extents.MinPoint.X || childExtents.MinPoint.Y < extents.MinPoint.Y || childExtents.MinPoint.Z < extents.MinPoint.Z
+				||
+				childExtents.MaxPoint.X > extents.MaxPoint.X || childExtents.MaxPoint.Y > extents.MaxPoint.Y || childExtents.MaxPoint.Z > extents.MaxPoint.Z)
+			{
+				expanded = true;
+				extents.AddExtents(childExtents);
+			}
+
+			if (expanded && parent != null)
+			{
+				parent.ChildExpanded(nodeAdapter, this); // TODO should parent subscribe to child events instead, child just broadcasts? maybe that's overkill.
+			}
+		}
+
+		void ChildRefit(BoundingVolumeHierarchyNodeAdapter<T> nodeAdapter, bool recurse = true)
+		{
+			if (leftChild == null || rightChild == null)
+			{
+				throw new Exception("ChildRefit called on node with null child");
+			}
+
+			extents = leftChild.extents;
+			extents.AddExtents(rightChild.extents);
+
+			if (recurse && parent != null)
+			{
+				parent.ChildRefit(nodeAdapter); 
+			}
+		}
+
+		public void GeneratePolylines(ref List<Polyline3d> polylines, int maxDepth)
+		{
+			Point3d[] bottomPoints =
+			[
+				new(extents.MinPoint.X, extents.MinPoint.Y, extents.MinPoint.Z), 
+				new(extents.MinPoint.X, extents.MaxPoint.Y, extents.MinPoint.Z), 
+				new(extents.MaxPoint.X, extents.MaxPoint.Y, extents.MinPoint.Z),
+				new(extents.MaxPoint.X, extents.MinPoint.Y, extents.MinPoint.Z)
+			];
+
+			Point3d[] topPoints =
+			{
+				new(extents.MinPoint.X, extents.MinPoint.Y, extents.MaxPoint.Z),
+				new(extents.MinPoint.X, extents.MaxPoint.Y, extents.MaxPoint.Z),
+				new(extents.MaxPoint.X, extents.MaxPoint.Y, extents.MaxPoint.Z),
+				new(extents.MaxPoint.X, extents.MinPoint.Y, extents.MaxPoint.Z)
+			};
+
+			Point3d[] corner1 =
+			{
+				new(extents.MinPoint.X, extents.MinPoint.Y, extents.MinPoint.Z),
+				new(extents.MinPoint.X, extents.MinPoint.Y, extents.MaxPoint.Z),
+			};
+
+			Point3d[] corner2 =
+			{
+				new(extents.MaxPoint.X, extents.MinPoint.Y, extents.MinPoint.Z),
+				new(extents.MaxPoint.X, extents.MinPoint.Y, extents.MaxPoint.Z),
+			};
+
+			Point3d[] corner3 =
+			{
+				new(extents.MinPoint.X, extents.MaxPoint.Y, extents.MinPoint.Z),
+				new(extents.MinPoint.X, extents.MaxPoint.Y, extents.MaxPoint.Z),
+			};
+
+			Point3d[] corner4 =
+			{
+				new(extents.MaxPoint.X, extents.MaxPoint.Y, extents.MinPoint.Z),
+				new(extents.MaxPoint.X, extents.MaxPoint.Y, extents.MaxPoint.Z),
+			};
+
+			List<Point3d[]> pointCollections = new List<Point3d[]>()
+			{
+				bottomPoints,
+				topPoints,
+				corner1, 
+				corner2, 
+				corner3, 
+				corner4
+			};
+			
+			double percentage = System.Math.Min((double)depth / (double)maxDepth, 1.0);
+
+			foreach (Point3d[] pointCollection in pointCollections)
+			{
+				Point3dCollection point3dCollection = new Point3dCollection(pointCollection);
+				Polyline3d polyline = new Polyline3d(Poly3dType.SimplePoly, point3dCollection, true);
+
+				SysColor c1 = SysColor.Green;
+				SysColor c2 = SysColor.Red;
+
+				SysColor c3 = Blend(c1, c2, percentage);
+
+				polyline.Color = Color.FromColor(c3);
+				
+				polylines.Add(polyline);
+			}
+
+			if (leftChild != null)
+			{
+				leftChild.GeneratePolylines(ref polylines, maxDepth);
+			}
+
+			if (rightChild != null)
+			{
+				rightChild.GeneratePolylines(ref polylines, maxDepth); 
+			}
+		}
+		public static SysColor Blend(SysColor color, SysColor backColor, double amount)
+		{
+			byte r = (byte)(color.R * amount + backColor.R * (1 - amount));
+			byte g = (byte)(color.G * amount + backColor.G * (1 - amount));
+			byte b = (byte)(color.B * amount + backColor.B * (1 - amount));
+			return SysColor.FromArgb(255, r, g, b);
+		}
+
+		public void GetEntities(ref List<T> foundEntities)
+		{
+			if (entities != null)
+			{
+				foundEntities.AddRange(entities);
+			}
+
+			if (leftChild != null)
+			{
+				leftChild.GetEntities(ref foundEntities);
+			}
+
+			if (rightChild != null)
+			{
+				rightChild.GetEntities(ref foundEntities);
+			}
+		}
+	}
+}

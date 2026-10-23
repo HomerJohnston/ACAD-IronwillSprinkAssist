@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "SprinkAssist": {
+      "commandName": "Project"
+    },
+    "Acad2026": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\acad.exe",
+      "commandLineArgs": "/nologo \"C:\\Users\\kylew\\OneDrive\\Desktop\\Test.dwg\"",
+      "workingDirectory": "X:\\SprinkAssist\\SprinkAssist"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>SprinkAssist</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>x64</Platforms>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	<UseWindowsForms>true</UseWindowsForms>
+	<UseWPF>true</UseWPF>
+	<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="SprinkAssistCUI\**" />
+    <Compile Remove="SprinkAssistCUI_light\**" />
+    <EmbeddedResource Remove="SprinkAssistCUI\**" />
+    <EmbeddedResource Remove="SprinkAssistCUI_light\**" />
+    <None Remove="SprinkAssistCUI\**" />
+    <None Remove="SprinkAssistCUI_light\**" />
+    <Page Remove="SprinkAssistCUI\**" />
+    <Page Remove="SprinkAssistCUI_light\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AutoCAD.NET" Version="25.1.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Source\Commands\DragPipe\" />
+  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if $(ConfigurationName) == Release (&#xD;&#xA;copy /Y &quot;$(AppData)\Autodesk\AutoCAD 2026\R25.1\enu\Support\SprinkAssist.cuix&quot; &quot;$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Resources\SprinkAssist.cuix&quot;&#xD;&#xA;copy /Y &quot;$(TargetPath)&quot; &quot;$(SolutionDir)SprinkAssistInstaller\IFESprinkAssist.bundle\Application\$(TargetFileName)&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;xcopy /Y /I &quot;$(TargetPath)&quot; &quot;C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Application\&quot;&#xD;&#xA;xcopy /Y &quot;$(TargetPath)&quot; &quot;C:\ProgramData\Autodesk\ApplicationPlugins\IFESprinkAssist.bundle\Application\$(TargetFileName)&quot;" />
+  </Target>
+</Project>
